@@ -22,7 +22,7 @@
   - preserve hard drive mode (Packager_Php::FS_MODE_PRESERVE_HDD)
     (first there is check if it is possible to get anything from hard drive, then from index.php)
 - there are implemented those file system wrapping functions and constants:
-  - \__DIR__ and \__FILE__
+  - \_\_DIR\_\_ and \_\_FILE\_\_
   - require_once(), _include_once(), require(), include()
   - new DirectoryIterator(), new SplFileInfo(), 
   - readfile(), file_get_contents()
