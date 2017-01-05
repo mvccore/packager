@@ -1,4 +1,4 @@
-# packager
+# Packager
 
 ## Main Features
 - pack any application into PHAR archive
