@@ -37,7 +37,7 @@
   - base64 encoded content
 
 ## Examples
-[**Example Hallo World (mvccore/example-helloworld)**](https://github.com/mvccore/example-helloworld)
-[**Example Pig Latin Translator (example-translator)**](https://github.com/mvccore/example-translator)
-[**Example CD Collection (mvccore/example-cdcol)**](https://github.com/mvccore/example-cdcol)
-[**Application Questionnaires (mvccore/app-questionnaire)**](https://github.com/mvccore/app-questionnaire)
+- [**Example Hallo World (mvccore/example-helloworld)**](https://github.com/mvccore/example-helloworld)
+- [**Example Pig Latin Translator (example-translator)**](https://github.com/mvccore/example-translator)
+- [**Example CD Collection (mvccore/example-cdcol)**](https://github.com/mvccore/example-cdcol)
+- [**Application Questionnaires (mvccore/app-questionnaire)**](https://github.com/mvccore/app-questionnaire)
