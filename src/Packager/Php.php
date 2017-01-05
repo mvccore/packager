@@ -1,610 +1,259 @@
 <?php
 
-/**
- * Packager
- *
- * This source file is subject to the BSD 3 License
- * For the full copyright and license information, please view 
- * the LICENSE.md file that are distributed with this source code.
- *
- * @copyright	Copyright (c) 2016 Tom Flídr (https://github.com/mvccore/packager)
- * @license		https://mvccore.github.io/docs/packager/1.0.0/LICENCE.md
- */
+include_once(__DIR__.'/Php/Completer.php');
 
-class Packager_Php
-{
-	private static $instance;
-	private static $mimeTypes = array(
-		// app files
-		'php'	=> 'application/php',
-		'htm'	=> 'text/html',
-		'html'	=> 'text/html',
-		'phtml'	=> 'text/html',
-		'xml'	=> 'text/xml',
-		'config'=> 'text/xml',
-		'css'	=> 'text/css',
-		'htc'	=> 'text/x-component',
-		'js'	=> 'application/javascript',
-		'txt'	=> 'text/plain',
-		'zip'	=> 'application/zip',
-		// fonts
-		'ttf'	=> 'application/x-font-ttf',
-		'eot'	=> 'application/vnd.ms-fontobject',
-		'otf'	=> 'application/x-font-otf',
-		'woff'	=> 'application/x-font-woff',
-		'woff2'	=> 'application/x-font-woff',
-		// images
-		'ico'	=> 'image/x-icon',
-		'gif'	=> 'image/gif',
-		'png'	=> 'image/png',
-		'jpg'	=> 'image/jpg',
-		'jpeg'	=> 'image/jpeg',
-		'bmp'	=> 'image/bmp',
-		'svg'	=> 'image/svg+xml',
-	);
-	private static $_responseTemplates = array(
-		'text'	=> "=================== %title ===================\n\n%h1\n\n%content\n\n",
-		'html'	=> '<!DOCTYPE HTML><html lang="en-US"><head><meta charset="UTF-8"><title>%title</title><style type="text/css">html,body{margin:30px;font-size:14px;color:#fff;text-align:left;line-height:1.5em;font-weight:bold;font-family:"consolas",courier new,monotype;text-shadow:1px 1px 0 rgba(0,0,0,.4);}h1{font-size:200%;line-height:1.5em;}h2{font-size:150%;line-height:1.5em;}%style</style></head><body><h1>%h1</h1>%content</body></html>',
-	);
-	private static $_htmlStyles = array(
-		'success'	=> 'html,body{background:#005700;}',
-		'error'		=> 'html,body{background:#cd1818;}',
-	);
-	private $cfg;
-	private $files = array();
-	private $result;
-	public static function run ($cfg = array())
-	{
-		self::$instance = new self($cfg);
-		self::$instance->process();
-	}
-	public function __construct ($cfg = array())
-	{
-		$cfg = (object) $cfg;
-		$cfg->sourcesDir = realpath($cfg->sourcesDir);
-		$cfg->sourcesDir = str_replace('\\', '/', realpath($cfg->sourcesDir));
-		if (!is_dir($cfg->sourcesDir)) die('Source directory not found.');
-		$this->cfg = $cfg;
-		$this->files = (object) array(
-			'all'		=> array(),
-			'php'		=> array(),
-			'static'	=> array(),
-		);
-	}
-	public function process ($cfg = array())
-	{
-		$this->_completeFilesPathsAndTypes();
-		$this->_completePhpFiles();
-		$this->_processPhpCode();
-		$this->_completeStaticFiles();
-		$this->_completeResult();
-		$this->_saveResult();
-		$this->_notify();
-	}
-	private function _completeFilesPathsAndTypes ()
-	{
-		// get project source code recursive iterator
-		$rdi = new \RecursiveDirectoryIterator($this->cfg->sourcesDir);
-		$rii = new \RecursiveIteratorIterator($rdi);
-		
-		$allFiles = array();
-		foreach($rii as $item){
-			if (!$item->isDir()) {
-				
-				$fullPath = str_replace('\\', '/', $item->__toString());
-				$relPath = substr($fullPath, strlen($this->cfg->sourcesDir));
-				
-				$extension = '';
-				$lastDotPos = strrpos($fullPath, '.');
-				if ($lastDotPos !== FALSE) $extension = substr($fullPath, $lastDotPos + 1);
-				
-				$fileName = '';
-				$lastSlashPos = strrpos($fullPath, '/');
-				if ($lastSlashPos !== FALSE) $fileName = substr($fullPath, $lastSlashPos + 1);
-				
-				$relPathDir = substr($relPath, 0, strlen($relPath) - strlen($fileName) - 1);
-				
-				$mimeType = '';
-				if (isset(self::$mimeTypes[$extension])) $mimeType = self::$mimeTypes[$extension];
-				
-				$allFiles[$relPath] = (object) array(
-					'fullPath'	 	=> $fullPath,
-					'filemtime'		=> filemtime($fullPath),
-					'relPathDir'	=> $relPathDir,
-					'fileName'		=> $fileName,
-					'extension'		=> $extension,
-					'mimeType'		=> $mimeType,
-					'processed'		=> FALSE,
-				);
-			}
-		}
-		
-		ksort($allFiles);
-		$this->files->all = $allFiles;
-		
-		$excludePatterns = $this->cfg->excludePatterns;
-		foreach ($excludePatterns as $excludePattern) {
-			$excludePattern = "/" . str_replace('/', '\\/', $excludePattern) . "/";
-			foreach ($this->files->all as $relPath => $fileInfo) {
-				@preg_match($excludePattern, $relPath, $matches);
-				if ($matches) unset($this->files->all[$relPath]);
-			}
-		}
-	}
-	private function _completePhpFiles ()
-	{
-		$includeFirst = $this->cfg->includeFirst;
-		foreach ($includeFirst as $includeFirstPathBegin) {
-			$this->_completePhpFiles_completeCollection($includeFirstPathBegin);
-		}
-		$this->_completePhpFiles_completeCollection();
-	}
-	private function _completePhpFiles_completeCollection ($pathBegin = '')
-	{
-		$fileInfoRecordsToInclude = array();
-		foreach ($this->files->all as $relPath => $fileInfo) {
-			if ($fileInfo->extension == 'php') {
-				if (strlen($pathBegin) > 0 && strpos($relPath, $pathBegin) === 0) {
-					$fileInfoRecordsToInclude[$relPath] = $fileInfo;
-					$this->files->all[$relPath]->processed = TRUE;
-				} else if (strlen($pathBegin) === 0) {
-					$fileInfoRecordsToInclude[$relPath] = $fileInfo;
-					$this->files->all[$relPath]->processed = TRUE;
-				}
-			}
-		}
-		ksort($fileInfoRecordsToInclude);
-		foreach ($fileInfoRecordsToInclude as $relPath => $fileInfo) {
-			$fileInfo->content = file_get_contents($fileInfo->fullPath);
-			$this->files->php[$relPath] = $fileInfo;
-		}
-	}
-	private function _processPhpCode ()
-	{
-		foreach ($this->files->php as $relPath => $fileInfo) {
-		
-			if ($this->cfg->compressPhp) $fileInfo->content = $this->_processPhpCode_shrinkPhpCode($fileInfo->content);
-			
-			if (mb_strpos($fileInfo->content, '<' . '?php') === 0) {
-				$fileInfo->content = mb_substr($fileInfo->content, 5);
-			} else if (mb_strpos($fileInfo->content, '<' . '?') === 0) {
-				$fileInfo->content = mb_substr($fileInfo->content, 2);
-			}
-			$fileInfo->content = trim($fileInfo->content);
+class Packager_Php extends Packager_Php_Completer
+{	
+	const FS_MODE_PRESERVE_HDD = 'PHP_PRESERVE_HDD';
+	const FS_MODE_PRESERVE_PACKAGE = 'PHP_PRESERVE_PACKAGE';
+	const FS_MODE_STRICT_HDD = 'PHP_STRICT_HDD';
+	const FS_MODE_STRICT_PACKAGE = 'PHP_STRICT_PACKAGE';
 
-			$fileInfo->content = str_replace('__DIR__', "'" . $fileInfo->relPathDir . "'", $fileInfo->content);
-			$fileInfo->content = str_replace('__FILE__', "'" . $fileInfo->relPathDir . $fileInfo->fileName . "'", $fileInfo->content);
-			
-			preg_match("/[^a-zA-Z0-9_](readfile)\(/", $fileInfo->content, $matches);
-			if ($matches) {
-				$fileInfo->content = preg_replace_callback(
-					"/[^a-zA-Z0-9_](readfile)\(/",
-					"Packager_Php::ProcessPhpCodeReadfileCalls",
-					$fileInfo->content
-				);
-			}
-				
-			preg_match("/[^a-zA-Z0-9_](file_get_contents)\(/", $fileInfo->content, $matches);
-			if ($matches) {
-				$fileInfo->content = preg_replace_callback(
-					"/[^a-zA-Z0-9_](file_get_contents)\(/",
-					"Packager_Php::ProcessPhpCodeFilegetcontentsCalls",
-					$fileInfo->content
-				);
-			}
-			
-			preg_match("/[^a-zA-Z0-9_\@]require\(/", $fileInfo->content, $matches);
-			if ($matches) {
-				$method = "Packager_Php::ProcessPhpCodeRequireCalls";
-				if (mb_strpos($fileInfo->content, '$this') !== FALSE) {
-					preg_match('/\$this/', $fileInfo->content, $thisMatches);
-					if ($thisMatches) {
-						$method = "Packager_Php::ProcessPhpCodeRequireCallsWithContext";
-					}
-				}
-				$fileInfo->content = preg_replace_callback(
-					"/([^a-zA-Z0-9_\@])require\(([^\)]*)\)/",
-					$method,
-					$fileInfo->content
-				);
-			}
-				
-			preg_match("/[^a-zA-Z0-9_\@]include\(/", $fileInfo->content, $matches);
-			if ($matches) {
-				$method = "Packager_Php::ProcessPhpCodeIncludeCalls";
-				if (mb_strpos($fileInfo->content, '$this') !== FALSE) {
-					preg_match('/\$this/', $fileInfo->content, $thisMatches);
-					if ($thisMatches) {
-						$method = "Packager_Php::ProcessPhpCodeIncludeCallsWithContext";
-					}
-				}
-				$fileInfo->content = preg_replace_callback(
-					"/([^a-zA-Z0-9_\@])include\(([^\)]*)\)/",
-					$method,
-					$fileInfo->content
-				);
-			}
-			
-				
-			preg_match("/[^a-zA-Z0-9_\@]file_exists\(/", $fileInfo->content, $matches);
-			if ($matches) {
-				$fileInfo->content = preg_replace_callback(
-					"/([^a-zA-Z0-9_\@])file_exists\(([^\)]*)\)/",
-					"Packager_Php::ProcessPhpCodeFileExistsCalls",
-					$fileInfo->content
-				);
-			}
-				
-			preg_match("/[^a-zA-Z0-9_\@]filemtime\(/", $fileInfo->content, $matches);
-			if ($matches) {
-				$fileInfo->content = preg_replace_callback(
-					"/([^a-zA-Z0-9_\@])filemtime\(([^\)]*)\)/",
-					"Packager_Php::ProcessPhpCodeFilemtimeCalls",
-					$fileInfo->content
-				);
-			}
-			
-			preg_match("/[^a-zA-Z0-9_\@]include_once\(/", $fileInfo->content, $matches);
-			if ($matches) {
-				$fileInfo->content = preg_replace_callback(
-					"/([^a-zA-Z0-9_\@])include_once\(([^\)]*)\)/",
-					"Packager_Php::ProcessPhpCodeIncludeOnceCalls",
-					$fileInfo->content
-				);
-			}
-			
-			preg_match("/[^a-zA-Z0-9_\@]parse_ini_file\(/", $fileInfo->content, $matches);
-			if ($matches) {
-				$fileInfo->content = preg_replace_callback(
-					"/([^a-zA-Z0-9_\@])parse_ini_file\(([^\)]*)\)/",
-					"Packager_Php::ProcessPhpCodeParseIniFile",
-					$fileInfo->content
-				);
-			}
-			
-			preg_match("/[^a-zA-Z0-9_\@]simplexml_load_file\(/", $fileInfo->content, $matches);
-			if ($matches) {
-				$fileInfo->content = preg_replace_callback(
-					"/([^a-zA-Z0-9_\@])simplexml_load_file\(([^\)]*)\)/",
-					"Packager_Php::ProcessPhpCodeSimplexmlLoadFile",
-					$fileInfo->content
-				);
-			}
-			
-			preg_match("/[^a-zA-Z0-9_]new DirectoryIterator\(/", $fileInfo->content, $matches);
-			if ($matches) {
-				$fileInfo->content = preg_replace_callback(
-					"/([^a-zA-Z0-9_])new DirectoryIterator\(([^\)]*)\)/",
-					"Packager_Php::ProcessPhpCodeDirectoryIteratorCalls",
-					$fileInfo->content
-				);
-			}
-			
-			$this->files->php[$relPath] = $fileInfo;
-		}
+	/**
+	 * Create singleton instance with configuration
+	 * 
+	 * @param array $cfg 
+	 * 
+	 * @return Packager_Php
+	 */
+	public static function Create ($cfg = array()) {
+		return parent::Create($cfg);
 	}
-	private function _processPhpCode_shrinkPhpCode ($code = '')
-	{
-		// PHP 4 & 5 compatibility
-		if (!defined('T_DOC_COMMENT')) define ('T_DOC_COMMENT', -1);
-		if (!defined('T_ML_COMMENT')) define ('T_ML_COMMENT', -1);
-		$space = $result = '';
-		$set = '!"#$&\'()*+,-./:;<=>?@[\]^`{|}';
-		$set = array_flip(preg_split('//',$set));
-		foreach (token_get_all($code) as $token)	{
-			if (!is_array($token))
-			$token = array(0, $token);
-			switch ($token[0]) {
-			case T_COMMENT:
-			case T_ML_COMMENT:
-			case T_DOC_COMMENT:
-			case T_WHITESPACE:
-				$space = ' ';
-				break;
-			default:
-				if (isset($set[substr($result, -1)]) ||
-					isset($set[$token[1]{0}])) $space = '';
-				$result .= $space . $token[1];
-				$space = '';
-			}
-		}
-		return $result;
+	/**
+	 * Get instance and merge configuration or create singleton instance with configuration
+	 * 
+	 * @param array $cfg 
+	 * 
+	 * @return Packager_Php
+	 */
+	public static function Get ($cfg = array()) {
+		return parent::Get($cfg);
 	}
-	public static function ProcessPhpCodeReadfileCalls ($matches)
-	{
-		return str_replace('readfile(', 'PHP_PACKAGER::READFILE(', $matches[0]);
+	/**
+	 * Set application sources directory
+	 * 
+	 * @param string $fullOrRelativePath
+	 * 
+	 * @return Packager_Php
+	 */
+	public function SetSourceDir ($fullOrRelativePath = '') {
+		return parent::SetSourceDir($fullOrRelativePath);
 	}
-	public static function ProcessPhpCodeFilegetcontentsCalls ($matches)
-	{
-		return str_replace('file_get_contents(', 'PHP_PACKAGER::FILE_GET_CONTENTS(', $matches[0]);
+	/**
+	 * Set compilation result file, if exist, it will be overwriten
+	 * 
+	 * @param string $releaseFileFullPath 
+	 * 
+	 * @return Packager_Php
+	 */
+	public function SetReleaseFile ($releaseFileFullPath = '') {
+		return parent::SetReleaseFile($releaseFileFullPath);
 	}
-	public static function ProcessPhpCodeRequireCalls ($matches)
-	{
-		return $matches[1] . 'PHP_PACKAGER::STANDARD_REQUIRE(' . $matches[2] . ')';
+	/**
+	 * Set preg_replace() patterns array or single string about
+	 * which files or folders will be excluded from result file.
+	 * Function replace all previous configuration records.
+	 * 
+	 * @param array|string $excludePatterns 
+	 * 
+	 * @return Packager_Php
+	 */
+	public function SetExcludePatterns ($excludePatterns = array()) {
+		return parent::SetExcludePatterns($excludePatterns);
 	}
-	public static function ProcessPhpCodeRequireCallsWithContext ($matches)
-	{
-		return $matches[1] . 'PHP_PACKAGER::CONTEXT_REQUIRE(' . $matches[2] . ', $this)';
+	/**
+	 * Add preg_replace() patterns array or single string about
+	 * which files or folders will be excluded from result file.
+	 * 
+	 * @param array|string $excludePatterns 
+	 * 
+	 * @return Packager_Php
+	 */
+	public function AddExcludePatterns ($excludePatterns = array()) {
+		return parent::AddExcludePatterns($excludePatterns);
 	}
-	public static function ProcessPhpCodeIncludeCalls ($matches)
-	{
-		return $matches[1] . 'PHP_PACKAGER::STANDARD_INCLUDE(' . $matches[2] . ')';
+	/**
+	 * Set patterns/replacements array about what will be replaced
+	 * in *.php and *.phtml files by preg_replace(pattern, replacement, source)
+	 * before possible minification process.
+	 * Function replace all previous configuration records.
+	 * 
+	 * @param array $patternReplacements 
+	 * 
+	 * @return Packager_Php
+	 */
+	public function SetPatternReplacements ($patternReplacements = array()) {
+		return parent::SetPatternReplacements($patternReplacements);
 	}
-	public static function ProcessPhpCodeIncludeCallsWithContext ($matches)
-	{
-		return $matches[1] . 'PHP_PACKAGER::CONTEXT_INCLUDE(' . $matches[2] . ', $this)';
+	/**
+	 * Add patterns/replacements array about what will be replaced
+	 * in *.php and *.phtml files by preg_replace(pattern, replacement, source)
+	 * before possible minification process.
+	 * 
+	 * @param array $patternReplacements 
+	 * 
+	 * @return Packager_Php
+	 */
+	public function AddPatternReplacements ($patternReplacements = array()) {
+		return parent::AddPatternReplacements($patternReplacements);
 	}
-	public static function ProcessPhpCodeFileExistsCalls ($matches)
-	{
-		return $matches[1] . 'PHP_PACKAGER::FILE_EXISTS(' . $matches[2] . ')';
+	/**
+	 * Set str_replace() key/value array about
+	 * what will be simply replaced in result file.
+	 * Function replace all previous configuration records.
+	 * 
+	 * @param array $stringReplacements 
+	 * 
+	 * @return Packager_Php
+	 */
+	public function SetStringReplacements ($stringReplacements = array()) {
+		return parent::SetStringReplacements($stringReplacements);
 	}
-	public static function ProcessPhpCodeFilemtimeCalls ($matches)
-	{
-		return $matches[1] . 'PHP_PACKAGER::FILEMTIME(' . $matches[2] . ')';
+	/**
+	 * Add str_replace() key/value array about
+	 * what will be simply replaced in result file.
+	 * 
+	 * @param array $stringReplacements 
+	 * 
+	 * @return Packager_Php
+	 */
+	public function AddStringReplacements ($stringReplacements = array()) {
+		return parent::AddStringReplacements($stringReplacements);
 	}
-	public static function ProcessPhpCodeIncludeOnceCalls ($matches)
-	{
-		return $matches[1];
+	/**
+	 * Set list of relative PHP file path(s) from application document root
+	 * to include in result file as first, after everything will be included 
+	 * by automatic order determination. List will be prepended or appended
+	 * before or after existing list by second param
+	 * Function replace all previous configuration records.
+	 * 
+	 * @param array|string $includeFirst
+	 * 
+	 * @return Packager_Php
+	 */
+	public function SetIncludeFirst ($includeFirst = array()) {
+		return parent::SetIncludeFirst($includeFirst);
 	}
-	public static function ProcessPhpCodeParseIniFile ($matches)
-	{
-		return $matches[1] . 'PHP_PACKAGER::PARSE_INI_FILE(' . $matches[2] . ')';
+	/**
+	 * Add list of relative PHP file path(s) from application document root
+	 * to include in result file as first, after everything will be included 
+	 * by automatic order determination. List will be prepended or appended
+	 * before or after existing list by second param.
+	 * 
+	 * @param array|string $includeFirst
+	 * @param string       $mode         'append' or 'prepend'
+	 * 
+	 * @return Packager_Php
+	 */
+	public function AddIncludeFirst ($includeFirst = array(), $mode = 'append') {
+		return parent::AddIncludeFirst($includeFirst, $mode);
 	}
-	public static function ProcessPhpCodeSimplexmlLoadFile ($matches)
-	{
-		return $matches[1] . 'PHP_PACKAGER::SIMPLEXML_LOAD_FILE(' . $matches[2] . ')';
+	
+	/**
+	 * Set list of relative PHP file path(s) from application document root
+	 * to include in result file as last, after everything will be included 
+	 * by automatic order determination. List will be prepended or appended
+	 * before or after existing list by second param
+	 * Function replace all previous configuration records.
+	 * 
+	 * @param array|string $includeLast
+	 * 
+	 * @return Packager_Php
+	 */
+	public function SetIncludeLast ($includeLast = array()) {
+		return parent::SetIncludeLast($includeLast);
 	}
-	public static function ProcessPhpCodeDirectoryIteratorCalls ($matches)
-	{
-		return $matches[1] . 'PHP_PACKAGER::DIRECTORY_ITERATOR(' . $matches[2] . ')';
+	/**
+	 * Add list of relative PHP file path(s) from application document root
+	 * to include in result file as last, after everything will be included 
+	 * by automatic order determination. List will be prepended or appended
+	 * before or after existing list by second param.
+	 * By default, there is initialized by default "index.php" file to include 
+	 * as last, see Packager_Php::SetIncludeLastDefault() to overwrite it
+	 * or use (new Packager_Php)->SetIncludeLast() to overwrite it.
+	 * 
+	 * @param array|string $includeLast
+	 * @param string       $mode         'append' or 'prepend'
+	 * 
+	 * @return Packager_Php
+	 */
+	public function AddIncludeLast ($includeLast = array(), $mode = 'append') {
+		return parent::AddIncludeLast($includeLast, $mode);
 	}
-	private function _completeStaticFiles ()
-	{
-		$includeFirst = $this->cfg->includeFirst;
-		foreach ($includeFirst as $includeFirstPathBegin) {
-			$this->_completeStaticFiles_completeCollection($includeFirstPathBegin);
-		}
-		$this->_completeStaticFiles_completeCollection();
+	/**
+	 * Set boolean if *.phtml templates will be minimized before saving into result file
+	 * 
+	 * @param string $minifyTemplates
+	 * 
+	 * @return Packager_Php
+	 */
+	public function SetMinifyTemplates ($minifyTemplates = TRUE) {
+		return parent::SetMinifyTemplates($minifyTemplates);
 	}
-	private function _completeStaticFiles_completeCollection ($pathBegin = '')
-	{
-		$fileInfoRecordsToInclude = array();
-		foreach ($this->files->all as $relPath => $fileInfo) {
-			if ($fileInfo->extension !== 'php') {
-				if (strlen($pathBegin) > 0 && strpos($relPath, $pathBegin) === 0) {
-					$fileInfoRecordsToInclude[$relPath] = $fileInfo;
-					$this->files->all[$relPath]->processed = TRUE;
-				} else if (strlen($pathBegin) === 0) {
-					$fileInfoRecordsToInclude[$relPath] = $fileInfo;
-					$this->files->all[$relPath]->processed = TRUE;
-				}
-			}
-		}
-		ksort($fileInfoRecordsToInclude);
-		foreach ($fileInfoRecordsToInclude as $relPath => $fileInfo) {
-			$fileInfo->content = base64_encode(file_get_contents($fileInfo->fullPath));
-			$this->files->static[$relPath] = $fileInfo;
-		}
+	/**
+	 * Set boolean if *.php scripts will be minimized before saving into result file
+	 * 
+	 * @param string $minifyPhp
+	 * 
+	 * @return Packager_Php
+	 */
+	public function SetMinifyPhp ($minifyPhp = TRUE) {
+		return parent::SetMinifyPhp($minifyPhp);
 	}
-	private function _completeResult ()
-	{
-		$phpAppShrinkerCode = 'class PHP_PACKAGER {
-	public static $CONTEXT;
-	private static $STATICS_ENCODED = array(__PHP_STATIC_SHRINKED_FILES__);
-	private static $STATICS_DECODED = array();
-	private static $SCRIPTS = array(__PHP_SCRIPTS_SHRINKED_FILES__);
-	private static function NORMALIZE_PATH ($path, $absolutely = TRUE) {
-		$path = str_replace("\\\", "/", $path);
-		if (mb_strpos($path, "/./") !== FALSE) {
-			$path = str_replace("/./", "/", $path);
-		}
-		if (mb_strpos($path, "/..") !== FALSE) {
-			while (true) {
-				$doubleDotPos = mb_strpos($path, "/..");
-				if ($doubleDotPos === FALSE) {
-					break;
-				} else {
-					$path1 = mb_substr($path, 0, $doubleDotPos);
-					$path2 = mb_substr($path, $doubleDotPos + 3);
-					$lastSlashPos = mb_strrpos($path1, "/");
-					$path1 = mb_substr($path1, 0, $lastSlashPos);
-					$path = $path1 . $path2;
-				}
-			}
-		}
-		if ($absolutely) {
-			$basePath = str_replace("\\\", "/", __DIR__);
-			if (strpos($path, $basePath) === 0) {
-				$path = substr($path, strlen($basePath));
-			}
-		}
-		return $path;
+	/**
+	 * Set mode for wrapper class how to behave when any replaced file system php 
+	 * function will be called - it here will be searching in memory and after in hdd 
+	 * or hdd first and then memory or no memory or no hdd.
+	 * 
+	 * @param string $fsMode 
+	 */
+	public function SetPhpFileSystemMode ($fsMode = self::FS_MODE_PRESERVE_HDD) {
+		return parent::SetPhpFileSystemMode($fsMode);
 	}
-	private static function EVAL_FILE ($path, $context = NULL)
-	{
-		$path = self::NORMALIZE_PATH($path, FALSE);
-		$content = self::GET_STATIC($path);
-		if (!is_null($context)) self::$CONTEXT = $context;
-		try {
-			if (!is_null($context)) {
-				$content = preg_replace_callback(
-					\'/\$this([^a-zA-Z0-9_])/\',
-					"PHP_PACKAGER::REPLACE_CONTEXT",
-					$content
-				);
-			}
-			eval(" ?".">" . $content . "<" . "?php ");
-		} catch (Exception $e) {
-			throw $e;
-		}
-		self::$CONTEXT = null;
+	/**
+	 * Define all php functions you want to replace with internal php file calls as strings,
+	 * named functions will not be used in original way to read/write anything from hard drive,
+	 * all specified functions will be replaced with wrapper calls to give results from memory variables.
+	 * It's possible to name 'include' and 'require', but all 'include_once' and 'require_once' 
+	 * are replaced automaticly if there is safely detected line content - string only, no variables inside
+	 * 
+	 * @param string $phpFuncStr,...
+	 */
+	public function ReplacePhpFunctions () {
+		return parent::ReplacePhpFunctions(func_get_args());
 	}
-	private static function GET_STATIC ($key) {
-		if (!isset(self::$STATICS_DECODED[$key]) && isset(self::$STATICS_ENCODED[$key])) {
-			self::$STATICS_DECODED[$key] = base64_decode(self::$STATICS_ENCODED[$key][1]);
-		}
-		return isset(self::$STATICS_DECODED[$key]) ? self::$STATICS_DECODED[$key] : "";
+	/**
+	 * Define all php functions you don't want to replace with internal php file calls as strings,
+	 * named functions will be used in original way to read/write anything from hard drive.
+	 * It's possible to name 'include' and 'require', but all 'include_once' and 'require_once' 
+	 * are replaced automaticly if there is safely detected line content - string only, no variables inside
+	 * 
+	 * @param string $phpFuncStr 
+	 */
+	public function KeepPhpFunctions () {
+		return parent::KeepPhpFunctions(func_get_args());
 	}
-	public static function REPLACE_CONTEXT ($matches) {
-		return \'PHP_PACKAGER::$CONTEXT\' . $matches[1];
+	/**
+	 * Merge multilevel configuration array with previously initialized values.
+	 * New values sended into this function will be used preferred.
+	 * 
+	 * @param array $cfg
+	 * 
+	 * @return Packager_Php
+	 */
+	public function MergeConfiguration ($cfg = array()) {
+		return parent::MergeConfiguration($cfg);
 	}
-	public static function STANDARD_REQUIRE ($path) {
-		self::EVAL_FILE($path);
-	}
-	public static function STANDARD_INCLUDE ($path) {
-		self::EVAL_FILE($path);
-	}
-	public static function CONTEXT_REQUIRE ($path, $context) {
-		self::EVAL_FILE($path, $context);
-	}
-	public static function CONTEXT_INCLUDE ($path, $context) {
-		self::EVAL_FILE($path, $context);
-	}
-	public static function FILE_GET_CONTENTS ($path) {
-		$path = self::NORMALIZE_PATH($path, TRUE);
-		return self::GET_STATIC($path);
-	}
-	public static function READFILE ($path) {
-		$path = self::NORMALIZE_PATH($path, TRUE);
-		echo self::GET_STATIC($path);
-	}
-	public static function FILE_EXISTS ($path) {
-		$path = self::NORMALIZE_PATH($path, TRUE);
-		if (isset(self::$SCRIPTS[$path])) return self::$SCRIPTS[$path][1];
-		if (isset(self::$STATICS_ENCODED[$path])) return self::$STATICS_ENCODED[$path][1];
-	}
-	public static function FILEMTIME ($path) {
-		$path = self::NORMALIZE_PATH($path, TRUE);
-		if (isset(self::$SCRIPTS[$path])) return self::$SCRIPTS[$path][0];
-		if (isset(self::$STATICS_ENCODED[$path])) return self::$STATICS_ENCODED[$path][0];
-	}
-	public static function PARSE_INI_FILE ($path, $sections = FALSE, $scanner = INI_SCANNER_NORMAL) {
-		$path = self::NORMALIZE_PATH($path, TRUE);
-		$content = self::GET_STATIC($path);
-		return parse_ini_string($content, $sections, $scanner);
-	}
-	public static function SIMPLEXML_LOAD_FILE ($path, $class_name = "SimpleXMLElement", $options = 0, $ns = "", $is_prefix = false)
-	{
-		$path = self::NORMALIZE_PATH($path, TRUE);
-		$content = self::GET_STATIC($path);
-		return simplexml_load_string($content, $class_name, $options, $ns, $is_prefix);
-	}
-	public static function DIRECTORY_ITERATOR ($absolutePath)
-	{
-		$relativePath = rtrim(self::NORMALIZE_PATH($absolutePath, TRUE), "/");
-		$relativePathLength = mb_strlen($relativePath);
-		$resultPaths = array();
-		$result = array();
-		$pathRest = "";
-		foreach (self::$STATICS_ENCODED as $path => $value) {
-			if (mb_strpos($path, $relativePath) === 0) {
-				$pathRest = ltrim(mb_substr($path, $relativePathLength), "/");
-				if (mb_strpos($pathRest, "/") === FALSE) {
-					$resultPaths[] = $pathRest;
-				}
-			}
-		}
-		asort($resultPaths);
-		foreach ($resultPaths as $pathRest) {
-			$result[] = new SplFileInfo($pathRest);
-		}
-		return $result;
-	}
-}';
-		
-		if ($this->cfg->compressPhp) {
-			$phpAppShrinkerCode = "error_reporting(E_ALL ^ E_NOTICE);\r\n" . preg_replace("#[\r\n\t]#", "", $phpAppShrinkerCode);
-		}
-		
-		$phpAppStaticFiles = "\n";
-		foreach ($this->files->static as $relPath => $fileInfo) {
-			$content = $fileInfo->content;
-			$filemtime = $fileInfo->filemtime;
-			$phpAppStaticFiles .= "'$relPath'=>array($filemtime,'$content'),\n";
-		}
-		$phpAppShrinkerCode = str_replace('__PHP_STATIC_SHRINKED_FILES__', $phpAppStaticFiles, $phpAppShrinkerCode);
-		
-		$phpAppScriptFiles = "\n";
-		foreach ($this->files->php as $relPath => $fileInfo) {
-			$filemtime = $fileInfo->filemtime;
-			$phpAppScriptFiles .= "'$relPath'=>array($filemtime,1),\n";
-		}
-		$phpAppShrinkerCode = str_replace('__PHP_SCRIPTS_SHRINKED_FILES__', $phpAppScriptFiles, $phpAppShrinkerCode);
-		
-		foreach ($this->files->php as $relPath => $fileInfo) {
-			$phpAppShrinkerCode .= "\r\n" . $fileInfo->content;
-		}
-		
-		foreach ($this->cfg->patternReplacements as $pattern => $replacement) {
-			$phpAppShrinkerCode = preg_replace($pattern, $replacement, $phpAppShrinkerCode);
-		}
-		
-		foreach ($this->cfg->stringReplacements as $from => $to) {
-			$phpAppShrinkerCode = str_replace($from, $to, $phpAppShrinkerCode);
-		}
-		
-		$this->result = $phpAppShrinkerCode;
-	}
-	private function _saveResult ()
-	{
-		$releaseFile = $this->cfg->releaseFile;
-		unlink($releaseFile);
-		file_put_contents($releaseFile, "<?php\r\n" . $this->result);
-	}
-	private function _notify ()
-	{
-		$phpFiles = array_keys($this->files->php);
-		$staticFiles = array_keys($this->files->static);
-		if (php_sapi_name() == 'cli') {
-			$content = "Included PHP files:\n\n"
-				. implode("\n", $phpFiles)
-				. "\n\nIncluded static files:\n\n"
-				. implode("\n", $staticFiles)
-				. "\n\nDONE";
-			$this->_sendResult(
-				'Successfly packed.', 
-				$content
-			);
-		} else {
-			$content = '<h2>Included PHP files:</h2><div class="files">'
-				. implode('<br />', $phpFiles)
-				. '<h2>Included static files:</h2><div class="files">'
-				. implode('<br />', $staticFiles)
-				. '</div><h2>DONE</h2>';
-			$this->_sendResult(
-				'Successfly packed.', 
-				$content,
-				'success'
-			);
-		}
-	}
-	private function _sendResult ($title, $content, $type = '')
-	{
-		$outputType = php_sapi_name() == 'cli' ? 'text' : 'html' ;
-		if (gettype($content) == 'string') {
-			$contentStr = $content;
-		} else {
-			$contentItems = array();
-			foreach ($content as $item) {
-				if ($outputType == 'text') {
-					$contentItems[] = $item['class'] . '::' . $item['function'] . "();\n" . $item['file'] . ':' . $item['line'];
-				} else {
-					$contentItems[] = '<td>' . $item['class'] . '::' . $item['function'] . '();&nbsp;</td><td>' . $item['file'] . ':' . $item['line'] . '</td>';
-				}
-			}
-			if ($outputType == 'text') {
-				$contentStr = implode("\n\n", $contentItems);
-			} else {
-				$contentStr = '<table><tbody><tr>' . implode('</tr><tr>', $contentItems) . '</tr></tbody></table>';
-			}
-		}
-		$responseTmpl = self::$_responseTemplates[$outputType];
-		$response = str_replace(
-			array('%title', '%h1', '%content', '%style'),
-			array('MvcCore PHP Packager', $title, $contentStr, self::$_htmlStyles[$type]),
-			$responseTmpl
-		);
-		echo $response;
-		die();
+	/**
+	 * Run PHP compilation process, print output to CLI or browser
+	 * 
+	 * @param array $cfg 
+	 * 
+	 * @return Packager_Php
+	 */
+	public function Run ($cfg = array()) {
+		parent::Run($cfg);
+		list($jobMethod, $params) = $this->completeJobAndParams();
+		$this->$jobMethod($params);
 	}
 }
