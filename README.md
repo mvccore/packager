@@ -1,8 +1,8 @@
 # Packager
 
 ## Main Features
-- pack any application into PHAR archive
-- pack any MvcCore application into single PHP file
+- pack PHP MVcCore application into single PHP file
+- pack any PHP application into PHAR archive
 
 ## Configuration possibilities
 - directory with whole app source to pack
