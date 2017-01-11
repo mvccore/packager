@@ -6,24 +6,36 @@ include_once(__DIR__.'/Replacer.php');
 class Packager_Php_Scripts_Completer extends Packager_Php_Base
 {
 	protected function processPhpCode () {
-
 		foreach ($this->files->php as & $fileInfo) {
 
 			// process pattern and string replacements by config
 			$this->processPatternAndStringReplacements($fileInfo);
 			
 			// process php code and wrap configured functions
-			$fileInfo->content = Packager_Php_Scripts_Replacer::Process($fileInfo);
+			$fileInfo->content = Packager_Php_Scripts_Replacer::ProcessReplacements($fileInfo, $this->cfg);
 
 			// minify if necessary
 			if ($this->cfg->minifyPhp) {
-				$fileInfo->content = self::shrinkPhpCode($fileInfo->content);
+				$fileInfo->content = $this->shrinkPhpCode($fileInfo->content);
 			}
 			$fileInfo->content = str_replace("\r\n", "\n", $fileInfo->content);
 
 			// remove open tag - only at file begin (<\?php or <\?) 
 			// and remove close tag - only at file end (?\>)
 			self::_removeOpenAndClosePhpTags($fileInfo);
+
+			if ($fileInfo->containsNamespace !== Packager_Php::NAMESPACE_NONE) {
+				$this->anyPhpContainsNamespace = TRUE;
+			}
+		}
+		if ($this->anyPhpContainsNamespace) {
+			foreach ($this->files->php as & $fileInfo) {
+
+				if ($fileInfo->containsNamespace === Packager_Php::NAMESPACE_NAMED_SEMICOLONS) {
+					$fileInfo->content = Packager_Php_Scripts_Replacer::ProcessNamespaces($fileInfo, $this->cfg);
+				}
+
+			}
 		}
 	}
 	protected function completeWrapperCode () {
@@ -44,7 +56,7 @@ class Packager_Php_Scripts_Completer extends Packager_Php_Base
 			$this->_processWrapperCodeByReplacementsStatistics();
 		}
 		if ($this->cfg->minifyPhp) {
-			$this->wrapperCode = self::shrinkPhpCode($this->wrapperCode);
+			$this->wrapperCode = $this->shrinkPhpCode($this->wrapperCode);
 		}
 		$this->wrapperCode = str_replace("\r\n", "\n", $this->wrapperCode);
 		$this->wrapperCode = trim(mb_substr($this->wrapperCode, strlen('<'.'?php')));

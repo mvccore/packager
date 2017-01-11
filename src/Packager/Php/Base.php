@@ -5,6 +5,10 @@ include_once(__DIR__.'/Scripts/Replacer.php');
 
 class Packager_Php_Base extends Packager_Common_Base
 {
+	const NAMESPACE_NONE = 0;
+	const NAMESPACE_GLOBAL_CURLY_BRACKETS = 1;
+	const NAMESPACE_NAMED_CURLY_BRACKETS = 2;
+	const NAMESPACE_NAMED_SEMICOLONS = 3;
 	protected static $wrapperClassName = 'Packager_Php_Wrapper';
 	protected static $wrapperStringDeclarator = 'PACKAGER_';
 	protected static $wrapperReplacements = array(
@@ -60,6 +64,8 @@ class Packager_Php_Base extends Packager_Common_Base
 	protected $resultFilesInfo = '';
 	protected $resultFilesContents = '';
 	protected $unsafeOrderDetection = array();
+	protected $anyPhpContainsNamespace = FALSE;
+	protected $globalNamespaceOpened = TRUE;
 
 	public function __construct ($cfg = array()) {
 		parent::__construct($cfg);

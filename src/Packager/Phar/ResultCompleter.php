@@ -67,8 +67,7 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 		);
 		try {
 			rename($params['phar'],  $params['php']);
-		}
-		catch (Exception $e) {
+		} catch (Exception $e) {
 			$result->success = FALSE;
 			$result->data = array(
 				$e->getMessage(),
@@ -101,9 +100,10 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 				}
 			}
 			if ($this->cfg->minifyPhp) {
-				$fileInfo->content = self::shrinkPhpCode($fileInfo->content);
+				$fileInfo->content = $this->shrinkPhpCode($fileInfo->content);
 			}
 			if ($this->cfg->minifyTemplates && in_array($fileInfo->extension, static::$templatesExtensions)) {
+				include_once(__DIR__.'/../Libs/Minify/HTML.php');
 				$fileInfo->content = Minify_HTML::minify($fileInfo->content);
 			}
 			$this->files[$fullPath] = $fileInfo;
@@ -137,8 +137,7 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 				0, 
 				$releaseFileNameWithoutExt . '.phar'
 			);
-		}
-		catch (UnexpectedValueException $e1) {
+		} catch (UnexpectedValueException $e1) {
 			$m = $e1->getMessage();
 			if (mb_strpos($m, 'disabled by the php.ini setting phar.readonly') !== FALSE) {
 				$this->_jsonResult = array(
@@ -151,8 +150,7 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 					$e1->getTrace(),
 				);
 			}
-		}
-		catch (Exception $e2) {
+		} catch (Exception $e2) {
 			$this->_jsonResult = array(
 				$e2->getMessage(),
 				$e2->getTrace(),
@@ -166,6 +164,7 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 		
 		$incScripts = array();
 		$incStatics = array();
+		//$archive->startBuffering();
 		foreach ($this->files as $fileInfo) {
 			$archive[$fileInfo->relPath] = $fileInfo->content;
 			if ($fileInfo->extension == 'php') {
@@ -174,7 +173,8 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 				$incStatics[] = $fileInfo->relPath;
 			}
 		}
-
+		//$archive->stopBuffering();
+		//$archive->compressFiles(Phar::GZ);
 		@$archive->buildFromIterator(); // writes archive on hard drive
 		unset($archive); // frees memory, run rename operation without any conflict
 

@@ -9,7 +9,6 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		'/App', 
 		'/Libs',
 	);
-	private $_autoLoadedFiles = array();
 	public function AutoloadCall ($className) {
 		$fileName = str_replace(array('_', '\\'), '/', $className) . '.php';
 		$includePath = '';
@@ -20,8 +19,8 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 				break;
 			}
 		}
-		if ($includePath) $this->_autoLoadedFiles[] = $includePath;
-		// $this->_autoLoadedFiles[] = array($fileName, $className, $includePath, $includePaths, '/');
+		if ($includePath) $this->autoLoadedFiles[] = $includePath;
+		// $this->autoLoadedFiles[] = array($fileName, $className, $includePath, $includePaths, '/');
 		if ($includePath) {
 			include_once($includePath);
 		} else {
@@ -255,7 +254,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		);
 		if ($autoloadJobResult instanceof stdClass && $autoloadJobResult->success) {
 			$result = $autoloadJobResult->includedFiles;
-		} else {
+		} else if ($fileInfo->relPath !== '/index.php') {
 			if ($autoloadJobResult->type == 'json') {
 				$this->sendResult(
 					implode('<br />', $autoloadJobResult->exceptionsMessages), 
@@ -270,8 +269,8 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 					 . "'$relPath' $newLine"
 					 . "Is this file used also in your development versions? $newLine"
 					 . "Or does this file generate any output by simple include() $newLine "
-					 . "which breaks compiling process?", 
-					$autoloadJobResult->data, 
+					 . "which breaks compiling process?",
+					$fileInfo->fullPath . "\r\n" . $autoloadJobResult->data, 
 					'error'
 				);
 			}
@@ -292,8 +291,19 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 			$this->exceptionsMessages[] = 'File is an empty string.';
 		} else {
 			// set custom error handlers to catch eval warnings and errors
+			register_shutdown_function(array(__CLASS__, 'ShutdownHandler'));
+			set_exception_handler(array(__CLASS__, 'ExceptionHandler'));
 			set_error_handler(array(__CLASS__, 'ErrorHandler'));
-			set_exception_handler(array(__CLASS__, 'ErrorHandler'));
+			$this->errorResponse = array(
+				'autoloadJob',
+				(object) array(
+					'success'			=> FALSE,
+					'includedFiles'		=>  array(),
+					'exceptionsMessages'=> array(),
+					'exceptionsTraces'	=> array(),
+					'content'			=> '',
+				)
+			);
 			ob_start();
 			try {
 				include($file);
@@ -306,7 +316,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		}
 		$this->sendJsonResultAndExit((object) array(
 			'success'			=> $success,
-			'includedFiles'		=> $this->_autoLoadedFiles,
+			'includedFiles'		=> $this->autoLoadedFiles,
 			'exceptionsMessages'=> $this->exceptionsMessages,
 			'exceptionsTraces'	=> $this->exceptionsTraces,
 			'content'			=> $content,

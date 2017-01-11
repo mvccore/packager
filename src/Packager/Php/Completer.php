@@ -78,6 +78,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 	private function _completeResultPhpCodeAndScriptFilesRecords () {
 		$fullPaths = array_keys($this->files->php);
 		$linesCounter = 0;
+		$this->globalNamespaceOpened = $this->anyPhpContainsNamespace;
 		for ($i = 0, $l = count($fullPaths); $i < $l; $i += 1) {
 
 			$fullPath = $fullPaths[$i];
@@ -88,8 +89,29 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 			$filesize = $fileInfo->filesize;
 			$linesCount = substr_count($fileInfo->content, "\n") + 1;
 
-			$glue = ($this->result == '') ? '' : "\n";
-			$this->result .= $glue . $fileInfo->content;
+			$namespaceGlue = '';
+			if ($this->anyPhpContainsNamespace) {
+				if (
+					$fileInfo->containsNamespace === Packager_Php::NAMESPACE_NONE &&
+					!$this->globalNamespaceOpened
+				) {
+					// pokud stavajici soubor namespace nemá a předchozí soubor globál nemespace zabřel - otevřít ho znova
+					//$this->result .= 'namespace{';
+					$namespaceGlue = 'namespace{' . (!$this->cfg->minifyPhp ? "\n": '');
+					$this->globalNamespaceOpened = TRUE;
+				} else if (
+					$fileInfo->containsNamespace !== Packager_Php::NAMESPACE_NONE &&
+					$this->globalNamespaceOpened
+				) {
+					// pokud stavajici soubor namespace má - uzařít předchozí globální namespace
+					$this->result .= (!$this->cfg->minifyPhp ? "\n}": '}');
+					$this->globalNamespaceOpened = FALSE;
+				}
+			}
+
+			$newLineGlue = ($this->result == '') ? '' : "\n";
+			// $this->anyPhpContainsNamespace
+			$this->result .= $newLineGlue . $namespaceGlue . $fileInfo->content;
 			
 			// Why to store any info about php scripts?
 			// BECAUSE MvcCore NEEDS TO KNOW IF CONTROLLER CLASS EXISTS TO DISPATCH THE CONTROLLER
@@ -98,6 +120,9 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 			$this->files->php[$fullPath] = $relPath;
 
 			$linesCounter += $linesCount;
+		}
+		if ($this->anyPhpContainsNamespace && $this->globalNamespaceOpened) {
+			$this->result .= (!$this->cfg->minifyPhp ? "\n}" : '}');;
 		}
 		// frees memory - store only relative paths for result notification
 		$this->files->php = array_values($this->files->php);
@@ -138,12 +163,13 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 			// process pattern and string replacements by config
 			$this->processPatternAndStringReplacements($fileInfo);
 			// process php code and wrap configured functions
-			$fileInfo->content = Packager_Php_Scripts_Replacer::Process($fileInfo);
+			$fileInfo->content = Packager_Php_Scripts_Replacer::ProcessReplacements($fileInfo, $this->cfg);
 
 			if ($this->cfg->minifyPhp) {
-				$fileInfo->content = self::shrinkPhpCode($fileInfo->content);
+				$fileInfo->content = $this->shrinkPhpCode($fileInfo->content);
 			}
 			if ($this->cfg->minifyTemplates) {
+				include_once(__DIR__.'/../Libs/Minify/HTML.php');
 				$fileInfo->content = Minify_HTML::minify($fileInfo->content);
 			}
 		}
@@ -156,7 +182,8 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 			$this->wrapperCode
 		);
 
-		$baseCode = '<'.'?php' 
+		$baseCode = '<'.'?php'
+			. ($this->anyPhpContainsNamespace ? "\nnamespace{" : "")
 			. "\n" . 'error_reporting('.$this->cfg->errorReportingLevel.');'
 			. "\n" . $this->wrapperCode 
 			. "\n" . $this->resultFilesContents 

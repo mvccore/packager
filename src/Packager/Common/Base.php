@@ -1,7 +1,5 @@
 <?php
 
-include_once(__DIR__.'/../Libs/Minify/HTML.php');
-
 class Packager_Common_Base {
 	protected $cfg;
 	protected $files = array();
@@ -10,6 +8,8 @@ class Packager_Common_Base {
 	protected $exceptionsMessages = array();
 	protected $exceptionsTraces = array();
 	protected $errorHandlerData = array();
+	protected $errorResponse = array();
+	protected $autoLoadedFiles = array();
 	protected static $templatesExtensions = array('phtml');
 	protected static $fileTypesStoringTypes = array(
 		'gzip'	=> array(
@@ -34,10 +34,12 @@ class Packager_Common_Base {
 		'sourcesDir'			=> '',
 		'releaseFile'			=> '',
 		'excludePatterns'		=> array(),
+		'includePatterns'		=> array(),
 		'stringReplacements'	=> array(),
 		'patternReplacements'	=> array(),
 		'minifyTemplates'		=> 0,
 		'minifyPhp'				=> 0,
+		'removePhpDocComments'	=> 0,
 		// PHP compiling only:
 		'includeFirst'			=> array(),	
 		'includeLast'			=> array(),
@@ -67,8 +69,8 @@ class Packager_Common_Base {
 	public static function Create ($cfg = array()) {
 		if (!self::$_instance) {
 			// set custom error handlers to catch eval warnings and errors
-			set_error_handler(array(__CLASS__, 'errorHandler'));
-			set_exception_handler(array(__CLASS__, 'errorHandler'));
+			set_error_handler(array(__CLASS__, 'ErrorHandler'));
+			set_exception_handler(array(__CLASS__, 'ErrorHandler'));
 			self::$_instance = new static($cfg);
 		}
 		return self::$_instance;
@@ -110,6 +112,22 @@ class Packager_Common_Base {
 		}
 		return $this;
 	}
+	public function SetIncludePatterns ($includePatterns = array()) {
+		if (gettype($includePatterns) == 'array') {
+			$this->cfg['includePatterns'] = $includePatterns;
+		} else {
+			$this->cfg['includePatterns'] = array($includePatterns);
+		}
+		return $this;
+	}
+	public function AddIncludePatterns ($includePatterns = array()) {
+		if (gettype($includePatterns) == 'array') {
+			$this->MergeConfiguration(array('includePatterns' => $includePatterns));
+		} else {
+			$this->cfg['includePatterns'][] = $includePatterns;
+		}
+		return $this;
+	}
 	public function SetPatternReplacements ($patternReplacements = array()) {
 		if (gettype($patternReplacements) == 'array') {
 			$this->cfg['patternReplacements'] = $patternReplacements;
@@ -148,6 +166,10 @@ class Packager_Common_Base {
 	}
 	public function SetMinifyPhp ($minifyPhp = TRUE) {
 		$this->cfg['minifyPhp'] = (bool)$minifyPhp;
+		return $this;
+	}
+	public function SetRemovePhpDocComments ($removePhpDocComments = TRUE) {
+		$this->cfg['removePhpDocComments'] = (bool)$removePhpDocComments;
 		return $this;
 	}
 	public function SetIncludeFirst ($includeFirst = array()) {
@@ -267,9 +289,42 @@ class Packager_Common_Base {
 		}
 		return $result;
 	}
-	protected static function shrinkPhpCode (& $code = '') {
+	public static function ErrorHandler ($severity, $message, $file, $line, $context) {
+		
+		$backTrace = debug_backtrace();
+		foreach ($backTrace as & $backTraceItem) {
+			unset($backTraceItem['args'], $backTraceItem['object']);
+		}
+		self::$_instance->errorHandlerData = func_get_args();
+		self::$_instance->exceptionsTraces = $backTrace;
+
+		if (isset($backTrace[count($backTrace) - 2])) {
+			$semiFinalBacktraceRec = (object) $backTrace[count($backTrace) - 2];
+			if ($semiFinalBacktraceRec->class == 'Packager_Php_Completer' && $semiFinalBacktraceRec->function == 'autoloadJob') {
+				header("HTTP/1.1 200 OK");
+				$response = (object) array(
+					'success'			=> TRUE,
+					'includedFiles'		=> self::$_instance->autoLoadedFiles,
+					'exceptionsMessages'=> self::$_instance->exceptionsMessages,
+					'exceptionsTraces'	=> self::$_instance->exceptionsTraces,
+					'content'			=> '',
+				);
+				self::$_instance->sendJsonResultAndExit($response);
+			}
+		}
+	}
+	public static function ExceptionHandler (\Exception $exception, $exit = TRUE) {
+		//var_dump($exception);
+	}
+	public static function ShutdownHandler () {
+		//$exception = error_get_last();
+		//var_dump($exception);
+	}
+	/************************************* dynamic ************************************/
+	protected function shrinkPhpCode (& $code = '') {
 		if (!defined('T_DOC_COMMENT')) define ('T_DOC_COMMENT', -1);
 		if (!defined('T_ML_COMMENT')) define ('T_ML_COMMENT', -1);
+		$removePhpDocComments = $this->cfg->removePhpDocComments;
 		$chars = '!"#$&\'()*+,-./:;<=>?@[\]^`{|}';
 		$chars = array_flip(preg_split('//',$chars));
 		$result = '';
@@ -278,12 +333,13 @@ class Packager_Common_Base {
 		$tokensToRemove = array(
 			T_COMMENT		=> 1,
 			T_ML_COMMENT	=> 1,
-			T_DOC_COMMENT	=> 1,
 			T_WHITESPACE	=> 1,
 		);
-		foreach ($tokens as $token) {
+		if ($removePhpDocComments) $tokensToRemove[T_DOC_COMMENT] = 1;
+		foreach ($tokens as & $token) {
 			if (is_array($token)) {
 				$tokenId = $token[0];
+				$token[3] = token_name($tokenId);
 				if (isset($tokensToRemove[$tokenId])) {
 					if ($tokenId == T_WHITESPACE) $space = ' ';
 				} else {
@@ -293,6 +349,9 @@ class Packager_Common_Base {
 						isset($chars[substr($result, -1)]) ||
 						isset($chars[$oldPart{0}])
 					) $space = '';
+					if (!$removePhpDocComments && $tokenId == T_DOC_COMMENT) {
+						$oldPart = $this->shrinkPhpCodeReducePhpDocComment($oldPart);
+					}
 					$result .= $space . $oldPart;
 					$space = '';
 				}
@@ -302,16 +361,25 @@ class Packager_Common_Base {
 		}
 		return $result;
 	}
-	protected static function errorHandler ($severity, $message, $file, $line, $context) {
-		$backTrace = debug_backtrace();
-		foreach ($backTrace as & $backTraceItem) {
-			unset($backTraceItem['args'], $backTraceItem['object']);
+	protected function shrinkPhpCodeReducePhpDocComment ($code) {
+		// keep only @var php doc comment, nothing else
+		preg_match("#(@var)\s+([^\s]+)#", $code, $matches1);
+		if ($matches1) {
+			if (substr($matches1[2], 0, 1) == '$') {
+				preg_match("#(@var)\s+([\$])([^\s]+)\s+([^\s]+)#", $code, $matches2);
+				if ($matches2) {
+					$code = '/** ' . $matches2[0] . ' */';
+				} else {
+					$code = '/** ' . $matches1[0] . ' */';
+				}
+			} else {
+				$code = '/** ' . $matches1[0] . ' */';
+			}
+		} else {
+			$code = '';
 		}
-		self::$_instance->errorHandlerData[] = func_get_args();
-		self::$_instance->exceptionsTraces[] = $backTrace;
+		return $code;
 	}
-
-	/************************************* dynamic ************************************/
 	protected function completeJobAndParams () {
 		$jobMethod = 'mainJob';
 		$params = array();
@@ -355,14 +423,18 @@ class Packager_Common_Base {
 			$protocol = (isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) == 'on') ? 'https://' : 'http://';
 			$absoluteUrl = $protocol . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'];
 			$subProcessUrl = $absoluteUrl . '?job=' . $job;
+			//var_dump($arguments);
 			foreach ($arguments as $key => $value) {
 				$subProcessUrl .= '&' . $key . '=' . base64_encode($value);
 			}
-			// $jobJsonResult = file_get_contents($subProcessUrl); // do not use file_get_contents(), when http output is 500, file_get_contents() returns false only..
 			// echo $subProcessUrl . '<br />';
+
+			//$jobResult = file_get_contents($subProcessUrl); // do not use file_get_contents(), when http output is 500, file_get_contents() returns false only..
+			
 			$cUrlResult = $this->_processGetRequest($subProcessUrl);
-			//print_r($cUrlResult);
-			//die();
+			if ($cUrlResult->code == 500) {
+				print_r($cUrlResult);
+			}
 			$jobResult = $cUrlResult->content;
 		}
 		if ($resultType == 'json') {
@@ -374,6 +446,13 @@ class Packager_Common_Base {
 				'type'		=> 'html',
 			);
 		}
+	}
+	protected function sendJsonResultAndExit ($jsonData) {
+		$jsonOut = json_encode($jsonData);
+		header('Content-Type: text/javascript; charset=utf-8');
+		header('Content-Length: ' . mb_strlen($jsonOut));
+		echo $jsonOut;
+		exit;
 	}
 	protected function completeAllFiles () {
 		// get project source code recursive iterator
@@ -398,23 +477,24 @@ class Packager_Common_Base {
 				$relPathDir = substr($relPath, 0, strlen($relPath) - strlen($fileName) - 1);
 				
 				$fileItem = (object) array(
-					'relPath'	 	=> $relPath,
-					'fullPath'	 	=> $fullPath,
-					'relPathDir'	=> $relPathDir,
-					'fileName'		=> $fileName,
-					'extension'		=> $extension,
-					'processed'		=> FALSE,
-					'content'		=> file_get_contents($fullPath),
-					'utf8bomRemoved'=> FALSE,
+					'relPath'	 		=> $relPath,
+					'fullPath'	 		=> $fullPath,
+					'relPathDir'		=> $relPathDir,
+					'fileName'			=> $fileName,
+					'extension'			=> $extension,
+					'processed'			=> FALSE,
+					'content'			=> file_get_contents($fullPath),
 				);
 
 				if (!in_array($extension, static::$fileTypesStoringTypes['binary'])) {
 					self::_convertFilecontentToUtf8Automaticly($fileItem);
 				}
-				
+
 				if ($this->compilationType == 'PHP') {
-					$fileItem->filemtime	= filemtime($fullPath);
-					$fileItem->filesize		= filesize($fullPath);
+					$fileItem->filemtime			= filemtime($fullPath);
+					$fileItem->filesize				= filesize($fullPath);
+					$fileItem->utf8bomRemoved		= FALSE;
+					$fileItem->containsNamespace	= Packager_Php::NAMESPACE_NONE;
 				}
 				
 				$allFiles[$fullPath] = $fileItem;
@@ -431,20 +511,27 @@ class Packager_Common_Base {
 	}
 	protected function excludeFilesByCfg (& $files) {
 		$excludePatterns = $this->cfg->excludePatterns;
-		foreach ($excludePatterns as $excludePattern) {
+		$includePatterns = $this->cfg->includePatterns;
+		foreach ($includePatterns as & $includePattern) {
+			$includePattern = "/" . str_replace('/', '\\/', $includePattern) . "/";
+		}
+		foreach ($excludePatterns as & $excludePattern) {
 			$excludePattern = "/" . str_replace('/', '\\/', $excludePattern) . "/";
-			foreach ($files as $fullPath => $fileInfo) {
-				@preg_match($excludePattern, $fileInfo->relPath, $matches);
-				if ($matches) unset($files[$fullPath]);
+			foreach ($files as $fullPath => & $fileInfo) {
+				@preg_match($excludePattern, $fileInfo->relPath, $excludeMatches);
+				if ($excludeMatches) {
+					$unset = TRUE;
+					foreach ($includePatterns as & $includePattern) {
+						@preg_match($includePattern, $fileInfo->relPath, $includeMatches);
+						if ($includeMatches) {
+							$unset = FALSE;
+							break;
+						}
+					}
+					if ($unset) unset($files[$fullPath]);
+				}
 			}
 		}
-	}
-	protected function sendJsonResultAndExit ($jsonData) {
-		$jsonOut = json_encode($jsonData);
-		header('Content-Type: text/javascript; charset=utf-8');
-		header('Content-Length: ' . mb_strlen($jsonOut));
-		echo $jsonOut;
-		exit;
 	}
 	protected function sendResult ($title, $content, $type = '') {
 		if (php_sapi_name() == 'cli') {
@@ -562,6 +649,7 @@ class Packager_Common_Base {
 		$info->error = curl_error($ch);
 		$code = intval($info->http_code);
 		curl_close($ch);
+		//var_dump($content);
 		return (object) array(
 			'code'		=> $code,
 			'info'		=> $info,

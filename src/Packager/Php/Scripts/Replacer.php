@@ -20,10 +20,13 @@ class Packager_Php_Scripts_Replacer
 	protected static $phpReplacementsStatistics = array();
 	protected static $wrapperClassName = '';
 	protected static $phpFsMode = '';
+	protected $cfg;
 	protected $result = '';
 	protected $scriptContent = '';
+	protected $statementEndOperator = ';';
 	protected $fileInfo = NULL;
 	protected $tokens = array();
+	protected $namespaceState = 0;
 	protected $classState = 0;
 	protected $classBracketsLevel = 0;
 	protected $functionsStates = array(0);
@@ -44,13 +47,18 @@ class Packager_Php_Scripts_Replacer
 	public static function GetReplacementsStatistics () {
 		return self::$phpReplacementsStatistics;
 	}
-	public static function Process (& $fileInfo) {
-		$instance = new self($fileInfo, token_get_all($fileInfo->content));
-		return $instance->run();
+	public static function ProcessReplacements (& $fileInfo, & $cfg) {
+		$instance = new self($fileInfo, $cfg, token_get_all($fileInfo->content));
+		return $instance->runReplacementsProcessing();
+	}
+	public static function ProcessNamespaces (& $fileInfo, & $cfg) {
+		$instance = new self($fileInfo, $cfg, token_get_all("<"."?php\n".$fileInfo->content));
+		return $instance->runNamespacesProcessing();
 	}
 	/* protected *************************************************************************************/
-	public function __construct(& $fileInfo, $tokens) {
+	public function __construct(& $fileInfo, $cfg, $tokens) {
 		$this->fileInfo = & $fileInfo;
+		$this->cfg = & $cfg;
 		$this->tokens = & $tokens;
 		$this->result = '';
 		$this->classState = 0;
@@ -64,7 +72,7 @@ class Packager_Php_Scripts_Replacer
 		$this->classFnStaticEnvironment = FALSE;
 		$this->classFnStaticMonitorIndex = -1;
 	}
-	protected function run () {
+	protected function runReplacementsProcessing () {
 		$newPart = '';
 		for ($i = 0, $l = count($this->tokens); $i < $l;) {
 			$token = $this->tokens[$i];
@@ -82,14 +90,75 @@ class Packager_Php_Scripts_Replacer
 					$newPart = $oldPart;
 				}
 			} else if (is_string($token)) {
+				if ($token == '(') {
+					$this->statementEndOperator = ')';
+				} else if ($token == ')') {
+					$this->statementEndOperator = ';';
+				}
 				$newPart = $token;
 			}
+			$this->monitorNamespace($token);
 			$this->monitorClass($token, $i);
 			$this->monitorFunctions($token, $i);
 			$this->result .= $newPart;
 			$i += 1;
 		}
 		return $this->result;
+	}
+	protected function runNamespacesProcessing () {
+		$newPart = '';
+		for ($i = 0, $l = count($this->tokens); $i < $l; $i += 1) {
+			$token = & $this->tokens[$i];
+			if (is_array($token)) {
+				$tokenId = $token[0];
+				$newPart = $token[1];
+				$token[3] = token_name($tokenId);
+				if ($tokenId == T_NAMESPACE) {
+					if ($this->namespaceState > 0) {
+						$this->result .= (!$this->cfg->minifyPhp ? "\n}\n" : '}');
+					}
+					$this->namespaceState = 1;
+				}
+				if ($tokenId == T_OPEN_TAG) $newPart = '';
+			} else if (is_string($token)) {
+				$newPart = $token;
+				if ($this->namespaceState == 1 && $token == ';') {
+					$newPart = '{';
+					$this->namespaceState = 2;
+				}
+			}
+			$this->result .= $newPart;
+		}
+		if ($this->namespaceState == 2) {
+			$this->result .= (!$this->cfg->minifyPhp ? "\n}" : '}');
+		}
+		return $this->result;
+	}
+	protected function monitorNamespace ($token) {
+		if ($this->namespaceState > 2 || $this->fileInfo->extension !== 'php') return;
+		if (is_array($token)) {
+			$tokenId = $token[0];
+			if ($this->namespaceState == 1 && $tokenId == T_STRING) {
+				$this->namespaceState = 2;
+			} else if ($tokenId == T_NAMESPACE) {
+				$this->namespaceState = 1;
+			}
+		} else if (is_string($token)) {
+			if ($this->namespaceState == 1) {
+				if ($token == '{') {
+					$this->fileInfo->containsNamespace = Packager_Php::NAMESPACE_GLOBAL_CURLY_BRACKETS;
+					$this->namespaceState = 3;
+				}
+			} else if ($this->namespaceState == 2) {
+				if ($token == ';') {
+					$this->fileInfo->containsNamespace = Packager_Php::NAMESPACE_NAMED_SEMICOLONS;
+					$this->namespaceState = 3;
+				} else if ($token == '{') {
+					$this->fileInfo->containsNamespace = Packager_Php::NAMESPACE_NAMED_CURLY_BRACKETS;
+					$this->namespaceState = 3;
+				}
+			}
+		}
 	}
 	protected function monitorClass ($token, $currentIndex) {
 		if (is_array($token)) {
@@ -257,17 +326,19 @@ class Packager_Php_Scripts_Replacer
 			$subTokens = array();
 			$j = $i + 1;
 			while (TRUE) {
-				$subToken = $this->tokens[$j];
+				$subToken = & $this->tokens[$j];
 				if (is_array($subToken)) {
-					$subTokens[] = $subToken;
+					$subTokenId = $subToken[0];
+					$subToken[3] = token_name($subTokenId);
+					$subTokens[] = & $subToken;
 				} else if (is_string($subToken)) {
-					if ($subToken == ';') {
-						$subInstance = new self($this->fileInfo, $subTokens);
-						$newSubPart = $subInstance->run();
+					if ($subToken == $this->statementEndOperator) {
+						$subInstance = new self($this->fileInfo, $this->cfg, $subTokens);
+						$newSubPart = $subInstance->runReplacementsProcessing();
 						if ($this->classFnDynamicEnvironment) {
-							$newPart .= $newSubPart . ', $this);';
+							$newPart .= $newSubPart . ', $this)' . $this->statementEndOperator;
 						} else {
-							$newPart .= $newSubPart . ');';
+							$newPart .= $newSubPart . ')' . $this->statementEndOperator;
 						}
 						$i = $j;
 						break;
@@ -277,6 +348,11 @@ class Packager_Php_Scripts_Replacer
 				}
 				$j += 1;
 			}
+			/*
+			echo '<pre>';
+			print_r($subTokens);
+			echo '</pre>';
+			*/
 			self::addToReplacementStatistics($oldPart);
 		} else {
 			// it is other php statement - do not replace anything

@@ -816,27 +816,22 @@ class Packager_Php_Wrapper_SplFileInfo extends SplFileInfo {
 			$this->_relPath = mb_substr($this->_absPath, Packager_Php_Wrapper::$BasePathLength);
 		}
 
+		$this->_baseName = $this->_relPath;
+		$lastSlashPos = mb_strrpos($this->_relPath, '/');
+		if ($lastSlashPos !== FALSE) {
+			$this->_baseName = mb_substr($this->_relPath, $lastSlashPos + 1);
+		}
+
+		$this->_basePath = mb_substr($this->_absPath, 0, mb_strlen($this->_absPath) - mb_strlen($this->_baseName));
+
+		$this->_ext = $this->_baseName;
+		$lastDotPos = mb_strrpos($this->_baseName, '.');
+		if ($lastDotPos !== FALSE) {
+			$this->_ext = mb_substr($this->_baseName, $lastDotPos + 1);
+		}
+
 		if (isset(Packager_Php_Wrapper::$Info[$this->_relPath])) {
 			$this->_info = Packager_Php_Wrapper::$Info[$this->_relPath];
-
-			$this->_baseName = $this->_relPath;
-			$lastSlashPos = mb_strrpos($this->_relPath, '/');
-			if ($lastSlashPos !== FALSE) {
-				$this->_baseName = mb_substr($this->_relPath, $lastSlashPos + 1);
-			}
-
-			$this->_basePath = mb_substr($this->_absPath, 0, mb_strlen($this->_absPath) - mb_strlen($this->_baseName));
-
-			$this->_ext = $this->_baseName;
-			$lastDotPos = mb_strrpos($this->_baseName, '.');
-			if ($lastDotPos !== FALSE) {
-				$this->_ext = mb_substr($this->_baseName, $lastDotPos + 1);
-			}
-		} else {
-			Packager_Php_Wrapper::PrintBacktrace();
-			throw new UnexpectedValueException(
-				__CLASS__."::__construct($absolute_path, " . $this->_relPath . "): The system cannot find the file specified."
-			);
 		}
 	}
 	/**
@@ -917,10 +912,10 @@ class Packager_Php_Wrapper_SplFileInfo extends SplFileInfo {
 	}
 	/**
 	 * Gets the last modified time
-	 * @return int
+	 * @return int|bool
 	 */
 	public function getMTime () {
-		return $this->_info['mtime'];
+		return $this->_info ? $this->_info['mtime'] : FALSE;
 	}
 	/**
 	 * Gets the owner of the file
@@ -968,10 +963,15 @@ class Packager_Php_Wrapper_SplFileInfo extends SplFileInfo {
 	}
 	/**
 	 * Gets file size
-	 * @return int
+	 * @return int|bool
 	 */
 	public function getSize () {
-		return $this->_info['size'];
+		if ($this->_info) {
+			return $this->_info['size'];
+		} else {
+			trigger_error("[".__CLASS__."::".__METHOD__."] File doesn't exists.", E_WARNING);
+			return FALSE;
+		}
 	}
 	/**
 	 * Gets file type
