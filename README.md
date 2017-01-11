@@ -1,8 +1,8 @@
-# packager
+# Packager
 
 ## Main Features
-- pack any application into PHAR archive
-- pack any MvcCore application into single PHP file
+- pack PHP MVcCore application into single PHP file
+- pack any PHP application into PHAR archive
 
 ## Configuration possibilities
 - directory with whole app source to pack
@@ -23,7 +23,7 @@
     (first there is check if it is possible to get anything from hard drive, then from index.php)
 - there are implemented those file system wrapping functions and constants:
   - \_\_DIR\_\_ and \_\_FILE\_\_
-  - require_once(), _include_once(), require(), include()
+  - require_once(), include_once(), require(), include()
   - new DirectoryIterator(), new SplFileInfo(), 
   - readfile(), file_get_contents()
   - file_exists(), filemtime(), filesize()
@@ -40,4 +40,4 @@
 - [**Example Hallo World (mvccore/example-helloworld)**](https://github.com/mvccore/example-helloworld)
 - [**Example Pig Latin Translator (example-translator)**](https://github.com/mvccore/example-translator)
 - [**Example CD Collection (mvccore/example-cdcol)**](https://github.com/mvccore/example-cdcol)
-- [**Application Questionnaires (mvccore/app-questionnaire)**](https://github.com/mvccore/app-questionnaire)
+- [**Application Questionnaires (mvccore/app-questionnaires)**](https://github.com/mvccore/app-questionnaires)
