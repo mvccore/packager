@@ -169,7 +169,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 				$fileInfo->content = $this->shrinkPhpCode($fileInfo->content);
 			}
 			if ($this->cfg->minifyTemplates) {
-				include_once(__DIR__.'/../Libs/Minify/HTML.php');
+				//include_once(__DIR__.'/../Libs/Minify/HTML.php');
 				$fileInfo->content = Minify_HTML::minify($fileInfo->content);
 			}
 		}

@@ -103,7 +103,7 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 				$fileInfo->content = $this->shrinkPhpCode($fileInfo->content);
 			}
 			if ($this->cfg->minifyTemplates && in_array($fileInfo->extension, static::$templatesExtensions)) {
-				include_once(__DIR__.'/../Libs/Minify/HTML.php');
+				//include_once(__DIR__.'/../Libs/Minify/HTML.php');
 				$fileInfo->content = Minify_HTML::minify($fileInfo->content);
 			}
 			$this->files[$fullPath] = $fileInfo;
