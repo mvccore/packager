@@ -157,8 +157,8 @@ class Packager_Php_Wrapper
 	 * 
 	 * @return int|mixed
 	 */
-	private function _callTemplateClosure ($path, & $context) {
-		$templateClosure = & self::_getFileContent($path, FALSE);
+	private static function _callTemplateClosure ($path, & $context) {
+		$templateClosure = self::_getFileContent($path, FALSE);
 		if (!is_null($context)) {
 			$templateClosure = $templateClosure->bindTo($context, $context);
 		}
@@ -175,11 +175,11 @@ class Packager_Php_Wrapper
 	 * 
 	 * @return string
 	 */
-	private function _evalFile ($path, & $context, $store) {
+	private static function _evalFile ($path, & $context, $store) {
 		if ($store == 'template') {
 			$content = & self::_getStaticWithContext($path, $context, $store);
 		} else {
-			$content = & self::_getFileContent($path, TRUE);
+			$content = self::_getFileContent($path, TRUE);
 		}
 		self::_addContext($context);
 		ob_start();
@@ -202,12 +202,12 @@ class Packager_Php_Wrapper
 	 */
 	private static function _getStaticWithContext ($path, $context) {
 		if (is_null($context)) {
-			$templateClosure = & self::_getFileContent($path, TRUE);
+			$templateClosure = self::_getFileContent($path, TRUE);
 			$content = self::_getTemplateClosureBody($templateClosure);
 		} else {
 			$content = & self::_getStaticWithContextAlreadyProcessed($path);
 			if (mb_strlen($content) === 0) {
-				$templateClosure = & self::_getFileContent($path, TRUE);
+				$templateClosure = self::_getFileContent($path, TRUE);
 				$content = self::_getTemplateClosureBody($templateClosure);
 				// http://php.net/manual/en/language.variables.basics.php
 				$content = preg_replace(
@@ -248,7 +248,7 @@ class Packager_Php_Wrapper
 	 * 
 	 * @return void
 	 */
-	private function _setUpCurrentFileSource () {
+	private static function _setUpCurrentFileSource () {
 		if (count(self::$_currentFileSource) === 0) {
 			self::$_currentFileSource = file(__FILE__);
 		}
@@ -463,7 +463,7 @@ class Packager_Php_Wrapper
 			return call_user_func_array('readfile', func_get_args());
 		} else {
 			$path = self::NormalizePath($filename);
-			$content = & self::_getFileContent($path, FALSE);
+			$content = self::_getFileContent($path, FALSE);
 			if ($content === FALSE) {
 				self::Warning('', $filename, 'readfile');
 				return FALSE;
@@ -514,7 +514,7 @@ class Packager_Php_Wrapper
 			return call_user_func_array('file_get_contents', func_get_args());
 		} else {
 			$path = self::NormalizePath($filename);
-			$content = & self::_getFileContent($path, TRUE);
+			$content = self::_getFileContent($path, TRUE);
 			if ($content === FALSE) {
 				self::Warning('', $filename, 'file_get_contents');
 				return FALSE;
@@ -540,7 +540,7 @@ class Packager_Php_Wrapper
 			return call_user_func_array('parse_ini_file', func_get_args());
 		} else {
 			$path = self::NormalizePath($filename);
-			$content = & self::_getFileContent($path, TRUE);
+			$content = self::_getFileContent($path, TRUE);
 			if ($content === FALSE) {
 				self::Warning('', $filename, 'parse_ini_file');
 				return FALSE;
@@ -565,7 +565,7 @@ class Packager_Php_Wrapper
 			return call_user_func_array('md5_file', func_get_args());
 		} else {
 			$path = self::NormalizePath($filename);
-			$content = & self::_getFileContent($path, TRUE);
+			$content = self::_getFileContent($path, TRUE);
 			if ($content === FALSE) {
 				return FALSE;
 			} else {
@@ -594,7 +594,7 @@ class Packager_Php_Wrapper
 			return call_user_func_array('simplexml_load_file', func_get_args());
 		} else {
 			$path = self::NormalizePath($filename);
-			$content = & self::_getFileContent($path, TRUE);
+			$content = self::_getFileContent($path, TRUE);
 			if ($content === FALSE) {
 				self::Warning("simplexml_load_file(): I/O warning : failed to load external entity \"$filename\"");
 				return FALSE;

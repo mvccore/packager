@@ -31,6 +31,8 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 	private function _orderPhpFilesByDependencies () {
 		$filesPhpDependenciesCountLast = 0;
 		$success = FALSE;
+		/*print_r($this->filesPhpDependencies);
+		die();*/
 		while (TRUE) {
 			$filesPhpDependenciesCountCurrent = count($this->filesPhpDependencies);
 			if ($filesPhpDependenciesCountCurrent == $filesPhpDependenciesCountLast) {
@@ -43,9 +45,12 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 			}
 			$filesPhpDependenciesCountLast = $filesPhpDependenciesCountCurrent;
 			$this->_arangeOrderByDependenciesRequiresData();
+			$this->_arangeOrderByDependenciesRequiresDataWithRecursiveDetection();
 			$this->_arangeOrderByDependenciesRequiresAndRequiredByData();
 		}
 		if (!$success && count($this->filesPhpDependencies) > 0) {
+			/* print_r($this->filesPhpDependencies);
+			die(); */
 			$this->_displayErrorIfThereWasIndefinableOrderSituation();
 		}
 		$this->filesPhpOrder = array_keys($this->filesPhpOrder);
@@ -62,9 +67,11 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 				$fullPath = $keysToIterate[$i];
 				$filesDependenciesItem = $this->filesPhpDependencies[$fullPath];
 				if (!$filesDependenciesItem->requiresCount) {
+					// if file doesn't require any other file - put it into order as it is directly
 					$this->filesPhpOrder[$fullPath] = 1;
 					unset($this->filesPhpDependencies[$fullPath]);
 				} else {
+					// if file requires anything - check if his files to require have been already orderer or not
 					$allRequiresFilesAlreadyOrdered = TRUE;
 					foreach ($filesDependenciesItem->requires as $requiresItem) {
 						if (!isset($this->filesPhpOrder[$requiresItem])) {
@@ -72,6 +79,7 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 							break;
 						}
 					}
+					// all it's files what is needs has been already ordered - so put this file also into order as it is
 					if ($allRequiresFilesAlreadyOrdered) {
 						$this->filesPhpOrder[$fullPath] = 1;
 						unset($this->filesPhpDependencies[$fullPath]);
@@ -80,6 +88,57 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 			}
 		}
 	}
+	private function _arangeOrderByDependenciesRequiresDataWithRecursiveDetection () {
+		$keysLengthLast = 0;
+		while (true) {
+			// complete keys to iterate in current loop
+			$keysToIterate = array_keys($this->filesPhpDependencies);
+			$keysLengthCurrent = count($keysToIterate);
+			if (!$keysLengthCurrent || $keysLengthCurrent == $keysLengthLast) break;
+			$keysLengthLast = $keysLengthCurrent;
+			for ($i = 0; $i < $keysLengthCurrent; $i += 1) {
+				$fullPath = $keysToIterate[$i];
+				if (!isset($this->filesPhpDependencies[$fullPath])) continue; // file has been ordered by another file
+				$filesDependenciesItem = $this->filesPhpDependencies[$fullPath];
+				if (!$filesDependenciesItem->requiresCount) {
+					// if file doesn't require any other file - put it into order as it is directly
+					$this->filesPhpOrder[$fullPath] = 1;
+					unset($this->filesPhpDependencies[$fullPath]);
+				} else {
+					// if file requires anything - walk on requires levels to complete recursive order
+					$filesToOrder = array($fullPath => 1);
+					$this->_getAllRequiresFilesToOrderedRecursive(
+						$filesDependenciesItem->requires,
+						$filesToOrder
+					);
+					/*print_r($filesToOrder);
+					die();*/
+					if ($filesToOrder) {
+						foreach ($filesToOrder as $subFullPath => $yes) {
+							$this->filesPhpOrder[$subFullPath] = 1;
+							unset($this->filesPhpDependencies[$subFullPath]);
+						}
+					}
+				}
+			}
+		}
+	}
+	private function _getAllRequiresFilesToOrderedRecursive ($requires, & $filesToOrder, $level = 0) {
+		foreach ($requires as $require) {
+			
+			if (!isset($this->filesPhpDependencies[$require])) continue; // file has been ordered by another file
+			if (isset($filesToOrder[$require])) continue; // recursive requiring
+			$fileItem = $this->filesPhpDependencies[$require];
+			if (!$fileItem->requires) continue; // file does'nt require anything
+			
+			$filesToOrder = array_merge(array($require => 1), $filesToOrder);
+
+			$this->_getAllRequiresFilesToOrderedRecursive(
+				$fileItem->requires, $filesToOrder, $level + 1
+			);
+		}
+		return $filesToOrder;
+	}
 	private function _arangeOrderByDependenciesRequiresAndRequiredByData () {
 		// complete keys to iterate in current loop
 		$keysToIterate = array_keys($this->filesPhpDependencies);
@@ -87,17 +146,24 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 		for ($i = 0; $i < $keysLength; $i += 1) {
 			$unsafeOrderDetectionRequires = array();
 			$fullPath = $keysToIterate[$i];
+			// $filesDependenciesItem - current file to process it's order
 			$filesDependenciesItem = $this->filesPhpDependencies[$fullPath];
 			if (!$filesDependenciesItem->requiresCount) {
+				// if file doesn't require any other file - put it into order as it is directly
 				$this->filesPhpOrder[$fullPath] = 1;
 				unset($this->filesPhpDependencies[$fullPath]);
 			} else {
+				// if file requires anything - 
 				$allRequiresFilesAlreadyOrdered = TRUE;
+				// $requiresItem - other file required by current file
 				foreach ($filesDependenciesItem->requires as $requiresItem) {
 					if (!isset($this->filesPhpOrder[$requiresItem])) {
+						// if file what is required by currently processed file has not ordered yet
 						if (in_array($requiresItem, $filesDependenciesItem->requiredBy)) {
+							// if current field requires antoehr file but another file also requires current file - it's unsafe cycle!
 							$unsafeOrderDetectionRequires[] = $this->files->all[$requiresItem]->relPath;
 						} else {
+							// not all required files for current files has been ordered
 							$allRequiresFilesAlreadyOrdered = FALSE;
 							break;
 						}
@@ -108,6 +174,7 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 					unset($this->filesPhpDependencies[$fullPath]);
 				}
 			}
+			// add unsafe order detected files into global array to notify developer at the end
 			if (count($unsafeOrderDetectionRequires) > 0) {
 				$relPath = $this->files->all[$fullPath]->relPath;
 				if (!in_array($relPath, $this->unsafeOrderDetection)) {
@@ -132,12 +199,16 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 			if ($key !== FALSE) unset($filesFullPaths[$key]);
 		}
 		if (count($filesFullPaths) > 0) {
+			ob_start();
+			echo '<pre>';
+			var_dump($filesFullPaths);
+			$filesFullPathsPrinted = ob_get_clean() . '</pre>';
 			$this->sendResult(
-				"There was not possible to determinate declaration order for files bellow. <br />",
-				"Please set order for these files manualy by config arrays in keys: <br />",
-				"\$config['includeFirst'] = array(...);<br /><br />".
-				"\$config['includeLast'] = array(...);", 
-				$filesFullPaths, 
+				"There was not possible to determinate declaration order for files bellow. <br />"
+				."Please set order for these files manualy by config arrays in keys: <br />"
+				."\$config['includeFirst'] = array(...);<br />"
+				."\$config['includeLast'] = array(...);",
+				$filesFullPathsPrinted, 
 				'error'
 			);
 		}

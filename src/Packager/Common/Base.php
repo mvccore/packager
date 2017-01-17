@@ -7,6 +7,7 @@ class Packager_Common_Base {
 	protected $compilationType = ''; // PHP || PHAR
 	protected $exceptionsMessages = array();
 	protected $exceptionsTraces = array();
+	protected $includedFilesCountTillNow = 0;
 	protected $errorHandlerData = array();
 	protected $errorResponse = array();
 	protected $autoLoadedFiles = array();
@@ -29,7 +30,7 @@ class Packager_Common_Base {
 			'ini', 'htm', 'html', 'xml', 'xsd', 'csv',
 		),
 	);
-	private static $_instance;
+	protected static $instance;
 	private static $_cfgDefault = array(
 		'sourcesDir'			=> '',
 		'releaseFile'			=> '',
@@ -51,7 +52,7 @@ class Packager_Common_Base {
 	);
 	private static $_htmlStyles = array(
 		'success'	=> 'html,body{background:#005700;}',
-		'error'		=> 'html,body{background:#cd1818;}.xdebug-error,.xdebug-error th,.xdebug-error td{color:#000;text-shadow:none !important;font-size:125%;}',
+		'error'		=> 'html,body{background:#cd1818;}.xdebug-error,.xdebug-error th,.xdebug-error td{color:#000;text-shadow:none !important;font-size:125%;}.xdebug-var-dump font[color*=cc0000]{background:#fff;text-shadow:none;}',
 	);
 	private static $_responseTemplates = array(
 		'text'	=> "\n======================= %title =======================\n\n\n%h1\n\n\n%content\n\n",
@@ -67,21 +68,21 @@ class Packager_Common_Base {
 		$this->cfg = $cfg;
 	}
 	public static function Create ($cfg = array()) {
-		if (!self::$_instance) {
+		if (!self::$instance) {
 			// set custom error handlers to catch eval warnings and errors
 			set_error_handler(array(__CLASS__, 'ErrorHandler'));
 			set_exception_handler(array(__CLASS__, 'ErrorHandler'));
-			self::$_instance = new static($cfg);
+			self::$instance = new static($cfg);
 		}
-		return self::$_instance;
+		return self::$instance;
 	}
 	public static function Get ($cfg = array()) {
-		if (!self::$_instance) {
+		if (!self::$instance) {
 			self::Create($cfg);
 		} else {
-			self::$_instance->MergeConfiguration($cfg);
+			self::$instance->MergeConfiguration($cfg);
 		}
-		return self::$_instance;
+		return self::$instance;
 	}
 	public function SetSourceDir ($fullOrRelativePath = '') {
 		$sourceDir = ltrim($fullOrRelativePath);
@@ -295,30 +296,31 @@ class Packager_Common_Base {
 		foreach ($backTrace as & $backTraceItem) {
 			unset($backTraceItem['args'], $backTraceItem['object']);
 		}
-		self::$_instance->errorHandlerData = func_get_args();
-		self::$_instance->exceptionsTraces = $backTrace;
+		self::$instance->errorHandlerData = func_get_args();
+		self::$instance->exceptionsTraces = $backTrace;
 
 		if (isset($backTrace[count($backTrace) - 2])) {
 			$semiFinalBacktraceRec = (object) $backTrace[count($backTrace) - 2];
 			if ($semiFinalBacktraceRec->class == 'Packager_Php_Completer' && $semiFinalBacktraceRec->function == 'autoloadJob') {
 				header("HTTP/1.1 200 OK");
 				$response = (object) array(
-					'success'			=> TRUE,
-					'includedFiles'		=> self::$_instance->autoLoadedFiles,
-					'exceptionsMessages'=> self::$_instance->exceptionsMessages,
-					'exceptionsTraces'	=> self::$_instance->exceptionsTraces,
+					'success'			=> 2,
+					'includedFiles'		=> Packager_Php_Scripts_Dependencies::CompleteIncludedFilesByTargetFile(),
+					'exceptionsMessages'=> self::$instance->exceptionsMessages,
+					'exceptionsTraces'	=> self::$instance->exceptionsTraces,
 					'content'			=> '',
 				);
-				self::$_instance->sendJsonResultAndExit($response);
+				self::$instance->sendJsonResultAndExit($response);
 			}
 		}
 	}
-	public static function ExceptionHandler (\Exception $exception, $exit = TRUE) {
-		//var_dump($exception);
+	public static function ExceptionHandler (/*\Exception */$exception, $exit = TRUE) {
+		var_dump($exception);
 	}
 	public static function ShutdownHandler () {
-		//$exception = error_get_last();
-		//var_dump($exception);
+		$exception = error_get_last();
+		var_dump($exception);
+		//var_dump(get_included_files());
 	}
 	/************************************* dynamic ************************************/
 	protected function shrinkPhpCode (& $code = '') {
@@ -433,7 +435,9 @@ class Packager_Common_Base {
 			
 			$cUrlResult = $this->_processGetRequest($subProcessUrl);
 			if ($cUrlResult->code == 500) {
-				print_r($cUrlResult);
+				echo '<pre>';
+				print_r($cUrlResult->info->url);
+				echo '</pre>';
 			}
 			$jobResult = $cUrlResult->content;
 		}
@@ -665,7 +669,7 @@ class Packager_Common_Base {
 		) {
 			$contentItems = array();
 			foreach ($item as $value) {
-				$contentItems[] = $this->_sendResultRenderErrorsContentItem($outputType, $value);
+				$contentItems[] = $this->_sendResultRenderErrorsContentItem($outputType, (array) $value);
 			}
 			if ($outputType == 'text') {
 				return implode("\n\n", $contentItems);

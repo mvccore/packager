@@ -27,7 +27,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 		$this->_completeResult();
 		// save result php file and display notification
 		$this->_saveResult();
-		$this->_notify();
+		$this->notify();
 	}
 	private function _completePhpAndStaticFiles () {
 		foreach ($this->filesPhpOrder as $fullPath) {
@@ -97,20 +97,22 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 				) {
 					// pokud stavajici soubor namespace nemá a předchozí soubor globál nemespace zabřel - otevřít ho znova
 					//$this->result .= 'namespace{';
-					$namespaceGlue = 'namespace{' . (!$this->cfg->minifyPhp ? "\n": '');
+					$namespaceGlue = "namespace{\n";
+					$linesCount += 1;
 					$this->globalNamespaceOpened = TRUE;
 				} else if (
 					$fileInfo->containsNamespace !== Packager_Php::NAMESPACE_NONE &&
 					$this->globalNamespaceOpened
 				) {
 					// pokud stavajici soubor namespace má - uzařít předchozí globální namespace
-					$this->result .= (!$this->cfg->minifyPhp ? "\n}": '}');
+					$this->result .= "\n}";
+					$linesCount += 1;
 					$this->globalNamespaceOpened = FALSE;
 				}
 			}
 
 			$newLineGlue = ($this->result == '') ? '' : "\n";
-			// $this->anyPhpContainsNamespace
+			
 			$this->result .= $newLineGlue . $namespaceGlue . $fileInfo->content;
 			
 			// Why to store any info about php scripts?
@@ -231,7 +233,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 		unlink($releaseFile);
 		file_put_contents($releaseFile, $this->result);
 	}
-	private function _notify () {
+	protected function notify ($title = 'Successfully packed') {
 		$scriptsCount = count($this->files->php);
 		$staticsCount = count($this->files->static);
 		$totalCount = $scriptsCount + $staticsCount;
@@ -248,7 +250,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 			}
 			$content .= "\n\n\nDONE";
 			$this->sendResult(
-				'Successfully packed', 
+				$title, 
 				$content
 			);
 		} else {
@@ -270,7 +272,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 			}
 			$content .= '</div><h2>DONE</h2>';
 			$this->sendResult(
-				'Successfully packed', 
+				$title, 
 				$content,
 				'success'
 			);

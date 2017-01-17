@@ -19,8 +19,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 				break;
 			}
 		}
-		if ($includePath) $this->autoLoadedFiles[] = $includePath;
-		// $this->autoLoadedFiles[] = array($fileName, $className, $includePath, $includePaths, '/');
+		//if ($includePath) $this->autoLoadedFiles[] = $includePath;
 		if ($includePath) {
 			include_once($includePath);
 		} else {
@@ -164,8 +163,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 			ob_clean();
 			try {
 				@eval('echo '.$capturedText . ';');
-			}
-			catch (Exception $e) {
+			} catch (Exception $e) {
 				$addDependency = FALSE;
 			}
 			if ($this->errorHandlerData) {
@@ -280,46 +278,90 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 	protected function completePhpFilesDependenciesByAutoloadDeclaration ($file = '') {
 		$success = TRUE;
 		$content = '';
-		$phpInclPath = get_include_path();
-		foreach (self::$_includePaths as $path) {
-			$phpInclPath .= PATH_SEPARATOR . $this->cfg->sourcesDir . '/' . $path;
-		}
-		set_include_path($phpInclPath);
-		spl_autoload_register(array(__CLASS__, 'AutoloadCall'));
 		if (!$file) {
 			$success = FALSE;
 			$this->exceptionsMessages[] = 'File is an empty string.';
 		} else {
-			// set custom error handlers to catch eval warnings and errors
-			register_shutdown_function(array(__CLASS__, 'ShutdownHandler'));
-			set_exception_handler(array(__CLASS__, 'ExceptionHandler'));
-			set_error_handler(array(__CLASS__, 'ErrorHandler'));
-			$this->errorResponse = array(
-				'autoloadJob',
-				(object) array(
-					'success'			=> FALSE,
-					'includedFiles'		=>  array(),
-					'exceptionsMessages'=> array(),
-					'exceptionsTraces'	=> array(),
-					'content'			=> '',
-				)
-			);
-			ob_start();
-			try {
-				include($file);
-			} catch (Exception $e) {
-				$success = FALSE;
-				$this->exceptionsMessages[] = $e->getMessage();
-				$this->exceptionsTraces[] = $e->getTrace();
+			// store included files count included till now to remove them later at the end
+			self::$instance->includedFilesCountTillNow = count(get_included_files());
+			if ($this->_prepareIncludePathsOrComposerAutoloadAndErrorHandlers($file)) {
+				// proces target file include command
+				try {
+					include($file);
+				} catch (Exception $e) {
+					$success = FALSE;
+					$this->exceptionsMessages[] = $e->getMessage();
+					$this->exceptionsTraces[] = $e->getTrace();
+				}
 			}
 			$content = ob_get_clean();
+			// complete included files by target file
 		}
 		$this->sendJsonResultAndExit((object) array(
 			'success'			=> $success,
-			'includedFiles'		=> $this->autoLoadedFiles,
+			'includedFiles'		=> self::CompleteIncludedFilesByTargetFile(),
 			'exceptionsMessages'=> $this->exceptionsMessages,
 			'exceptionsTraces'	=> $this->exceptionsTraces,
 			'content'			=> $content,
 		));
+	}
+	private function _prepareIncludePathsOrComposerAutoloadAndErrorHandlers ($file) {
+		// try to include composer loader usualy placed in
+		$sourcesDir = trim($this->cfg->sourcesDir, '/');
+		$composerAutoloadFullPath = $sourcesDir . '/vendor/autoload.php';
+		if (file_exists($composerAutoloadFullPath)) {
+			include_once($composerAutoloadFullPath);
+			if ($this->_isFileIncluded($file)) {
+				// file has no dependency, because it's part of composer 
+				// autoload or in composer autoload static includes array
+				return FALSE;
+			}
+		} else {
+			// if composer autoload doesn't exists, MvcCore project is probably
+			// developed with manualy placed files in docment root, '/App' dir or in 'Libs' dir,
+			// so extend include path in those directories
+			$phpInclPath = get_include_path();
+			foreach (self::$_includePaths as $path) {
+				$phpInclPath .= PATH_SEPARATOR . $sourcesDir . '/' . ltrim($path, '/');
+			}
+			set_include_path($phpInclPath);
+		}
+		spl_autoload_register(array(__CLASS__, 'AutoloadCall'));
+		// set custom error handlers to catch eval warnings and errors
+		register_shutdown_function(array(__CLASS__, 'ShutdownHandler'));
+		set_exception_handler(array(__CLASS__, 'ExceptionHandler'));
+		set_error_handler(array(__CLASS__, 'ErrorHandler'));
+		$this->errorResponse = array(
+			'autoloadJob',
+			(object) array(
+				'success'			=> FALSE,
+				'includedFiles'		=> array(),
+				'exceptionsMessages'=> array(),
+				'exceptionsTraces'	=> array(),
+				'content'			=> '',
+			)
+		);
+		return TRUE;
+	}
+	public function CompleteIncludedFilesByTargetFile () {
+		$includedFilesCountTillNow = self::$instance->includedFilesCountTillNow;
+		$allIncludedFiles = array_slice(get_included_files(), $includedFilesCountTillNow);
+		$autoLoadedFiles = array();
+		foreach ($allIncludedFiles as $includedFileFullPath) {
+			$autoLoadedFiles[] = str_replace('\\', '/', $includedFileFullPath);
+		}
+		return $autoLoadedFiles;
+	}
+	private function _isFileIncluded ($file) {
+		$result = FALSE;
+		$inclFiles = get_included_files();
+		foreach ($inclFiles as $inclFile) {
+			$inclFile = str_replace('\\', '/', $inclFile);
+			if ($inclFile == $file) {
+				$result = TRUE;
+				break;
+			}
+		}
+		return $result;
 	}
 }

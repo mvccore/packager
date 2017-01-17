@@ -25,7 +25,7 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 				'json'
 			);
 			if ($secondJobResult instanceof stdClass && $secondJobResult->success) {
-				$this->_notify($firstJobResult->data->incl);
+				$this->notify($firstJobResult->data->incl);
 			} else {
 				if ($secondJobResult->type == 'json') {
 					$this->sendResult(

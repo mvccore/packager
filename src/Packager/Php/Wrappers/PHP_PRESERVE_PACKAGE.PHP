@@ -152,8 +152,8 @@ class Packager_Php_Wrapper
 	 * 
 	 * @return mixed
 	 */
-	private function _callTemplateClosure ($path, & $context) {
-		$templateClosure = & self::_getFileContent($path, FALSE);
+	private static function _callTemplateClosure ($path, & $context) {
+		$templateClosure = self::_getFileContent($path, FALSE);
 		if (!is_null($context)) {
 			$templateClosure = $templateClosure->bindTo($context, $context);
 		}
@@ -170,11 +170,11 @@ class Packager_Php_Wrapper
 	 * 
 	 * @return string
 	 */
-	private function _evalFile ($path, & $context, $store) {
+	private static function _evalFile ($path, & $context, $store) {
 		if ($store == 'template') {
 			$content = & self::_getStaticWithContext($path, $context, $store);
 		} else {
-			$content = & self::_getFileContent($path, TRUE);
+			$content = self::_getFileContent($path, TRUE);
 		}
 		self::_addContext($context);
 		ob_start();
@@ -197,12 +197,12 @@ class Packager_Php_Wrapper
 	 */
 	private static function _getStaticWithContext ($path, $context) {
 		if (is_null($context)) {
-			$templateClosure = & self::_getFileContent($path, TRUE);
+			$templateClosure = self::_getFileContent($path, TRUE);
 			$content = self::_getTemplateClosureBody($templateClosure);
 		} else {
 			$content = & self::_getStaticWithContextAlreadyProcessed($path);
 			if (mb_strlen($content) === 0) {
-				$templateClosure = & self::_getFileContent($path, TRUE);
+				$templateClosure = self::_getFileContent($path, TRUE);
 				$content = self::_getTemplateClosureBody($templateClosure);
 				// http://php.net/manual/en/language.variables.basics.php
 				$content = preg_replace(
@@ -243,7 +243,7 @@ class Packager_Php_Wrapper
 	 * 
 	 * @return void
 	 */
-	private function _setUpCurrentFileSource () {
+	private static function _setUpCurrentFileSource () {
 		if (count(self::$_currentFileSource) === 0) {
 			self::$_currentFileSource = file(__FILE__);
 		}
@@ -323,7 +323,7 @@ class Packager_Php_Wrapper
 	 * 
 	 * @return string
 	 */
-	private static function _getFileContent ($path, $decodeGzip = TRUE) {
+	private static function & _getFileContent ($path, $decodeGzip = TRUE) {
 		if (!isset(self::$Info[$path])) return FALSE;
 		$record = self::$Info[$path];
 		$index = $record['index'];
@@ -425,8 +425,8 @@ class Packager_Php_Wrapper
 		return preg_match("#^([a-z]*)\://(.*)#", $path) ? TRUE : FALSE;
 	}
 	// Packager_Php_Scripts_Completer::end(_isProtocolPath)
-	
-	// Packager_Php_Scripts_Completer::start(Exception)
+
+	// Packager_Php_Scripts_Completer::start(Warning)
 	/**
 	 * Generates php warning content in output.
 	 * 
@@ -440,7 +440,7 @@ class Packager_Php_Wrapper
 		if (!$msg) $msg = "$fn($path): failed to open stream: No such file or directory";
 		trigger_error($msg, E_USER_WARNING);
 	}
-	// Packager_Php_Scripts_Completer::end(Exception)
+	// Packager_Php_Scripts_Completer::end(Warning)
 
 	// Packager_Php_Scripts_Completer::start(readfile)
 	/**
@@ -456,7 +456,7 @@ class Packager_Php_Wrapper
 	public static function Readfile ($filename, $use_include_path = FALSE, $context = NULL) {
 		if (self::_isProtocolPath($filename)) return call_user_func_array('readfile', func_get_args());
 		$path = self::NormalizePath($filename);
-		$content = & self::_getFileContent($path, FALSE);
+		$content = self::_getFileContent($path, FALSE);
 		if ($content === FALSE) {
 			return call_user_func_array('readfile', func_get_args());
 		} else {
@@ -503,7 +503,7 @@ class Packager_Php_Wrapper
 	public static function FileGetContents ($filename, $use_include_path = FALSE, $context = NULL, $offset = 0/*, $maxlen = NULL*/) {
 		if (self::_isProtocolPath($filename)) return call_user_func_array('file_get_contents', func_get_args());
 		$path = self::NormalizePath($filename);
-		$content = & self::_getFileContent($path, TRUE);
+		$content = self::_getFileContent($path, TRUE);
 		if ($content === FALSE) {
 			return call_user_func_array('file_get_contents', func_get_args());
 		} else {
@@ -524,7 +524,7 @@ class Packager_Php_Wrapper
 	 */
 	public static function ParseIniFile ($filename, $process_sections = FALSE, $scanner_mode = INI_SCANNER_NORMAL) {
 		$path = self::NormalizePath($filename);
-		$str = & self::_getFileContent($path, TRUE);
+		$str = self::_getFileContent($path, TRUE);
 		if ($str === FALSE) {
 			return call_user_func_array('parse_ini_file', func_get_args());
 		} else {
@@ -545,7 +545,7 @@ class Packager_Php_Wrapper
 	 */
 	public static function Md5File ($filename, $raw_output = FALSE) {
 		$path = self::NormalizePath($filename);
-		$content = & self::_getFileContent($path, TRUE);
+		$content = self::_getFileContent($path, TRUE);
 		if ($content === FALSE) {
 			return call_user_func_array('md5_file', func_get_args());
 		} else {
@@ -571,7 +571,7 @@ class Packager_Php_Wrapper
 	) {
 		if (self::_isProtocolPath($filename)) return call_user_func_array('simplexml_load_file', func_get_args());
 		$path = self::NormalizePath($filename);
-		$str = & self::_getFileContent($path, TRUE);
+		$str = self::_getFileContent($path, TRUE);
 		if ($str === FALSE) {
 			return simplexml_load_file($str, $class_name, $options, $ns, $is_prefix);
 		} else {

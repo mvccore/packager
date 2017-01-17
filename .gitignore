@@ -50,3 +50,7 @@ Temporary Items
 .hg
 .hgignore
 .hgtags
+
+# Composer dependent libraries
+vendor/*
+composer.lock
