@@ -140,21 +140,26 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 		} catch (UnexpectedValueException $e1) {
 			$m = $e1->getMessage();
 			if (mb_strpos($m, 'disabled by the php.ini setting phar.readonly') !== FALSE) {
-				$this->_jsonResult = array(
+				$this->_jsonResult->success = FALSE;
+				$this->_jsonResult->data = array(
 					self::$_pharNotAllowedMsg[0],
-					self::$_pharNotAllowedMsg[1],
+					str_replace('php.ini', php_ini_loaded_file(), self::$_pharNotAllowedMsg[1]),
 				);
 			} else {
-				$this->_jsonResult = array(
+				$this->_jsonResult->success = FALSE;
+				$this->_jsonResult->data = array(
 					$e1->getMessage(),
 					$e1->getTrace(),
 				);
 			}
 		} catch (Exception $e2) {
-			$this->_jsonResult = array(
+			$this->_jsonResult->success = FALSE;
+			$this->_jsonResult->data = array(
 				$e2->getMessage(),
 				$e2->getTrace(),
 			);
+		} finally {
+			if ($this->_jsonResult->data) return;
 		}
 		
 		$archive->setStub('<'.'?php '
@@ -177,7 +182,7 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 		//$archive->compressFiles(Phar::GZ);
 		@$archive->buildFromIterator(); // writes archive on hard drive
 		unset($archive); // frees memory, run rename operation without any conflict
-
+		
 		$this->_jsonResult->data = array(
 			'phar'		=> $releaseDir . '/' . $releaseFileNameWithoutExt . '.phar', 
 			'php'		=> $releaseDir . '/' . $releaseFileNameWithoutExt . '.php',
@@ -187,7 +192,7 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 			),
 		);
 	}
-	private function _notify ($incFiles) {
+	protected function notify ($incFiles) {
 		$scriptsCount = count($incFiles->scripts);
 		$staticsCount = count($incFiles->statics);
 		$totalCount = $scriptsCount + $staticsCount;
