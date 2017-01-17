@@ -116,13 +116,13 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		$regExps = array(
 			// do not read anything from require() and include(),
 			// these functions are always used for dynamicly included files
-			//"#([^a-zA-Z0-9_])(require)([^_a-zA-Z0-9])([^;]*);#m" => array('$1', array(3, 4)),
-			//"#([^a-zA-Z0-9_])(include)([^_a-zA-Z0-9])([^;]*);#m" => array('$1', array(3, 4)),
+			//"#([^a-zA-Z0-9_\\/\*])(require)([^_a-zA-Z0-9])([^;]*);#m" => array('$1', array(3, 4)),
+			//"#([^a-zA-Z0-9_\\/\*])(include)([^_a-zA-Z0-9])([^;]*);#m" => array('$1', array(3, 4)),
 
 			// read everything from require_once() and include_once(),
 			// these functions are always used for fixed including to declare content classes
-			"#([^a-zA-Z0-9_])(require_once)([^;]*);#m"	=> array('$1', array(3)),
-			"#([^a-zA-Z0-9_])(include_once)([^;]*);#m"	=> array('$1', array(3)),
+			"#([^a-zA-Z0-9_\\/\*])(require_once)([^;]*);#m"	=> array('$1', array(3)),
+			"#([^a-zA-Z0-9_\\/\*])(include_once)([^;]*);#m"	=> array('$1', array(3)),
 		);
 		foreach ($regExps as $regExp => $backReferences) {
 			$matches = array();
