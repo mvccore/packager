@@ -53,12 +53,14 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 	private function _completeRequireRecords ($fullPath, & $fileInfo) {
 		// capture all dependent files defined by require, require_once, include, include_once as relative paths
 		$byRequiresAndIncludes = $this->_completeDependenciesByRequiresAndIncludes($fullPath, $fileInfo);
-		// try to load file and try to capture what was necessary to autoload
-		$autoloadedByDeclaration = $this->_completePhpFileDependenciesByAutoloadDeclaration($fileInfo);
-		// if there is no record about autoloaded file and it is not foreing file - add autoloaded file at the end
-		foreach ($autoloadedByDeclaration as $autoLoadItem) {
-			if (isset($this->files->all[$autoLoadItem]) && !in_array($autoLoadItem, $byRequiresAndIncludes)) {
-				$byRequiresAndIncludes[] = $autoLoadItem;
+		if ($this->cfg->autoloadingOrderDetection) {
+			// try to load file and try to capture what was necessary to autoload
+			$autoloadedByDeclaration = $this->_completePhpFileDependenciesByAutoloadDeclaration($fileInfo);
+			// if there is no record about autoloaded file and it is not foreing file - add autoloaded file at the end
+			foreach ($autoloadedByDeclaration as $autoLoadItem) {
+				if (isset($this->files->all[$autoLoadItem]) && !in_array($autoLoadItem, $byRequiresAndIncludes)) {
+					$byRequiresAndIncludes[] = $autoLoadItem;
+				}
 			}
 		}
 		return (object) array(

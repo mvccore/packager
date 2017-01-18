@@ -206,9 +206,22 @@ class Packager_Php extends Packager_Php_Completer
 	 * or hdd first and then memory or no memory or no hdd.
 	 * 
 	 * @param string $fsMode 
+	 * 
+	 * @return Packager_Php
 	 */
 	public function SetPhpFileSystemMode ($fsMode = self::FS_MODE_PRESERVE_HDD) {
 		return parent::SetPhpFileSystemMode($fsMode);
+	}
+	/**
+	 * Enable or disable PHP files order detection by autoloader(s),
+	 * by MvcCore startup.php autoloader or by startup.php and composer autoloader.
+	 * 
+	 * @param bool $enabled 
+	 * 
+	 * @return Packager_Php
+	 */
+	public function SetAutoloadingOrderDetection ($enabled = TRUE) {
+		return parent::SetAutoloadingOrderDetection($enabled);
 	}
 	/**
 	 * Define all php functions you want to replace with internal php file calls as strings,
@@ -218,6 +231,8 @@ class Packager_Php extends Packager_Php_Completer
 	 * are replaced automaticly if there is safely detected line content - string only, no variables inside
 	 * 
 	 * @param string $phpFuncStr,...
+	 * 
+	 * @return Packager_Php
 	 */
 	public function ReplacePhpFunctions () {
 		return parent::ReplacePhpFunctions(func_get_args());
@@ -229,13 +244,15 @@ class Packager_Php extends Packager_Php_Completer
 	 * are replaced automaticly if there is safely detected line content - string only, no variables inside
 	 * 
 	 * @param string $phpFuncStr 
+	 * 
+	 * @return Packager_Php
 	 */
 	public function KeepPhpFunctions () {
 		return parent::KeepPhpFunctions(func_get_args());
 	}
 	/**
 	 * Merge multilevel configuration array with previously initialized values.
-	 * New values sended into this function will be used preferred.
+	 * New values sended into this function will be used as preferred.
 	 * 
 	 * @param array $cfg
 	 * 

@@ -32,23 +32,24 @@ class Packager_Common_Base {
 	);
 	protected static $instance;
 	private static $_cfgDefault = array(
-		'sourcesDir'			=> '',
-		'releaseFile'			=> '',
-		'excludePatterns'		=> array(),
-		'includePatterns'		=> array(),
-		'stringReplacements'	=> array(),
-		'patternReplacements'	=> array(),
-		'minifyTemplates'		=> 0,
-		'minifyPhp'				=> 0,
-		'removePhpDocComments'	=> 0,
+		'sourcesDir'				=> '',
+		'releaseFile'				=> '',
+		'excludePatterns'			=> array(),
+		'includePatterns'			=> array(),
+		'stringReplacements'		=> array(),
+		'patternReplacements'		=> array(),
+		'minifyTemplates'			=> 0,
+		'minifyPhp'					=> 0,
+		'removePhpDocComments'		=> 0,
 		// PHP compiling only:
-		'includeFirst'			=> array(),	
-		'includeLast'			=> array(),
-		'phpFsMode'				=> 'PHP_PRESERVE_HDD',
-		'phpFunctionsToReplace'	=> array(),
-		'phpFunctionsToKeep'	=> array(),
-		'phpFunctionsToProcess'	=> array(),
-		//'errorReportingLevel'	=> 5,		// E_ALL
+		'autoloadingOrderDetection'	=> TRUE,
+		'includeFirst'				=> array(),	
+		'includeLast'				=> array(),
+		'phpFsMode'					=> 'PHP_PRESERVE_HDD',
+		'phpFunctionsToReplace'		=> array(),
+		'phpFunctionsToKeep'		=> array(),
+		'phpFunctionsToProcess'		=> array(),
+		//'errorReportingLevel'		=> 5,		// E_ALL
 	);
 	private static $_htmlStyles = array(
 		'success'	=> 'html,body{background:#005700;}',
@@ -231,6 +232,10 @@ class Packager_Common_Base {
 	}
 	public function SetPhpFileSystemMode ($fsMode = 'PHP_PRESERVE_HDD') {
 		$this->cfg['phpFsMode'] = $fsMode;
+		return $this;
+	}
+	public function SetAutoloadingOrderDetection ($enabled = TRUE) {
+		$this->cfg['autoloadingOrderDetection'] = $enabled;
 		return $this;
 	}
 	public function ReplacePhpFunctions () {
