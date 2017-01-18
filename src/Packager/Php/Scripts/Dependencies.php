@@ -373,7 +373,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		);
 		return TRUE;
 	}
-	public function CompleteIncludedFilesByTargetFile () {
+	public static function CompleteIncludedFilesByTargetFile () {
 		$includedFilesCountTillNow = self::$instance->includedFilesCountTillNow;
 		$allIncludedFiles = array_slice(get_included_files(), $includedFilesCountTillNow);
 		$autoLoadedFiles = array();

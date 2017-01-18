@@ -421,6 +421,7 @@ class Packager_Common_Base {
 				$command .= ' ' . $key . '=' . base64_encode($value);
 			}
 			$jobResult = @exec($command, $out);
+			//var_dump(array($jobResult, $command, $out));
 		} else {
 			$protocol = (isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) == 'on') ? 'https://' : 'http://';
 			$absoluteUrl = $protocol . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'];
