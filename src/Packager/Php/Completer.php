@@ -172,6 +172,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 			}
 			if ($this->cfg->minifyTemplates) {
 				//include_once(__DIR__.'/../Libs/Minify/HTML.php');
+				@include_once('vendor/autoload.php');
 				$fileInfo->content = Minify_HTML::minify($fileInfo->content);
 			}
 		}

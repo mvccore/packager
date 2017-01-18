@@ -293,6 +293,8 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 					$this->exceptionsMessages[] = $e->getMessage();
 					$this->exceptionsTraces[] = $e->getTrace();
 				}
+			} else {
+				if ($this->exceptionsMessages) $success = FALSE;
 			}
 			$content = ob_get_clean();
 			// complete included files by target file
@@ -307,10 +309,38 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 	}
 	private function _prepareIncludePathsOrComposerAutoloadAndErrorHandlers ($file) {
 		// try to include composer loader usualy placed in
+		$scriptFileName = $_SERVER['SCRIPT_FILENAME'];
+		$scriptFileName = strtoupper(mb_substr($scriptFileName, 0, 1)) . mb_substr($scriptFileName, 1);
+		$lastSlash = mb_strrpos($scriptFileName, DIRECTORY_SEPARATOR);
+		$documentRoot = ($lastSlash !== FALSE) ? mb_substr($scriptFileName, 0, $lastSlash) : $scriptFileName ;
+		$wrongComposerAutoloadFullPath = $documentRoot . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+		$alreadyIncludedFiles = get_included_files();
+		if (in_array($wrongComposerAutoloadFullPath, $alreadyIncludedFiles)) {
+			$this->exceptionsMessages = array(
+				"Do not use 'include_once(\"vendor/autoload.php\");' for result packing.",
+				"Use direct path instead: 'include_once(\"vendor/mvccore/packager/src/Packager/Php.php\");'"
+			);
+			return FALSE;
+		}
 		$sourcesDir = trim($this->cfg->sourcesDir, '/');
 		$composerAutoloadFullPath = $sourcesDir . '/vendor/autoload.php';
+		$errorMsgs = array();
+		$errorTraces = array();
 		if (file_exists($composerAutoloadFullPath)) {
-			include_once($composerAutoloadFullPath);
+			try {
+				include_once($composerAutoloadFullPath);
+			} catch (Exception $e1) {
+				$errorMsgs = array($e1->getMessage());
+				$errorTraces = $e1->getTrace();
+			} catch (Error $e2) {
+				$errorMsgs = array($e2->getMessage());
+				$errorTraces = $e2->getTrace();
+			} finally {
+				if ($errorMsgs) {
+					var_dump(get_included_files());
+					var_dump($errorMsgs);
+				}
+			}
 			if ($this->_isFileIncluded($file)) {
 				// file has no dependency, because it's part of composer 
 				// autoload or in composer autoload static includes array
@@ -336,8 +366,8 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 			(object) array(
 				'success'			=> FALSE,
 				'includedFiles'		=> array(),
-				'exceptionsMessages'=> array(),
-				'exceptionsTraces'	=> array(),
+				'exceptionsMessages'=> $errorMsgs,
+				'exceptionsTraces'	=> $errorTraces,
 				'content'			=> '',
 			)
 		);

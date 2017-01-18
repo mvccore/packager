@@ -290,8 +290,8 @@ class Packager_Common_Base {
 		}
 		return $result;
 	}
-	public static function ErrorHandler ($severity, $message, $file, $line, $context) {
-		
+	public static function ErrorHandler ($severity = NULL, $message = NULL, $file = NULL, $line = NULL, $context = NULL) {
+
 		$backTrace = debug_backtrace();
 		foreach ($backTrace as & $backTraceItem) {
 			unset($backTraceItem['args'], $backTraceItem['object']);
@@ -314,12 +314,12 @@ class Packager_Common_Base {
 			}
 		}
 	}
-	public static function ExceptionHandler (/*\Exception */$exception, $exit = TRUE) {
-		var_dump($exception);
+	public static function ExceptionHandler (/*\Exception */$exception = NULL, $exit = TRUE) {
+		if (!is_null($exception)) var_dump($exception);
 	}
 	public static function ShutdownHandler () {
 		$exception = error_get_last();
-		var_dump($exception);
+		if (!is_null($exception)) var_dump($exception);
 		//var_dump(get_included_files());
 	}
 	/************************************* dynamic ************************************/
