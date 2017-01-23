@@ -8,6 +8,11 @@
 - pack PHP MVcCore application into single PHP file
 - pack any PHP application into PHAR archive
 
+## Installation
+```shell
+composer require mvccore/simpleform
+```
+
 ## Configuration possibilities
 - directory with whole app source to pack
 - result index.php file where to store packed result
