@@ -1,5 +1,9 @@
 # Packager
 
+[![Latest Stable Version](https://img.shields.io/badge/Stable-v2.1.6-brightgreen.svg?style=plastic)](https://github.com/mvccore/example-helloworld/releases)
+[![License](https://img.shields.io/badge/Licence-BSD-brightgreen.svg?style=plastic)](https://github.com/mvccore/example-helloworld/blob/master/LICENCE.md)
+![PHP Version](https://img.shields.io/badge/PHP->=5.3-brightgreen.svg?style=plastic)
+
 ## Main Features
 - pack PHP MVcCore application into single PHP file
 - pack any PHP application into PHAR archive
