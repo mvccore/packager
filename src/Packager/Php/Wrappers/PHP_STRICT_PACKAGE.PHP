@@ -408,7 +408,7 @@ class Packager_Php_Wrapper
 		if (mb_strpos($path, self::$BasePath) === 0) {
 			$path = mb_substr($path, self::$BasePathLength);
 		}
-		return $path;
+		return str_replace('//', '/', $path);
 	}
 	// Packager_Php_Scripts_Completer::end(NormalizePath)
 	
