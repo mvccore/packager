@@ -487,6 +487,43 @@ class Packager_Php_Wrapper
 		return self::$Info[$path]['size'];
 	}
 	// Packager_Php_Scripts_Completer::end(readfile)
+
+	// Packager_Php_Scripts_Completer::start(is_file)
+	/**
+	 * Tells whether the filename is a regular file.
+	 * 
+	 * @param string   $filename
+	 * 
+	 * @return boolean
+	 */
+	public static function IsFile ($filename) {
+		$path = self::NormalizePath($filename);
+		if (isset(self::$Info[$path])) return TRUE;
+		return is_file($filename);
+	}
+	// Packager_Php_Scripts_Completer::end(is_file)
+
+	// Packager_Php_Scripts_Completer::start(is_dir)
+	/**
+	 * Tells whether the filename is a directory.
+	 * 
+	 * @param string   $filename
+	 * 
+	 * @return boolean
+	 */
+	public static function IsDir ($filename) {
+		$path = self::NormalizePath($filename);
+		$catched = FALSE;
+		foreach (self::$Info as $pathKey => & $item) {
+			if (strpos($pathKey, $path) === 0) {
+				$catched = TRUE;
+				break;
+			}
+		}
+		if ($catched) return TRUE;
+		return is_dir($filename);
+	}
+	// Packager_Php_Scripts_Completer::end(is_dir)
 	
 	// Packager_Php_Scripts_Completer::start(file_get_contents)
 	/**
@@ -766,9 +803,7 @@ class Packager_Php_Wrapper_DirectoryIterator extends DirectoryIterator {
         return parent::valid();
     }
 }
-// Packager_Php_Scripts_Completer::end(DirectoryIterator)
 
-// Packager_Php_Scripts_Completer::start(SplFileInfo)
 class Packager_Php_Wrapper_SplFileInfo extends SplFileInfo {
 	/**
 	 * If there are any items in PHP package, this mode is set to false
@@ -1201,4 +1236,4 @@ class Packager_Php_Wrapper_SplFileInfo extends SplFileInfo {
 		throw new RuntimeException(__CLASS__."::" . $methodName . "(): Not implemented.");
 	}
 }
-// Packager_Php_Scripts_Completer::end(SplFileInfo)
+// Packager_Php_Scripts_Completer::end(DirectoryIterator)

@@ -22,6 +22,8 @@ class Packager_Php_Base extends Packager_Common_Base
 			'DirectoryIterator' 			=> '%WrapperClass%_DirectoryIterator',
 			// 'RecursiveDirectoryIterator'	=> 'RecursiveDirectoryIterator', // not implemented
 			'SplFileInfo' 					=> '%WrapperClass%_SplFileInfo',
+			'is_dir'						=> '%WrapperClass%::IsDir',
+			'is_file'						=> '%WrapperClass%::IsFile',
 			'readfile'						=> '%WrapperClass%::Readfile',
 			'file_get_contents'				=> '%WrapperClass%::FileGetContents',
 			'file_exists'					=> '%WrapperClass%::FileExists',
@@ -51,7 +53,7 @@ class Packager_Php_Base extends Packager_Common_Base
 	protected static $errorReportingLevelDefault = 5; // E_ALL
 	protected static $phpReplacementsStatistics = array();
 	protected static $wrapperInternalElementsDependencies = array(
-		'NormalizePath'							=> ',require_once,include_once,require,include,readfile,file_get_contents,parse_ini_file,simplexml_load_file,filemtime,filesize,file_exists,DirectoryIterator,SplFileInfo,md5_file,',
+		'NormalizePath'							=> ',require_once,include_once,require,include,readfile,file_get_contents,parse_ini_file,simplexml_load_file,filemtime,filesize,file_exists,DirectoryIterator,md5_file,is_dir,is_file,',
 		'Warning'								=> ',require_once,include_once,require,include,readfile,file_get_contents,parse_ini_file,simplexml_load_file,filemtime,filesize,',
 		'_getFileContent'						=> ',require_once,include_once,require,include,readfile,file_get_contents,parse_ini_file,simplexml_load_file,md5_file,',
 		'_includeFile'							=> ',require_once,include_once,require,include,',

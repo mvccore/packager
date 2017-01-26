@@ -161,17 +161,22 @@ class Packager_Php_Scripts_Completer extends Packager_Php_Base
 		$startStr	= str_replace(array('{startEnd}', '{functionName}'), array('start', $originalPhpFunctionName), $commentTemplate);
 		$endStr		= str_replace(array('{startEnd}', '{functionName}'), array('end', $originalPhpFunctionName), $commentTemplate);
 		$startPos = mb_strpos($this->wrapperCode, $startStr);
-		if ($startPos === FALSE) {
+		
+		/*if ($startPos === FALSE) {
 			echo "<h1>Comment containing '$startStr' not founded in wrapper code.</h1>";
 			echo "<pre>{$this->wrapperCode}</pre>";
 			die();
-		}
+		}*/
+		
 		$endPos = mb_strpos($this->wrapperCode, $endStr, $startPos + mb_strlen($startStr));
-		if ($endPos === FALSE) {
+		
+		/*if ($endPos === FALSE) {
 			echo "<h1>Comment containing '$endStr' not founded in wrapper code.</h1>";
 			echo "<pre>{$this->wrapperCode}</pre>";
 			die();
-		}
+		}*/
+		if ($startPos === FALSE || $endPos === FALSE) return;
+		
 		$this->wrapperCode = mb_substr(
 			$this->wrapperCode,
 			0,
