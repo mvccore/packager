@@ -1,7 +1,19 @@
 {
 	"name": "mvccore/packager",
 	"description": "Library to pack any type of app into PHAR archive or any MvcCore app into single PHP super fast result file.",
-	"keywords": ["mvccore", "framework", "mvc", "packing", "packager", "packed app", "packing to phar", "packing to php", "singlefile app", "php packed result", "super fast php app"],
+	"keywords": [
+		"mvccore", 
+		"framework", 
+		"mvc", 
+		"packing", 
+		"packager", 
+		"packed app", 
+		"packing to phar", 
+		"packing to php", 
+		"single file app", 
+		"php packed result", 
+		"super fast php app"
+	],
 	"license": ["BSD-3-Clause"],
 	"authors": [
 		{

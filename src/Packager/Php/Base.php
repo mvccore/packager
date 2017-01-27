@@ -9,7 +9,7 @@ class Packager_Php_Base extends Packager_Common_Base
 	const NAMESPACE_GLOBAL_CURLY_BRACKETS = 1;
 	const NAMESPACE_NAMED_CURLY_BRACKETS = 2;
 	const NAMESPACE_NAMED_SEMICOLONS = 3;
-	protected static $wrapperClassName = 'Packager_Php_Wrapper';
+	protected static $wrapperClassName = '\Packager_Php_Wrapper';
 	protected static $wrapperStringDeclarator = 'PACKAGER_';
 	protected static $wrapperReplacements = array(
 		T_DIR			=> NULL, // callable closure function, initialized later

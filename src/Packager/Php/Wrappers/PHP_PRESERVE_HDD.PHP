@@ -3,7 +3,7 @@
 class Packager_Php_Wrapper
 {
 	/** @var string */
-	const FS_MODE = '____Packager_Php_Wrapper::FS_MODE____';
+	const FS_MODE = '____\Packager_Php_Wrapper::FS_MODE____';
 
 	/** @var string */
 	public static $BasePath;
@@ -22,13 +22,13 @@ class Packager_Php_Wrapper
 	public static $Contents = array();
 
 	/** @var array */
-	public static $Info = array('____Packager_Php_Wrapper::$Info____'); // replaced automaticly in build process
+	public static $Info = array('____\Packager_Php_Wrapper::$Info____'); // replaced automaticly in build process
 
 	/** @var int */
-	private static $_baseLinesCount = '____Packager_Php_Wrapper::$_baseLinesCount____'; // replaced automaticly in build process
+	private static $_baseLinesCount = '____\Packager_Php_Wrapper::$_baseLinesCount____'; // replaced automaticly in build process
 
 	/** @var bool */
-	private static $_minifiedPhp = '____Packager_Php_Wrapper::$_minifiedPhp____'; // replaced automaticly in build process
+	private static $_minifiedPhp = '____\Packager_Php_Wrapper::$_minifiedPhp____'; // replaced automaticly in build process
 	
 	/** @var array */
 	private static $_contexts = array();
