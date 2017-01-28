@@ -87,10 +87,11 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 			$relPath = $fileInfo->relPath;
 			$filemtime = $fileInfo->filemtime;
 			$filesize = $fileInfo->filesize;
+			
 			$linesCount = substr_count($fileInfo->content, "\n") + 1;
 
-			$openNamespaceGlue = '';
-			$closeNamespaceGlue = '';
+			$newLineGlue = ($this->result == '') ? '' : "\n";
+
 			if ($this->anyPhpContainsNamespace) {
 				if (
 					$fileInfo->containsNamespace === Packager_Php::NAMESPACE_NONE &&
@@ -98,31 +99,23 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 				) {
 					// if current file doesn't have any namespace and previous 
 					// file closed global namespace - open global namespace again
-					if ($this->cfg->minifyPhp) {					
-						$openNamespaceGlue = 'namespace{';
-					} else {
-						$openNamespaceGlue = "namespace{\n";
-						$linesCount += 1;
-					}
+					$this->result .= $newLineGlue . "namespace{\n";
+					$newLineGlue = '';
+					$linesCounter += 1;
 					$this->globalNamespaceOpened = TRUE;
 				} else if (
 					$fileInfo->containsNamespace !== Packager_Php::NAMESPACE_NONE &&
 					$this->globalNamespaceOpened
 				) {
 					// if current file have namespace - close previous global namespace
-					if ($this->cfg->minifyPhp) {
-						$closeNamespaceGlue = '}';
-					} else {
-						$closeNamespaceGlue = "}\n";
-						$linesCount += 1;
-					}
+					$this->result .= $newLineGlue . "}\n";
+					$newLineGlue = '';
+					$linesCounter += 1;
 					$this->globalNamespaceOpened = FALSE;
 				}
 			}
-
-			$newLineGlue = ($this->result == '') ? '' : "\n";
 			
-			$this->result .= $newLineGlue . $closeNamespaceGlue . $openNamespaceGlue . $fileInfo->content;
+			$this->result .= $newLineGlue . $fileInfo->content;
 			
 			/**
 			 * DEVEL NOTE:
@@ -139,7 +132,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 			$linesCounter += $linesCount;
 		}
 		if ($this->anyPhpContainsNamespace && $this->globalNamespaceOpened) {
-			$this->result .= (!$this->cfg->minifyPhp ? "\n}" : '}');;
+			$this->result .= "\n}";
 		}
 		// frees memory - store only relative paths for result notification
 		$this->files->php = array_values($this->files->php);
