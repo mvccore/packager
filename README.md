@@ -1,6 +1,6 @@
 # Packager
 
-[![Latest Stable Version](https://img.shields.io/badge/Stable-v2.1.7-brightgreen.svg?style=plastic)](https://github.com/mvccore/packager/releases)
+[![Latest Stable Version](https://img.shields.io/badge/Stable-v2.1.9-brightgreen.svg?style=plastic)](https://github.com/mvccore/packager/releases)
 [![License](https://img.shields.io/badge/Licence-BSD-brightgreen.svg?style=plastic)](https://mvccore.github.io/docs/packager/2.0.0/LICENCE.md)
 ![PHP Version](https://img.shields.io/badge/PHP->=5.3-brightgreen.svg?style=plastic)
 
@@ -22,20 +22,20 @@ composer require mvccore/packager
 - minimalizing PHTML templates
 - minimalizing PHP scripts
 - PHP packing has now 4 options, how implemented file system wrapping functions could behave:
-  - strict package mode (`Packager_Php::FS_MODE_STRICT_PACKAGE`)
+  - strict package mode (`\Packager_Php::FS_MODE_STRICT_PACKAGE`)
     (everything is only possible to get from `index.php`, very fast for specific application types in **IIS/PHP/op_cache**)
-  - strict hard drive mode (`Packager_Php::FS_MODE_STRICT_HDD`)
+  - strict hard drive mode (`\Packager_Php::FS_MODE_STRICT_HDD`)
     (no file system wrapping functions)
-  - preserve php package mode (`Packager_Php::FS_MODE_PRESERVE_PACKAGE`)
+  - preserve php package mode (`\Packager_Php::FS_MODE_PRESERVE_PACKAGE`)
     (first there is check if it is possible to get anything from `index.php`, then from hard drive)
-  - preserve hard drive mode (`Packager_Php::FS_MODE_PRESERVE_HDD`)
+  - preserve hard drive mode (`\Packager_Php::FS_MODE_PRESERVE_HDD`)
     (first there is check if it is possible to get anything from hard drive, then from `index.php`)
 - there are implemented those file system wrapping functions and constants:
-  - `\_\_DIR\_\_` and `\_\_FILE\_\_`
+  - `__DIR__` and `__FILE__`
   - `require_once();`, `include_once();`, `require();`, `include();`
   - `new DirectoryIterator();`, `new SplFileInfo();` 
   - `readfile();`, `file_get_contents();`
-  - `file_exists();`, `filemtime();`, `filesize();`
+  - `file_exists();`, `is_file();`,  `is_dir();`,  `filemtime();`, `filesize();`
   - `simplexml_load_file();`, `parse_ini_file();`, `md5_file();`
 - possibility to define which file system wrapping functions should be keeped and not wrapped
 - for PHP packing - possibility to define files by extension how to store them inside `index.php` result
@@ -49,4 +49,5 @@ composer require mvccore/packager
 - [**Example Hallo World (mvccore/example-helloworld)**](https://github.com/mvccore/example-helloworld)
 - [**Example Pig Latin Translator (example-translator)**](https://github.com/mvccore/example-translator)
 - [**Example CD Collection (mvccore/example-cdcol)**](https://github.com/mvccore/example-cdcol)
+- [**Application XML Documents (mvccore/app-xmldocs)**](https://github.com/mvccore/app-xmldocs)
 - [**Application Questionnaires (mvccore/app-questionnaires)**](https://github.com/mvccore/app-questionnaires)
