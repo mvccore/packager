@@ -89,34 +89,49 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 			$filesize = $fileInfo->filesize;
 			$linesCount = substr_count($fileInfo->content, "\n") + 1;
 
-			$namespaceGlue = '';
+			$openNamespaceGlue = '';
+			$closeNamespaceGlue = '';
 			if ($this->anyPhpContainsNamespace) {
 				if (
 					$fileInfo->containsNamespace === Packager_Php::NAMESPACE_NONE &&
 					!$this->globalNamespaceOpened
 				) {
-					// pokud stavajici soubor namespace nemá a předchozí soubor globál nemespace zabřel - otevřít ho znova
-					//$this->result .= 'namespace{';
-					$namespaceGlue = "namespace{\n";
-					$linesCount += 1;
+					// if current file doesn't have any namespace and previous 
+					// file closed global namespace - open global namespace again
+					if ($this->cfg->minifyPhp) {					
+						$openNamespaceGlue = 'namespace{';
+					} else {
+						$openNamespaceGlue = "namespace{\n";
+						$linesCount += 1;
+					}
 					$this->globalNamespaceOpened = TRUE;
 				} else if (
 					$fileInfo->containsNamespace !== Packager_Php::NAMESPACE_NONE &&
 					$this->globalNamespaceOpened
 				) {
-					// pokud stavajici soubor namespace má - uzařít předchozí globální namespace
-					$this->result .= "\n}";
-					$linesCount += 1;
+					// if current file have namespace - close previous global namespace
+					if ($this->cfg->minifyPhp) {
+						$closeNamespaceGlue = '}';
+					} else {
+						$closeNamespaceGlue = "}\n";
+						$linesCount += 1;
+					}
 					$this->globalNamespaceOpened = FALSE;
 				}
 			}
 
 			$newLineGlue = ($this->result == '') ? '' : "\n";
 			
-			$this->result .= $newLineGlue . $namespaceGlue . $fileInfo->content;
+			$this->result .= $newLineGlue . $closeNamespaceGlue . $openNamespaceGlue . $fileInfo->content;
 			
-			// Why to store any info about php scripts?
-			// BECAUSE MvcCore NEEDS TO KNOW IF CONTROLLER CLASS EXISTS TO DISPATCH THE CONTROLLER
+			/**
+			 * DEVEL NOTE:
+			 * Why to store any info about php scripts?
+			 * - Because in previous versions MvcCore needs to know if controller 
+			 * - class exists by file_exists() to dispatch the controller.
+			 * - But not any more, maybe we can remove it.
+			 * - but it is still good to have info about php scripts themselfs
+			 */
 			$this->resultFilesInfo .= "\n" . "'$relPath'=>array('index'=>-1,'mtime'=>$filemtime,'size'=>$filesize,'lines'=>array($linesCounter,$linesCount)),";
 
 			$this->files->php[$fullPath] = $relPath;
