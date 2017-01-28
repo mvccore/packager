@@ -279,8 +279,8 @@ class Packager_Php_Scripts_Replacer
 			} else {
 				if (is_object($replacement)) {
 					// if we have current php function call between php replacements
-					$newPart = $this->processPhpCodeReplacementObjectType(
-						$replacement, $oldPart
+					list($i, $newPart) = $this->processPhpCodeReplacementObjectType(
+						$replacement, $oldPart, $tokenId, $i
 					);
 				} else if (is_array($replacement)) {
 					// if there is configured item in replacements array in type: string,
@@ -297,12 +297,24 @@ class Packager_Php_Scripts_Replacer
 	}
 	// php function calls - any_php_build_in_function() or programmerCustomFunction()
 	// php class names, keywords, stdClass keys, TRUE/FALSE, public constants like PHP_EOL and other php shit...
-	protected function processPhpCodeReplacementObjectType ($replacement, $oldPart) {
+	protected function processPhpCodeReplacementObjectType ($replacement, $oldPart, $tokenId, $i) {
 		$newPart = '';
 		if (isset($replacement->$oldPart)) {
 			// determinate if current function call is necessary to process by config
 			// and fill $newPart variable with proper content
 			if (isset(self::$phpFunctionsToProcess[$oldPart])) {
+				if ($this->startsWithUpper($oldPart)) {
+					// look into previous token and check if it is a backslash or not
+					$previousToken = isset($this->tokens[$i - 1]) ? $this->tokens[$i - 1] : array();
+					if (gettype($previousToken) == 'array' && $previousToken) {
+						$previousTokenVal = $previousToken[1];
+						if ($previousTokenVal == '\\') {
+							// remove last character added into result and continue
+							$resultLength = mb_strlen($this->result);
+							$this->result = mb_substr($this->result, 0, $resultLength - 1);
+						}
+					}
+				}
 				// yes - by configuration is necessary to replace this php function call - do it
 				$newPart = str_replace('%WrapperClass%', self::$wrapperClassName, $replacement->$oldPart);
 				self::addToReplacementStatistics($oldPart);
@@ -314,7 +326,7 @@ class Packager_Php_Scripts_Replacer
 			// it is other php statement - do not replace anything
 			$newPart = $oldPart;
 		}
-		return $newPart;
+		return array($i, $newPart);
 	}
 	// All occurrences of require_once(), include_once(), require() and include() statements replace by configuration.
 	protected function processPhpCodeReplacementArrayType ($replacement, $oldPart, $tokenId, $i) {
@@ -388,6 +400,10 @@ class Packager_Php_Scripts_Replacer
 			}
 		}
 		return $staticCatched ? FALSE : TRUE;
+	}
+	protected function startsWithUpper ($str) {
+		$chr = mb_substr ($str, 0, 1, "UTF-8");
+		return mb_strtolower($chr, "UTF-8") != $chr;
 	}
 	protected static function addToReplacementStatistics ($replacementKey) {
 		if (!isset(self::$phpReplacementsStatistics[$replacementKey])) {
