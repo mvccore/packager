@@ -54,3 +54,6 @@ Temporary Items
 # Composer dependent libraries
 vendor/*
 composer.lock
+
+*.phpproj
+*.phpproj.user

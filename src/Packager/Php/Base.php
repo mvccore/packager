@@ -40,7 +40,8 @@ class Packager_Php_Base extends Packager_Common_Base
 		'/index.php',
 	);
 	protected static $excludePatternsDefault = array(
-		'^/Libs/startup\.php$',
+		'#^/Libs/startup\.php$#',
+		'#^/vendor/mvccore/mvccore/src/startup\.php$#',
 	);
 	/**
 	 *	0 - Turn off all error reporting 

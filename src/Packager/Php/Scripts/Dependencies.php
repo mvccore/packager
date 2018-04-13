@@ -332,9 +332,11 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 			try {
 				include_once($composerAutoloadFullPath);
 			} catch (Exception $e1) {
+				//var_dump($e1);
 				$errorMsgs = array($e1->getMessage());
 				$errorTraces = $e1->getTrace();
 			} catch (Error $e2) {
+				//var_dump($e2);
 				$errorMsgs = array($e2->getMessage());
 				$errorTraces = $e2->getTrace();
 			} finally {

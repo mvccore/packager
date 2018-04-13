@@ -296,49 +296,37 @@ class Packager_Common_Base {
 		return $result;
 	}
 	public static function ErrorHandler ($severity = NULL, $message = NULL, $file = NULL, $line = NULL, $context = NULL) {
+		//var_dump(func_get_args());
 		
-	}
-	public static function ExceptionHandler (/*\Exception */$exception = NULL, $exit = TRUE) {
-		// if (!is_null($exception)) var_dump($exception);
-	}
-	public static function ShutdownHandler () {
-		//var_dump(get_included_files());
-		/** @var $exception Exception */
-		$exception = error_get_last();
-		if (!is_null($exception)) {
-			self::$instance->errorHandlerData = $exception->getMessage();
-			self::$instance->exceptionsTraces = $exception->getTrace();
-			header("HTTP/1.1 200 OK");
-			$response = (object) array(
-				'success'			=> 3,
-				'includedFiles'		=> Packager_Php_Scripts_Dependencies::CompleteIncludedFilesByTargetFile(),
-				'exceptionsMessages'=> self::$instance->exceptionsMessages,
-				'exceptionsTraces'	=> self::$instance->exceptionsTraces,
-				'content'			=> '',
-			);
-			self::$instance->sendJsonResultAndExit($response);
-		} else {
-			$backTrace = debug_backtrace();
-			foreach ($backTrace as & $backTraceItem) {
-				unset($backTraceItem['args'], $backTraceItem['object']);
-			}
-			self::$instance->errorHandlerData = func_get_args();
-			self::$instance->exceptionsTraces = $backTrace;
-			if (isset($backTrace[count($backTrace) - 2])) {
-				$semiFinalBacktraceRec = (object) $backTrace[count($backTrace) - 2];
-				if ($semiFinalBacktraceRec->class == 'Packager_Php_Completer' && $semiFinalBacktraceRec->function == 'autoloadJob') {
-					header("HTTP/1.1 200 OK");
-					$response = (object) array(
-						'success'			=> 2,
-						'includedFiles'		=> Packager_Php_Scripts_Dependencies::CompleteIncludedFilesByTargetFile(),
-						'exceptionsMessages'=> self::$instance->exceptionsMessages,
-						'exceptionsTraces'	=> self::$instance->exceptionsTraces,
-						'content'			=> '',
-					);
-					self::$instance->sendJsonResultAndExit($response);
-				}
+		$backTrace = debug_backtrace();
+		foreach ($backTrace as & $backTraceItem) {
+			unset($backTraceItem['args'], $backTraceItem['object']);
+		}
+		self::$instance->errorHandlerData = func_get_args();
+		self::$instance->exceptionsTraces = $backTrace;
+
+		if (isset($backTrace[count($backTrace) - 2])) {
+			$semiFinalBacktraceRec = (object) $backTrace[count($backTrace) - 2];
+			if ($semiFinalBacktraceRec->class == 'Packager_Php_Completer' && $semiFinalBacktraceRec->function == 'autoloadJob') {
+				header("HTTP/1.1 200 OK");
+				$response = (object) array(
+					'success'			=> 2,
+					'includedFiles'		=> Packager_Php_Scripts_Dependencies::CompleteIncludedFilesByTargetFile(),
+					'exceptionsMessages'=> self::$instance->exceptionsMessages,
+					'exceptionsTraces'	=> self::$instance->exceptionsTraces,
+					'content'			=> '',
+				);
+				self::$instance->sendJsonResultAndExit($response);
 			}
 		}
+	}
+	public static function ExceptionHandler (/*\Exception */$exception = NULL, $exit = TRUE) {
+		if (!is_null($exception)) var_dump($exception);
+	}
+	public static function ShutdownHandler () {
+		$exception = error_get_last();
+		if (!is_null($exception)) var_dump($exception);
+		//var_dump(get_included_files());
 	}
 	/************************************* dynamic ************************************/
 	protected function shrinkPhpCode (& $code = '') {
@@ -514,6 +502,7 @@ class Packager_Common_Base {
 				}
 
 				if ($this->compilationType == 'PHP') {
+					$fileItem->instance				= $item;
 					$fileItem->filemtime			= filemtime($fullPath);
 					$fileItem->filesize				= filesize($fullPath);
 					$fileItem->utf8bomRemoved		= FALSE;
@@ -532,15 +521,15 @@ class Packager_Common_Base {
 			$this->files = $allFiles;
 		}
 	}
-	protected function excludeFilesByCfg (& $files) {
+	protected function excludeFilesByCfg (& $allFiles) {
 		$excludePatterns = $this->cfg->excludePatterns;
 		$includePatterns = $this->cfg->includePatterns;
 		foreach ($includePatterns as & $includePattern) {
-			$includePattern = "/" . str_replace('/', '\\/', $includePattern) . "/";
+			$includePattern = $includePattern;
 		}
 		foreach ($excludePatterns as & $excludePattern) {
-			$excludePattern = "/" . str_replace('/', '\\/', $excludePattern) . "/";
-			foreach ($files as $fullPath => & $fileInfo) {
+			$excludePattern = $excludePattern;
+			foreach ($allFiles as $fullPath => & $fileInfo) {
 				@preg_match($excludePattern, $fileInfo->relPath, $excludeMatches);
 				if ($excludeMatches) {
 					$unset = TRUE;
@@ -551,7 +540,7 @@ class Packager_Common_Base {
 							break;
 						}
 					}
-					if ($unset) unset($files[$fullPath]);
+					if ($unset) unset($allFiles[$fullPath]);
 				}
 			}
 		}
