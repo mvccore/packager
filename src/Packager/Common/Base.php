@@ -40,7 +40,7 @@ class Packager_Common_Base {
 		'patternReplacements'		=> array(),
 		'minifyTemplates'			=> 0,
 		'minifyPhp'					=> 0,
-		'removePhpDocComments'		=> 0,
+		'keepPhpDocComments'		=> array('@var'),
 		// PHP compiling only:
 		'autoloadingOrderDetection'	=> TRUE,
 		'includeFirst'				=> array(),	
@@ -170,8 +170,8 @@ class Packager_Common_Base {
 		$this->cfg['minifyPhp'] = (bool)$minifyPhp;
 		return $this;
 	}
-	public function SetRemovePhpDocComments ($removePhpDocComments = TRUE) {
-		$this->cfg['removePhpDocComments'] = (bool)$removePhpDocComments;
+	public function SetKeepPhpDocComments ($keepPhpDocComments = array()) {
+		$this->cfg['keepPhpDocComments'] = $keepPhpDocComments;
 		return $this;
 	}
 	public function SetIncludeFirst ($includeFirst = array()) {
@@ -332,7 +332,6 @@ class Packager_Common_Base {
 	protected function shrinkPhpCode (& $code = '') {
 		if (!defined('T_DOC_COMMENT')) define ('T_DOC_COMMENT', -1);
 		if (!defined('T_ML_COMMENT')) define ('T_ML_COMMENT', -1);
-		$removePhpDocComments = $this->cfg->removePhpDocComments;
 		$chars = '!"#$&\'()*+,-./:;<=>?@[\]^`{|}';
 		$chars = array_flip(preg_split('//',$chars));
 		$result = '';
@@ -343,7 +342,8 @@ class Packager_Common_Base {
 			T_ML_COMMENT	=> 1,
 			T_WHITESPACE	=> 1,
 		);
-		if ($removePhpDocComments) $tokensToRemove[T_DOC_COMMENT] = 1;
+		if (count($this->cfg->keepPhpDocComments) === 0) 
+			$tokensToRemove[T_DOC_COMMENT] = 1;
 		foreach ($tokens as & $token) {
 			if (is_array($token)) {
 				$tokenId = $token[0];
@@ -357,9 +357,8 @@ class Packager_Common_Base {
 						isset($chars[substr($result, -1)]) ||
 						isset($chars[$oldPart{0}])
 					) $space = '';
-					if (!$removePhpDocComments && $tokenId == T_DOC_COMMENT) {
+					if ($tokenId == T_DOC_COMMENT) 
 						$oldPart = $this->shrinkPhpCodeReducePhpDocComment($oldPart);
-					}
 					$result .= $space . $oldPart;
 					$space = '';
 				}
@@ -370,23 +369,52 @@ class Packager_Common_Base {
 		return $result;
 	}
 	protected function shrinkPhpCodeReducePhpDocComment ($code) {
-		// keep only @var php doc comment, nothing else
-		preg_match("#(@var)\s+([^\s]+)#", $code, $matches1);
-		if ($matches1) {
-			if (substr($matches1[2], 0, 1) == '$') {
-				preg_match("#(@var)\s+([\$])([^\s]+)\s+([^\s]+)#", $code, $matches2);
-				if ($matches2) {
-					$code = '/** ' . $matches2[0] . ' */';
-				} else {
-					$code = '/** ' . $matches1[0] . ' */';
+		$keepPhpDocComments = $this->cfg->keepPhpDocComments;
+		$result = array();
+		foreach ($keepPhpDocComments as $keepPhpDocComment) {
+			if ($keepPhpDocComment == '@var') {
+				preg_match("#(@var)\s+([^\s]+)#", $code, $matchesVar);
+				if ($matchesVar) {
+					if (substr($matchesVar[2], 0, 1) == '$') {
+						preg_match("#(@var)\s+([\$])([^\s]+)\s+([^\s]+)#", $code, $matchesVarInline);
+						$result[] = $matchesVarInline
+							? $matchesVarInline[0]
+							: $matchesVar[0] ;
+					} else {
+						$result[] = $matchesVar[0];
+					}
 				}
+			} else if ($keepPhpDocComment == '@param') {
+				$index = 0;
+				$paramLength = mb_strlen($keepPhpDocComment);
+				while (TRUE) {
+					$paramPos = mb_strpos($code, $keepPhpDocComment, $index);
+					if ($paramPos === FALSE) break;
+					$dolarPos = mb_strpos($code, '$', $paramPos + $paramLength + 1);
+					if ($dolarPos === FALSE) break;
+					$dolarPosPlusOne = $dolarPos + 1;
+					$nextPos = array(
+						mb_strpos($code, '\r', $dolarPosPlusOne),
+						mb_strpos($code, '\n', $dolarPosPlusOne),
+						mb_strpos($code, ' ', $dolarPosPlusOne),
+						mb_strpos($code, '\t', $dolarPosPlusOne)
+					);
+					foreach ($nextPos as $key => & $nextPosItem) if ($nextPosItem === FALSE) unset($nextPos[$key]);
+					if (!$nextPos) break;
+					$nextPosInt = min($nextPos);
+					$result[] = mb_substr($code, $paramPos, $nextPosInt - $paramPos);
+					$index = $nextPosInt + 1;
+				}
+			} else if ($keepPhpDocComment == '@return') {
+				preg_match("#(@return)\s+([^\s]+)#", $code, $matchesReturn);
+				if ($matchesReturn) $result[] = $matchesReturn[0];
 			} else {
-				$code = '/** ' . $matches1[0] . ' */';
+				preg_match("#" . $keepPhpDocComment . "\s#", $code, $matchesOther);
+				if ($matchesOther) $result[] = trim($matchesOther[0]);
 			}
-		} else {
-			$code = '';
 		}
-		return $code;
+		if (!$result) return '';
+		return '/** '.implode(' ', $result).' */';
 	}
 	protected function completeJobAndParams () {
 		$jobMethod = 'mainJob';
