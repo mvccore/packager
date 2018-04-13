@@ -40,7 +40,7 @@ class Packager_Common_Base {
 		'patternReplacements'		=> array(),
 		'minifyTemplates'			=> 0,
 		'minifyPhp'					=> 0,
-		'keepPhpDocComments'		=> array('@var'),
+		'keepPhpDocComments'		=> array(),
 		// PHP compiling only:
 		'autoloadingOrderDetection'	=> TRUE,
 		'includeFirst'				=> array(),	
