@@ -35,7 +35,7 @@ composer require mvccore/packager
   - `require_once();`, `include_once();`, `require();`, `include();`
   - `new DirectoryIterator();`, `new SplFileInfo();` 
   - `readfile();`, `file_get_contents();`
-  - `file_exists();`, `is_file();`,  `is_dir();`,  `filemtime();`, `filesize();`
+  - `file_exists();`, `is_file();`,  `is_dir();`,  `mkdir()`, `filemtime();`, `filesize();`
   - `simplexml_load_file();`, `parse_ini_file();`, `md5_file();`
 - possibility to define which file system wrapping functions should be keeped and not wrapped
 - for PHP packing - possibility to define files by extension how to store them inside `index.php` result
