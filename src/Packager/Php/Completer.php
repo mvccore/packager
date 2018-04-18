@@ -196,7 +196,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 		// insert files info into wrapper code
 		$this->wrapperCode = str_replace(
 			"'____" . self::$wrapperClassName . "::\$Info____'", 
-			$this->resultFilesInfo . "\n", 
+			"/*____" . self::$wrapperClassName . "::\$Info____*/" . $this->resultFilesInfo . "\n", 
 			$this->wrapperCode
 		);
 

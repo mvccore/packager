@@ -4,6 +4,9 @@ class Packager_Php_Wrapper
 {
 	/** @var string */
 	const FS_MODE = '____\Packager_Php_Wrapper::FS_MODE____';
+	
+	/** @var string */
+	public static $ScriptFilename;
 
 	/** @var string */
 	public static $BasePath;
@@ -57,6 +60,7 @@ class Packager_Php_Wrapper
 	 * @return void
 	 */
 	public static function Init () {
+		self::$ScriptFilename = str_replace('\\', '/', $_SERVER['SCRIPT_FILENAME']);
 		self::$BasePath = str_replace('\\', '/', __DIR__);
 		self::$BasePathLength = mb_strlen(self::$BasePath);
 		if (version_compare(PHP_VERSION, '5.4.0', "<")) {
@@ -513,6 +517,7 @@ class Packager_Php_Wrapper
 	 */
 	public static function IsDir ($filename) {
 		$path = self::NormalizePath($filename);
+		if (isset(self::$Info[$path])) return TRUE;
 		$catched = FALSE;
 		foreach (self::$Info as $pathKey => & $item) {
 			if (strpos($pathKey, $path) === 0) {
@@ -523,6 +528,76 @@ class Packager_Php_Wrapper
 		return $catched;
 	}
 	// Packager_Php_Scripts_Completer::end(is_dir)
+
+	// Packager_Php_Scripts_Completer::start(mkdir)
+	/**
+	 * Makes real directory.
+	 * 
+	 * @param string   $filename
+	 * @param int      $mode
+	 * @param bool     $recursive
+	 * @param resource $context
+	 * 
+	 * @return boolean
+	 */
+	public static function MkDir ($filename, $mode = 0777, $recursive = FALSE, $context = NULL) {
+		$path = self::NormalizePath($filename);
+		$r = FALSE;
+		if (!isset(self::$Info[$path])) {
+			if ($context !== NULL) {
+				$r = mkdir($filename, $mode, $recursive, $context);
+			} else {
+				$r = mkdir($filename, $mode, $recursive);
+			}
+			if ($r) self::_changeItself(
+				'/*____\\Packager_Php_Wrapper::$Info____*/',
+				"'".$path."'=>array('index'=>-1,'mtime'=>".time().",'size'=>0,'lines'=>array(0,0)),"
+			);
+		}
+		return $r;
+	}
+	// Packager_Php_Scripts_Completer::end(mkdir)
+	
+	// Packager_Php_Scripts_Completer::start(_changeItself)
+	/**
+	 * Change php file content itself - add new content after unique `$replacement`.
+	 * Do not put any new line chars into `$newContent`.
+	 * 
+	 * @param string $replacement
+	 * @param string $newContent
+	 * 
+	 * @return boolean
+	 */
+	private static function _changeItself ($replacement, $newContent) {
+		$oldSelf = self::$ScriptFilename;
+		$newSelf = $oldSelf . '.' . uniqid();
+		$oh = @fopen($oldSelf, 'r');
+		$nh = @fopen($newSelf, 'w+');
+		$r1 = FALSE;
+		if ($oh && $nh) {
+			$r1 = TRUE;
+			while (($ol = fgets($oh)) !== FALSE) {
+				$pos = mb_strpos($ol, $replacement);
+				if ($pos !== FALSE) {
+					$ol = mb_substr($ol, 0, $pos)
+						. $replacement
+						. $newContent
+						. mb_substr($ol, $pos + mb_strlen($replacement));
+				}
+				fwrite($nh, $ol);
+			}
+		}
+		@fclose($oh);
+		@fclose($nh);
+		if ($r1) {
+			$newOldSelf = $oldSelf . '.' . uniqid();
+			$r2 = rename($oldSelf, $newOldSelf);
+			$r3 = rename($newSelf, $oldSelf);
+			$r4 = unlink($newOldSelf);
+		}
+		return $r1 && $r2 && $r3 && $r4;
+	}
+	// Packager_Php_Scripts_Completer::end(_changeItself)
 	
 	// Packager_Php_Scripts_Completer::start(file_get_contents)
 	/**
