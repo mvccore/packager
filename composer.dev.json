@@ -19,12 +19,18 @@
 		"name": "Tom Flidr",
 		"homepage": "https://github.com/tomFlidr"
 	}],
+	"repositories": [{
+		"packagist.org": false
+	},{
+		"type": "path",
+		"url": "../../../packages/mrclay/minify"
+	}],
 	"require": {
 		"php": ">=5.3.0",
-		"mrclay/minify": "2.3.*"
+		"mrclay/minify": "*"
 	},
 	"autoload": {
 		"classmap": ["src/"]
 	},
-	"minimum-stability": "stable"
+	"minimum-stability": "dev"
 }
