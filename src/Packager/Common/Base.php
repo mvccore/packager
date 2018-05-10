@@ -274,7 +274,33 @@ class Packager_Common_Base {
 		$this->cfg = (object) $this->cfg;
 		$this->compilationType = strtoupper(str_replace('Packager_', '', get_class($this)));
 		$this->_checkCommonConfiguration($cfg);
+		$this->_changeCurrentWorkingDirectoryToProjectRoot();
 		return $this;
+	}
+	/**
+	 * Print all files included by exclude/include pattern rules directly to output
+	 * 
+	 * @param array $cfg 
+	 * 
+	 * @return void
+	 */
+	public function PrintFilesToPack ($cfg = array()) {
+		$this->Run($cfg);
+		// complete $this->files as ussual
+		$this->completeAllFiles();
+		$phpFiles = array();
+		$staticFiles = array();
+		foreach($this->files->all as $path => $fileItem){
+			if ($fileItem->extension == 'php') {
+				$phpFiles[] = $path;
+			} else {
+				$staticFiles[] = $path;
+			}
+		}
+		$this->files->php = $phpFiles;
+		$this->files->static = $staticFiles;
+		unset($this->files->all);
+		$this->notify("Files to pack notification");
 	}
 
 	/************************************* static ************************************/
@@ -296,7 +322,7 @@ class Packager_Common_Base {
 		return $result;
 	}
 	public static function ErrorHandler ($severity = NULL, $message = NULL, $file = NULL, $line = NULL, $context = NULL) {
-		//var_dump(func_get_args());
+		var_dump(func_get_args());
 		
 		$backTrace = debug_backtrace();
 		foreach ($backTrace as & $backTraceItem) {
@@ -326,7 +352,7 @@ class Packager_Common_Base {
 	public static function ShutdownHandler () {
 		$exception = error_get_last();
 		if (!is_null($exception)) var_dump($exception);
-		//var_dump(get_included_files());
+		var_dump(get_included_files());
 	}
 	/************************************* dynamic ************************************/
 	protected function shrinkPhpCode (& $code = '') {
@@ -469,11 +495,11 @@ class Packager_Common_Base {
 			//$jobResult = file_get_contents($subProcessUrl); // do not use file_get_contents(), when http output is 500, file_get_contents() returns false only..
 			
 			$cUrlResult = $this->_processGetRequest($subProcessUrl);
-			if ($cUrlResult->code == 500) {
+			/*if ($cUrlResult->code == 500) {
 				echo '<pre>';
 				print_r($cUrlResult->info->url);
 				echo '</pre>';
-			}
+			}*/
 			$jobResult = $cUrlResult->content;
 		}
 		if ($resultType == 'json') {
@@ -525,10 +551,6 @@ class Packager_Common_Base {
 					'content'			=> file_get_contents($fullPath),
 				);
 
-				if (!in_array($extension, static::$fileTypesStoringTypes['binary'])) {
-					self::_convertFilecontentToUtf8Automaticly($fileItem);
-				}
-
 				if ($this->compilationType == 'PHP') {
 					$fileItem->instance				= $item;
 					$fileItem->filemtime			= filemtime($fullPath);
@@ -542,6 +564,8 @@ class Packager_Common_Base {
 		}
 		
 		$this->excludeFilesByCfg($allFiles);
+		
+		$this->encodeFilesToUtf8($allFiles);
 		
 		if ($this->compilationType == 'PHP') {
 			$this->files->all = $allFiles;
@@ -570,6 +594,13 @@ class Packager_Common_Base {
 					}
 					if ($unset) unset($allFiles[$fullPath]);
 				}
+			}
+		}
+	}
+	protected function encodeFilesToUtf8 (& $allFiles) {
+		foreach ($allFiles as $fullPath => & $fileInfo) {
+			if (!in_array($fileInfo->extension, static::$fileTypesStoringTypes['binary'])) {
+				self::_convertFilecontentToUtf8Automaticly($fileInfo);
 			}
 		}
 	}
@@ -719,5 +750,22 @@ class Packager_Common_Base {
 				return '<td>' . $item['class'] . '::' . $item['function'] . '();&nbsp;</td><td>' . $item['file'] . ':' . $item['line'] . '</td>';
 			}
 		}
+	}
+	private function _changeCurrentWorkingDirectoryToProjectRoot () {
+		$startDir = rtrim(str_replace('\\', '/', getcwd()), '/');
+		$projectRootDir = '';
+		// try to detect current or any parent folder with composer.json
+		$currentDir = $startDir;
+		while (TRUE) {
+			if (file_exists($currentDir . '/vendor/autoload.php')) {
+				$projectRootDir = $currentDir;
+				break;
+			} else {
+				$lastSlashPos = mb_strrpos($currentDir, '/');
+				if ($lastSlashPos === FALSE) break;
+				$currentDir = mb_substr($currentDir, 0, $lastSlashPos);
+			}
+		}
+		if ($projectRootDir && $startDir !== $projectRootDir) chdir($projectRootDir);
 	}
 }

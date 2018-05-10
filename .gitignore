@@ -57,3 +57,4 @@ composer.lock
 
 *.phpproj
 *.phpproj.user
+composer.dev.json

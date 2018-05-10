@@ -273,29 +273,4 @@ class Packager_Php extends Packager_Php_Completer
 		list($jobMethod, $params) = $this->completeJobAndParams();
 		$this->$jobMethod($params);
 	}
-	/**
-	 * Print all files included by exclude/include pattern rules directly to output
-	 * 
-	 * @param array $cfg 
-	 * 
-	 * @return void
-	 */
-	public function PrintFilesToPack ($cfg = array()) {
-		parent::Run($cfg);
-		// complete $this->files as ussual
-		$this->completeAllFiles();
-		$phpFiles = array();
-		$staticFiles = array();
-		foreach($this->files->all as $path => $fileItem){
-			if ($fileItem->extension == 'php') {
-				$phpFiles[] = $path;
-			} else {
-				$staticFiles[] = $path;
-			}
-		}
-		$this->files->php = $phpFiles;
-		$this->files->static = $staticFiles;
-		unset($this->files->all);
-		$this->notify("Files to pack notification");
-	}
 }

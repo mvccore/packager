@@ -4,41 +4,34 @@ include_once(__DIR__.'/Order.php');
 
 class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 {
+	protected $includedFiles = array();
+	protected $composerClassLoader = NULL;
 	private static $_includePaths = array(
 		'',
 		'/App', 
 		'/Libs',
 	);
-	public function AutoloadCall ($className) {
+	public static function AutoloadCall ($className) {
 		$fileName = str_replace(array('_', '\\'), '/', $className) . '.php';
 		$includePath = '';
 		foreach (self::$_includePaths as $path) {
-			$fullPath = $this->cfg->sourcesDir . $path . '/' . $fileName;
+			$fullPath = self::$instance->cfg->sourcesDir . $path . '/' . $fileName;
 			if (file_exists($fullPath)) {
 				$includePath = $fullPath;
 				break;
 			}
 		}
-		//if ($includePath) $this->autoLoadedFiles[] = $includePath;
 		if ($includePath) {
-			include_once($includePath);
+			self::$instance->includedFiles[] = self::_virtualRealPath($includePath);
+			return include_once($includePath);
 		} else {
-			$status = 0;
-			$backTraceLog = debug_backtrace();
-			foreach ($backTraceLog as $backTraceInfo) {
-				if ($status === 0 && $backTraceInfo['function'] == 'spl_autoload_call') {
-					$status = 1;
-				} else if ($status == 1 && $backTraceInfo['function'] == 'class_exists') {
-					$status = 2;
-					break;
-				} else if ($status > 0) {
-					break;
-				}
-			}
-			if ($status < 2) {
-				$this->exceptionsMessages[] = 'Class "' . $className . '" not found by class_exists() method.';
+			$includePath = self::$instance->composerClassLoader->findFile($className);
+			if ($includePath) {
+				self::$instance->includedFiles[] = self::_virtualRealPath($includePath);
+				return include_once($includePath);
 			}
 		}
+		return FALSE;
 	}
     protected function completePhpFilesDependencies () {
 		// complete dependencies - requires
@@ -252,6 +245,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		$autoloadJobResult = $this->executeJobAndGetResult(
 			'autoloadJob', array('file' => $fileInfo->fullPath), 'json'
 		);
+		//var_dump([$fileInfo->fullPath, $autoloadJobResult]);
 		if ($autoloadJobResult instanceof stdClass && $autoloadJobResult->success) {
 			$result = $autoloadJobResult->includedFiles;
 		} else if ($fileInfo->relPath !== '/index.php') {
@@ -285,7 +279,8 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 			$this->exceptionsMessages[] = 'File is an empty string.';
 		} else {
 			// store included files count included till now to remove them later at the end
-			self::$instance->includedFilesCountTillNow = count(get_included_files());
+			$this->includedFiles = get_included_files();
+			$this->includedFilesCountTillNow = count($this->includedFiles);
 			if ($this->_prepareIncludePathsOrComposerAutoloadAndErrorHandlers($file)) {
 				// proces target file include command
 				try {
@@ -310,13 +305,15 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		));
 	}
 	private function _prepareIncludePathsOrComposerAutoloadAndErrorHandlers ($file) {
-		// try to include composer loader usualy placed in
+		// try to find composer loader usualy placed in $documentRoot/vendor/autoload.php
 		$scriptFileName = $_SERVER['SCRIPT_FILENAME'];
 		$scriptFileName = strtoupper(mb_substr($scriptFileName, 0, 1)) . mb_substr($scriptFileName, 1);
 		$lastSlash = mb_strrpos($scriptFileName, DIRECTORY_SEPARATOR);
 		$documentRoot = ($lastSlash !== FALSE) ? mb_substr($scriptFileName, 0, $lastSlash) : $scriptFileName ;
 		$wrongComposerAutoloadFullPath = $documentRoot . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+		// count allready included files
 		$alreadyIncludedFiles = get_included_files();
+		// check if packager use include_once("vendor/autoload.php") or not
 		if (in_array($wrongComposerAutoloadFullPath, $alreadyIncludedFiles)) {
 			$this->exceptionsMessages = array(
 				"Do not use 'include_once(\"vendor/autoload.php\");' for result packing.",
@@ -329,8 +326,9 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		$errorMsgs = array();
 		$errorTraces = array();
 		if (file_exists($composerAutoloadFullPath)) {
+			// if project is using composer autoloader
 			try {
-				include_once($composerAutoloadFullPath);
+				$this->composerClassLoader = include_once($composerAutoloadFullPath);
 			} catch (Exception $e1) {
 				//var_dump($e1);
 				$errorMsgs = array($e1->getMessage());
@@ -350,17 +348,12 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 				// autoload or in composer autoload static includes array
 				return FALSE;
 			}
+			spl_autoload_register(array(__CLASS__, 'AutoloadCall'), false, true);
 		} else {
 			// if composer autoload doesn't exists, MvcCore project is probably
-			// developed with manualy placed files in docment root, '/App' dir or in 'Libs' dir,
-			// so extend include path in those directories
-			$phpInclPath = get_include_path();
-			foreach (self::$_includePaths as $path) {
-				$phpInclPath .= PATH_SEPARATOR . $sourcesDir . '/' . ltrim($path, '/');
-			}
-			set_include_path($phpInclPath);
+			// developed with manualy placed files in docment root, '/App' dir or in '/Libs' dir,
+			spl_autoload_register(array(__CLASS__, 'AutoloadCall'));
 		}
-		spl_autoload_register(array(__CLASS__, 'AutoloadCall'));
 		// set custom error handlers to catch eval warnings and errors
 		register_shutdown_function(array(__CLASS__, 'ShutdownHandler'));
 		set_exception_handler(array(__CLASS__, 'ExceptionHandler'));
@@ -379,7 +372,8 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 	}
 	public static function CompleteIncludedFilesByTargetFile () {
 		$includedFilesCountTillNow = self::$instance->includedFilesCountTillNow;
-		$allIncludedFiles = array_slice(get_included_files(), $includedFilesCountTillNow);
+		//$allIncludedFiles = array_slice(get_included_files(), $includedFilesCountTillNow);
+		$allIncludedFiles = array_slice(self::$instance->includedFiles, $includedFilesCountTillNow);
 		$autoLoadedFiles = array();
 		foreach ($allIncludedFiles as $includedFileFullPath) {
 			$autoLoadedFiles[] = str_replace('\\', '/', $includedFileFullPath);
@@ -397,5 +391,26 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 			}
 		}
 		return $result;
+	}
+	private static function _virtualRealPath ($path) {
+		$path = str_replace('\\', '/', $path);
+		$path = rtrim($path, '/');
+		while (strpos($path, '//') !== FALSE)
+			$path = str_replace('//', '/', $path);
+		$parts = explode('/', $path);
+		$absolutes = array();
+		foreach ($parts as $part) {
+			if (strlen($part) === 0) {
+				$absolutes[] = $part;
+				continue;
+			}
+			if ($part == '.') continue;
+			if ($part == '..') {
+				array_pop($absolutes);
+			} else {
+				$absolutes[] = $part;
+			}
+		}
+		return implode('/', $absolutes);
 	}
 }
