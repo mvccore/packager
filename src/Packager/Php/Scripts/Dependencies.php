@@ -8,7 +8,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 	protected $composerClassLoader = NULL;
 	private static $_includePaths = array(
 		'',
-		'/App', 
+		'/App',
 		'/Libs',
 	);
 	public static function AutoloadCall ($className) {
@@ -103,7 +103,6 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		$dependentFilesByRequiresAndIncludes = $this->_completeDependenciesByReqsAndInclsAbsolutizeCapturedPaths(
 			$fileInfo, $capturedItems
 		);
-
 		return $dependentFilesByRequiresAndIncludes;
 	}
 	private function _completeDependenciesByFileContentCapture (& $fileInfo) {
@@ -130,6 +129,15 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 						$backReferenceStr .= $matches[$backReferenceIndex][$matchKey][0];
 					}
 					$catchedTextIndex = $matchItem[1];
+					// this is very very very crazy result fix from `preg_match_all()` with PREG_OFFSET_CAPTURE
+					$catchedTextIndexFix = mb_strpos(
+						$fileInfo->content, $matches[2][0][0],
+						$catchedTextIndex - mb_strlen($matches[2][0][0]) - 4
+					);
+					if ($catchedTextIndexFix !== $catchedTextIndex && $catchedTextIndexFix !== FALSE) {
+						$catchedTextIndex = $catchedTextIndexFix;
+					}
+					// end of fix
 					$catchedTextLength = mb_strlen($matchItem[0]);
 					$capturedItems[] = array($backReferenceStr, $catchedTextIndex, $catchedTextLength);
 				}
@@ -162,7 +170,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 				$addDependency = FALSE;
 			}
 			if ($this->errorHandlerData) {
-				// if there was any unknown variables in captured inclide_once() or require_once() content,
+				// if there was any unknown variables in captured include_once() or require_once() content,
 				// do not add any evaluated dependency, because there is not relevant eval result
 				$addDependency = FALSE;
 				$this->errorHandlerData = array();
@@ -185,8 +193,13 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		if (count($capturedItems) > 0) {
 			$newFileContent = '';
 			$previousItem = array();
+			$currentIndex = 0;
+			$currentLength = 0;
+			//var_dump([$fileInfo->fullPath, $capturedItems]);
 			foreach ($capturedItems as $key => & $capturedItem) {
-				$previousItem = ($key > 0) ? $capturedItems[$key - 1] : array(0, 0, 0) ;
+				$previousItem = ($key > 0)
+					? $capturedItems[$key - 1]
+					: array(0, 0, 0) ;
 				$previousIndex = $previousItem[1];
 				$previousLength = $previousItem[2];
 				$currentIndex = $capturedItem[1];
@@ -207,24 +220,26 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 			$realPath = realpath($requiredOrIncluded);
 			$fullPath = '';
 			if ($realPath !== FALSE) {
-				$fullPath = $realPath;
+				$fullPath = self::_virtualRealPath($requiredOrIncluded);
 			} else {
+				$fullPathLastSlash = strrpos($fileInfo->fullPath, '/');
+				$fullPathDir = $fullPathLastSlash !== FALSE
+					? substr($fileInfo->fullPath, 0, $fullPathLastSlash)
+					: $fileInfo->fullPath ;
+				$possibleFullPath = $fullPathDir . '/' . ltrim($requiredOrIncluded, '/');
+				$realPath = realpath($possibleFullPath);
+				if ($realPath !== FALSE) {
+					$fullPath = self::_virtualRealPath($possibleFullPath);
+				}
+			}
+			if (!$fullPath) {
 				foreach (self::$_includePaths as $possibleAutoloadingDirectory) {
 					$possibleFullPath = $this->cfg->sourcesDir . $possibleAutoloadingDirectory . '/' . ltrim($requiredOrIncluded, '/');
 					$realPath = realpath($possibleFullPath);
 					if ($realPath !== FALSE) {
-						$fullPath = $realPath;
+						$fullPath = self::_virtualRealPath($possibleFullPath);
 						break;
 					}
-				}
-			}
-			if (!$fullPath) {
-				$fullPathLastSlash = strrpos($fileInfo->fullPath, '/');
-				$fullPathDir = $fullPathLastSlash !== FALSE ? substr($fileInfo->fullPath, 0, $fullPathLastSlash) : $fileInfo->fullPath ;
-				$possibleFullPath = $fullPathDir . '/' . ltrim($requiredOrIncluded, '/');
-				$realPath = realpath($possibleFullPath);
-				if ($realPath !== FALSE) {
-					$fullPath = $realPath;
 				}
 			}
 			if (!$fullPath) {
@@ -233,7 +248,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 			$byRequiresAndIncludes[$key] = str_replace('\\', '/', $fullPath);
 		}
 		// remove duplicates and foreing files
-		foreach ($byRequiresAndIncludes as $byRequiresAndIncludesItem) {
+		foreach ($byRequiresAndIncludes as $key => $byRequiresAndIncludesItem) {
 			if (isset($this->files->all[$byRequiresAndIncludesItem]) && !isset($result[$byRequiresAndIncludesItem])) {
 				$result[$byRequiresAndIncludesItem] = 1;
 			}
@@ -251,8 +266,8 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		} else if ($fileInfo->relPath !== '/index.php') {
 			if ($autoloadJobResult->type == 'json') {
 				$this->sendResult(
-					implode('<br />', $autoloadJobResult->exceptionsMessages), 
-					$autoloadJobResult->exceptionsTraces, 
+					implode('<br />', $autoloadJobResult->exceptionsMessages),
+					$autoloadJobResult->exceptionsTraces,
 					'error'
 				);
 			} else {
@@ -264,7 +279,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 					 . "Is this file used also in your development versions? $newLine"
 					 . "Or does this file generate any output by simple include() $newLine "
 					 . "which breaks compiling process?",
-					$fileInfo->fullPath . "\r\n" . $autoloadJobResult->data, 
+					$fileInfo->fullPath . "\r\n" . $autoloadJobResult->data,
 					'error'
 				);
 			}
@@ -344,7 +359,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 				}
 			}
 			if ($this->_isFileIncluded($file)) {
-				// file has no dependency, because it's part of composer 
+				// file has no dependency, because it's part of composer
 				// autoload or in composer autoload static includes array
 				return FALSE;
 			}

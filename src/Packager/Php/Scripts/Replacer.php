@@ -65,10 +65,10 @@ class Packager_Php_Scripts_Replacer
 		$this->classBracketsLevel = 0;
 		$this->functionsStates = array(0);
 		$this->functionsBracketsLevels = array(0);
-		
+
 		$this->classFnDynamicEnvironment = FALSE;
 		$this->classFnDynamicMonitorIndex = -1;
-		
+
 		$this->classFnStaticEnvironment = FALSE;
 		$this->classFnStaticMonitorIndex = -1;
 	}
@@ -250,7 +250,7 @@ class Packager_Php_Scripts_Replacer
 				$this->classFnDynamicMonitorIndex = -1;
 			}
 			if ($this->classFnStaticEnvironment && $this->classFnStaticMonitorIndex === $monitorLastIndex) {
-				
+
 				$this->classFnStaticEnvironment = FALSE;
 				$this->classFnStaticMonitorIndex = -1;
 			}
@@ -280,7 +280,7 @@ class Packager_Php_Scripts_Replacer
 				if (is_object($replacement)) {
 					// if we have current php function call between php replacements
 					$newPart = $this->processPhpCodeReplacementObjectType(
-						$replacement, $oldPart
+						$replacement, $oldPart, $i
 					);
 				} else if (is_array($replacement)) {
 					// if there is configured item in replacements array in type: string,
@@ -297,7 +297,7 @@ class Packager_Php_Scripts_Replacer
 	}
 	// php function calls - any_php_build_in_function() or programmerCustomFunction()
 	// php class names, keywords, stdClass keys, TRUE/FALSE, public constants like PHP_EOL and other php shit...
-	protected function processPhpCodeReplacementObjectType ($replacement, $oldPart) {
+	protected function processPhpCodeReplacementObjectType ($replacement, $oldPart, $i) {
 		$newPart = '';
 		if (isset($replacement->$oldPart)) {
 			// determinate if current function call is necessary to process by config
@@ -305,6 +305,14 @@ class Packager_Php_Scripts_Replacer
 			if (isset(self::$phpFunctionsToProcess[$oldPart])) {
 				// yes - by configuration is necessary to replace this php function call - do it
 				$newPart = str_replace('%WrapperClass%', self::$wrapperClassName, $replacement->$oldPart);
+				// check if before replaced function call is backslash allready and if backslash is also first char in new part
+				if (mb_substr(self::$wrapperClassName, 0, 1) == '\\' && $i > 0) {
+					$previousToken = $this->tokens[$i - 1];
+					if (gettype($previousToken) == 'array' && $previousToken[1] == '\\') {
+						// previous token is already a backslash - remove backslash from new part
+						$newPart = mb_substr($newPart, 1);
+					}
+				}
 				self::addToReplacementStatistics($oldPart);
 			} else {
 				// no - keep original php function call
@@ -372,7 +380,7 @@ class Packager_Php_Scripts_Replacer
 				if (isset($continueTokens[$tokenId])) {
 					continue;
 				} else if (isset($endingTokens[$tokenId])) {
-					break;	
+					break;
 				} else if ($tokenId == T_STATIC) {
 					$staticCatched = TRUE;
 					break;
