@@ -4,8 +4,8 @@ include_once(__DIR__.'/Completer.php');
 
 class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 {
-    protected function completePhpFilesOrder () {
-		$this->filesPhpOrder = array();
+	protected function completePhpFilesOrder () {
+		$this->filesPhpOrder = [];
 		// order dependencies to process next steps faster
 		$this->_orderDependenciesByCounts();
 		// order by completed dependencies
@@ -14,7 +14,7 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 		$this->_orderPhpFilesByPreferedConfiguration('includeFirst');
 		$this->_orderPhpFilesByPreferedConfiguration('includeLast');
 		// free memory
-		$this->filesPhpDependencies = array();
+		$this->filesPhpDependencies = [];
 	}
 	private function _orderDependenciesByCounts () {
 		// order records from lowest count of requires to highest count of requires
@@ -106,7 +106,7 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 					unset($this->filesPhpDependencies[$fullPath]);
 				} else {
 					// if file requires anything - walk on requires levels to complete recursive order
-					$filesToOrder = array($fullPath => 1);
+					$filesToOrder = [$fullPath => 1];
 					$this->_getAllRequiresFilesToOrderedRecursive(
 						$filesDependenciesItem->requires,
 						$filesToOrder
@@ -131,7 +131,7 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 			$fileItem = $this->filesPhpDependencies[$require];
 			if (!$fileItem->requires) continue; // file does'nt require anything
 			
-			$filesToOrder = array_merge(array($require => 1), $filesToOrder);
+			$filesToOrder = array_merge([$require => 1], $filesToOrder);
 
 			$this->_getAllRequiresFilesToOrderedRecursive(
 				$fileItem->requires, $filesToOrder, $level + 1
@@ -144,7 +144,7 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 		$keysToIterate = array_keys($this->filesPhpDependencies);
 		$keysLength = count($keysToIterate);
 		for ($i = 0; $i < $keysLength; $i += 1) {
-			$unsafeOrderDetectionRequires = array();
+			$unsafeOrderDetectionRequires = [];
 			$fullPath = $keysToIterate[$i];
 			// $filesDependenciesItem - current file to process it's order
 			$filesDependenciesItem = $this->filesPhpDependencies[$fullPath];
@@ -216,7 +216,7 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 	private function _orderPhpFilesByPreferedConfiguration ($cfgKey) {
 		if (count($this->cfg->$cfgKey) > 0) {
 			$filesPhpOrder = $this->filesPhpOrder;
-			$fullPathsToReorder = array();
+			$fullPathsToReorder = [];
 			foreach ($this->cfg->$cfgKey as $fullPath) {
 				if (is_file($fullPath)) {
 					if (!isset($this->files->all[$fullPath])) continue;

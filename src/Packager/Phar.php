@@ -11,7 +11,7 @@ class Packager_Phar extends Packager_Phar_ResultCompleter
 	 * 
 	 * @return Packager_Phar
 	 */
-	public static function Create ($cfg = array()) {
+	public static function Create ($cfg = []) {
 		return parent::Create($cfg);
 	}
 	/**
@@ -21,7 +21,7 @@ class Packager_Phar extends Packager_Phar_ResultCompleter
 	 * 
 	 * @return Packager_Phar
 	 */
-	public static function Get ($cfg = array()) {
+	public static function Get ($cfg = []) {
 		return parent::Get($cfg);
 	}
 	/**
@@ -53,7 +53,7 @@ class Packager_Phar extends Packager_Phar_ResultCompleter
 	 * 
 	 * @return Packager_Phar
 	 */
-	public function SetExcludePatterns ($excludePatterns = array()) {
+	public function SetExcludePatterns ($excludePatterns = []) {
 		return parent::SetExcludePatterns($excludePatterns);
 	}
 	/**
@@ -64,7 +64,7 @@ class Packager_Phar extends Packager_Phar_ResultCompleter
 	 * 
 	 * @return Packager_Phar
 	 */
-	public function AddExcludePatterns ($excludePatterns = array()) {
+	public function AddExcludePatterns ($excludePatterns = []) {
 		return parent::AddExcludePatterns($excludePatterns);
 	}
 	/**
@@ -77,7 +77,7 @@ class Packager_Phar extends Packager_Phar_ResultCompleter
 	 * 
 	 * @return Packager_Php
 	 */
-	public function SetPatternReplacements ($patternReplacements = array()) {
+	public function SetPatternReplacements ($patternReplacements = []) {
 		return parent::SetPatternReplacements($patternReplacements);
 	}
 	/**
@@ -89,7 +89,7 @@ class Packager_Phar extends Packager_Phar_ResultCompleter
 	 * 
 	 * @return Packager_Php
 	 */
-	public function AddPatternReplacements ($patternReplacements = array()) {
+	public function AddPatternReplacements ($patternReplacements = []) {
 		return parent::AddPatternReplacements($patternReplacements);
 	}
 	/**
@@ -101,7 +101,7 @@ class Packager_Phar extends Packager_Phar_ResultCompleter
 	 * 
 	 * @return Packager_Phar
 	 */
-	public function SetStringReplacements ($stringReplacements = array()) {
+	public function SetStringReplacements ($stringReplacements = []) {
 		return parent::SetStringReplacements($stringReplacements);
 	}
 	/**
@@ -112,7 +112,7 @@ class Packager_Phar extends Packager_Phar_ResultCompleter
 	 * 
 	 * @return Packager_Phar
 	 */
-	public function AddStringReplacements ($stringReplacements = array()) {
+	public function AddStringReplacements ($stringReplacements = []) {
 		return parent::AddStringReplacements($stringReplacements);
 	}
 	/**
@@ -143,7 +143,7 @@ class Packager_Phar extends Packager_Phar_ResultCompleter
 	 * 
 	 * @return Packager_Phar
 	 */
-	public function MergeConfiguration ($cfg = array()) {
+	public function MergeConfiguration ($cfg = []) {
 		return parent::MergeConfiguration($cfg);
 	}
 	/**
@@ -153,7 +153,7 @@ class Packager_Phar extends Packager_Phar_ResultCompleter
 	 * 
 	 * @return Packager_Phar
 	 */
-	public function Run ($cfg = array()) {
+	public function Run ($cfg = []) {
 		parent::Run($cfg);
 		list($jobMethod, $params) = $this->completeJobAndParams();
 		$this->$jobMethod($params);

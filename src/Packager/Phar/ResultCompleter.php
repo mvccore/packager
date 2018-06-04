@@ -4,24 +4,24 @@ include_once(__DIR__.'/../Common/Base.php');
 
 class Packager_Phar_ResultCompleter extends Packager_Common_Base
 {
-    private static $_pharNotAllowedMsg = array(
+	private static $_pharNotAllowedMsg = [
 		'It is not allowed to create PHAR archive on your computer.',
 		'Go to "php.ini" and allow PHAR archive creation by set up "phar.readonly = 0".'
-	);
+	];
 	private $_jsonResult;
-	protected function mainJob ($params = array()) {
+	protected function mainJob ($params = []) {
 		$firstJobResult = $this->executeJobAndGetResult(
-			'completingJob', array()
+			'completingJob', []
 		);
 		if ($firstJobResult instanceof stdClass && $firstJobResult->success) {
 			$pharAbsPath = $firstJobResult->data->phar;
 			$phpAbsPath = $firstJobResult->data->php;
 			$secondJobResult = $this->executeJobAndGetResult(
 				'renameJob', 
-				array(
+				[
 					'phar'	=> $pharAbsPath,
 					'php'	=> $phpAbsPath,
-				),
+				],
 				'json'
 			);
 			if ($secondJobResult instanceof stdClass && $secondJobResult->success) {
@@ -49,30 +49,30 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 			}
 		}
 	}
-	protected function completingJob ($params = array()) {
-		$this->_jsonResult = (object) array(
+	protected function completingJob ($params = []) {
+		$this->_jsonResult = (object) [
 			'success'	=> TRUE,
-			'data'		=> array(),
-		);
+			'data'		=> [],
+		];
 		$this->completeAllFiles();
 		$this->_processPhpCode();
 		list($releaseDir, $releaseFileNameWithoutExt) = $this->_completeBuildPaths();
 		$this->_buildPharArchive($releaseDir, $releaseFileNameWithoutExt);
 		$this->sendJsonResultAndExit($this->_jsonResult);
 	}
-	protected function renameJob ($params = array()) {
-		$result = (object) array(
+	protected function renameJob ($params = []) {
+		$result = (object) [
 			'success'	=> TRUE,
-			'data'		=> array(),
-		);
+			'data'		=> [],
+		];
 		try {
 			rename($params['phar'],  $params['php']);
 		} catch (Exception $e) {
 			$result->success = FALSE;
-			$result->data = array(
+			$result->data = [
 				$e->getMessage(),
 				$e->getTrace(),
-			);
+			];
 		}
 		$this->sendJsonResultAndExit($result);
 	}
@@ -125,9 +125,9 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 		@unlink($releaseDir . '/' . $releaseFileNameWithoutExt . '.phar');
 		@unlink($releaseDir . '/' . $releaseFileNameWithoutExt . '.php');
 
-		return array(
+		return [
 			$releaseDir, $releaseFileNameWithoutExt
-		);
+		];
 	}
 	private function _buildPharArchive ($releaseDir, $releaseFileNameWithoutExt) {
 		$archive = NULL;
@@ -142,23 +142,23 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 			$m = $e1->getMessage();
 			if (mb_strpos($m, 'disabled by the php.ini setting phar.readonly') !== FALSE) {
 				$this->_jsonResult->success = FALSE;
-				$this->_jsonResult->data = array(
+				$this->_jsonResult->data = [
 					self::$_pharNotAllowedMsg[0],
 					str_replace('php.ini', php_ini_loaded_file(), self::$_pharNotAllowedMsg[1]),
-				);
+				];
 			} else {
 				$this->_jsonResult->success = FALSE;
-				$this->_jsonResult->data = array(
+				$this->_jsonResult->data = [
 					$e1->getMessage(),
 					$e1->getTrace(),
-				);
+				];
 			}
 		} catch (Exception $e2) {
 			$this->_jsonResult->success = FALSE;
-			$this->_jsonResult->data = array(
+			$this->_jsonResult->data = [
 				$e2->getMessage(),
 				$e2->getTrace(),
-			);
+			];
 		} finally {
 			if ($this->_jsonResult->data) return;
 		}
@@ -168,8 +168,8 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 			.'include_once("phar://' . $releaseFileNameWithoutExt . '.phar/index.php");'
 			.'__HALT_COMPILER();');
 		
-		$incScripts = array();
-		$incStatics = array();
+		$incScripts = [];
+		$incStatics = [];
 		//$archive->startBuffering();
 		foreach ($this->files as $fileInfo) {
 			$archive[$fileInfo->relPath] = $fileInfo->content;
@@ -184,14 +184,14 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 		@$archive->buildFromIterator(); // writes archive on hard drive
 		unset($archive); // frees memory, run rename operation without any conflict
 		
-		$this->_jsonResult->data = array(
+		$this->_jsonResult->data = [
 			'phar'		=> $releaseDir . '/' . $releaseFileNameWithoutExt . '.phar', 
 			'php'		=> $releaseDir . '/' . $releaseFileNameWithoutExt . '.php',
-			'incl'		=> array(
+			'incl'		=> [
 				'scripts'	=> $incScripts,
 				'statics'	=> $incStatics,
-			),
-		);
+			],
+		];
 	}
 	protected function notify ($incFiles) {
 		$scriptsCount = count($incFiles->scripts);

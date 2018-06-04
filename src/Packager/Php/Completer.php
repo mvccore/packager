@@ -4,15 +4,15 @@ include_once(__DIR__.'/Scripts/Dependencies.php');
 
 class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 {
-    private static $_universalStoringType = 'base64';
-	private static $_extensionsAndStoringTypes = array();
-	private static $_fileTypesForWhiteSpaceTrim = array(
+	private static $_universalStoringType = 'base64';
+	private static $_extensionsAndStoringTypes = [];
+	private static $_fileTypesForWhiteSpaceTrim = [
 		'css','htc','js','txt','svg','ini','htm','html','phtml','xml',
-	);
-	protected function autoloadJob ($params = array()) {
+	];
+	protected function autoloadJob ($params = []) {
 		$this->completePhpFilesDependenciesByAutoloadDeclaration($params['file']);
 	}
-	protected function mainJob ($params = array()) {
+	protected function mainJob ($params = []) {
 		// complete $this->files as ussual
 		$this->completeAllFiles();
 		// complete dependencies array by include_once(), require_once() and autoloading
@@ -38,7 +38,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 			}
 		}
 		if ($this->cfg->phpFsMode == Packager_Php::FS_MODE_STRICT_HDD) {
-			$this->files->static = array();
+			$this->files->static = [];
 		} else {
 			$fullPaths = array_keys($this->files->all);
 			for ($i = 0, $l = count($fullPaths); $i < $l; $i += 1) {
@@ -48,8 +48,8 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 			}
 		}
 		// frees memory
-		$this->files->all = array();
-		$this->filesPhpOrder = array();
+		$this->files->all = [];
+		$this->filesPhpOrder = [];
 	}
 	private function _completeResult () {
 		self::_setUpExtensionsAndStoringTypes();

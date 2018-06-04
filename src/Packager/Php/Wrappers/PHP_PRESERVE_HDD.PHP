@@ -367,7 +367,7 @@ class Packager_Php_Wrapper
 	 * Get static file content by store type and store index (decode gzip string if necessary)
 	 * 
 	 * @param string  $store 
-	 * @param int     $index 
+	 * @param int	 $index 
 	 * @param boolean $decodeGzip 
 	 * 
 	 * @return string
@@ -544,8 +544,8 @@ class Packager_Php_Wrapper
 	 * Makes real directory.
 	 * 
 	 * @param string   $filename
-	 * @param int      $mode
-	 * @param bool     $recursive
+	 * @param int	  $mode
+	 * @param bool	 $recursive
 	 * @param resource $context
 	 * 
 	 * @return boolean
@@ -609,8 +609,8 @@ class Packager_Php_Wrapper
 	 * @param string   $filename
 	 * @param boolean  $use_include_path
 	 * @param resource $context
-	 * @param int      $offset
-	 * @param int      $maxlen
+	 * @param int	  $offset
+	 * @param int	  $maxlen
 	 * 
 	 * @return string|bool
 	 */
@@ -636,7 +636,7 @@ class Packager_Php_Wrapper
 	 * 
 	 * @param string  $filename 
 	 * @param boolean $process_sections 
-	 * @param int     $scanner_mode 
+	 * @param int	 $scanner_mode 
 	 * 
 	 * @return array|bool
 	 */
@@ -686,7 +686,7 @@ class Packager_Php_Wrapper
 	 * 
 	 * @param string  $path 
 	 * @param string  $class_name 
-	 * @param int     $options 
+	 * @param int	 $options 
 	 * @param string  $ns 
 	 * @param boolean $is_prefix 
 	 * 
@@ -885,26 +885,26 @@ class Packager_Php_Wrapper_DirectoryIterator extends DirectoryIterator {
 		} else {
 			parent::rewind();
 		}
-    }
+	}
 	public function current() {
 		if (!$this->_hdd) return $this->_files[$this->_position];
-        return parent::current();
-    }
-    public function key() {
+		return parent::current();
+	}
+	public function key() {
 		if (!$this->_hdd) return $this->_position;
-        return parent::key();
-    }
-    public function next() {
-        if (!$this->_hdd) {
+		return parent::key();
+	}
+	public function next() {
+		if (!$this->_hdd) {
 			$this->_position += 1;
 		} else {
 			parent::next();
 		}
-    }
-    public function valid() {
+	}
+	public function valid() {
 		if (!$this->_hdd) return isset($this->_files[$this->_position]);
-        return parent::valid();
-    }
+		return parent::valid();
+	}
 }
 
 class Packager_Php_Wrapper_SplFileInfo extends SplFileInfo {
@@ -1013,7 +1013,7 @@ class Packager_Php_Wrapper_SplFileInfo extends SplFileInfo {
 		} else {
 			$this->_notImplemented(__METHOD__);
 		}
-    }
+	}
 	/**
 	 * Gets the base name of the file
 	 * @param string $suffix
@@ -1043,7 +1043,7 @@ class Packager_Php_Wrapper_SplFileInfo extends SplFileInfo {
 		} else {
 			$this->_notImplemented(__METHOD__);
 		}
-    }
+	}
 	/**
 	 * Gets the file extension
 	 * @return string

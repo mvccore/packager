@@ -2,22 +2,22 @@
 
 class Packager_Php_Scripts_Replacer
 {
-	protected static $dynamicClassFnDeterminators = array(
-		'continueTokens'=> array(
+	protected static $dynamicClassFnDeterminators = [
+		'continueTokens'=> [
 			T_WHITESPACE=> 1,
 			T_COMMENT	=> 1,
-		),
-		'endingTokens'	=> array(
+		],
+		'endingTokens'	=> [
 			T_PUBLIC	=> 1,
 			T_PROTECTED	=> 1,
 			T_PRIVATE	=> 1,
 			T_ABSTRACT	=> 1,
 			T_FINAL		=> 1,
-		),
-	);
-	protected static $phpFunctionsToProcess = array();
-	protected static $wrapperReplacements = array();
-	protected static $phpReplacementsStatistics = array();
+		],
+	];
+	protected static $phpFunctionsToProcess = [];
+	protected static $wrapperReplacements = [];
+	protected static $phpReplacementsStatistics = [];
 	protected static $wrapperClassName = '';
 	protected static $phpFsMode = '';
 	protected $cfg;
@@ -25,17 +25,17 @@ class Packager_Php_Scripts_Replacer
 	protected $scriptContent = '';
 	protected $statementEndOperator = ';';
 	protected $fileInfo = NULL;
-	protected $tokens = array();
+	protected $tokens = [];
 	protected $namespaceState = 0;
 	protected $classState = 0;
 	protected $classBracketsLevel = 0;
-	protected $functionsStates = array(0);
-	protected $functionsOpenIndexes = array(0);
-	protected $functionsBracketsLevels = array(0);
-	public static function SetPhpFunctionsToProcess ($phpFunctionsToProcess = array()) {
+	protected $functionsStates = [0];
+	protected $functionsOpenIndexes = [0];
+	protected $functionsBracketsLevels = [0];
+	public static function SetPhpFunctionsToProcess ($phpFunctionsToProcess = []) {
 		self::$phpFunctionsToProcess = $phpFunctionsToProcess;
 	}
-	public static function SetWrapperReplacements ($wrapperReplacements = array()) {
+	public static function SetWrapperReplacements ($wrapperReplacements = []) {
 		self::$wrapperReplacements = $wrapperReplacements;
 	}
 	public static function SetWrapperClassName ($wrapperClassName = '') {
@@ -63,8 +63,8 @@ class Packager_Php_Scripts_Replacer
 		$this->result = '';
 		$this->classState = 0;
 		$this->classBracketsLevel = 0;
-		$this->functionsStates = array(0);
-		$this->functionsBracketsLevels = array(0);
+		$this->functionsStates = [0];
+		$this->functionsBracketsLevels = [0];
 
 		$this->classFnDynamicEnvironment = FALSE;
 		$this->classFnDynamicMonitorIndex = -1;
@@ -293,7 +293,7 @@ class Packager_Php_Scripts_Replacer
 				}
 			}
 		}
-		return array($i, $newPart);
+		return [$i, $newPart];
 	}
 	// php function calls - any_php_build_in_function() or programmerCustomFunction()
 	// php class names, keywords, stdClass keys, TRUE/FALSE, public constants like PHP_EOL and other php shit...
@@ -331,7 +331,7 @@ class Packager_Php_Scripts_Replacer
 			// determinate if current function call is necessary to process by config
 			// and fill $newPart variable with proper content
 			$newPart = str_replace('%WrapperClass%', self::$wrapperClassName, $replacement[1]) . '(';
-			$subTokens = array();
+			$subTokens = [];
 			$j = $i + 1;
 			while (TRUE) {
 				$subToken = & $this->tokens[$j];
@@ -366,7 +366,7 @@ class Packager_Php_Scripts_Replacer
 			// it is other php statement - do not replace anything
 			$newPart = $oldPart;
 		}
-		return array($i, $newPart);
+		return [$i, $newPart];
 	}
 	protected function getClassDynamicFunctionEnvironment ($functionIndex) {
 		// go backwards and try to catch T_STATIC or not

@@ -4,15 +4,15 @@ include_once(__DIR__.'/Order.php');
 
 class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 {
-	protected $includedFiles = array();
+	protected $includedFiles = [];
 	protected $composerClassLoader = NULL;
-	private static $_includePaths = array(
+	private static $_includePaths = [
 		'',
 		'/App',
 		'/Libs',
-	);
+	];
 	public static function AutoloadCall ($className) {
-		$fileName = str_replace(array('_', '\\'), '/', $className) . '.php';
+		$fileName = str_replace(['_', '\\'], '/', $className) . '.php';
 		$includePath = '';
 		foreach (self::$_includePaths as $path) {
 			$fullPath = self::$instance->cfg->sourcesDir . $path . '/' . $fileName;
@@ -33,7 +33,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		}
 		return FALSE;
 	}
-    protected function completePhpFilesDependencies () {
+	protected function completePhpFilesDependencies () {
 		// complete dependencies - requires
 		foreach ($this->files->all as $fullPath => & $fileInfo) {
 			if ($fileInfo->extension == 'php') {
@@ -56,10 +56,10 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 				}
 			}
 		}
-		return (object) array(
-			'requiredBy'	=> array(),
+		return (object) [
+			'requiredBy'	=> [],
 			'requires'		=> $byRequiresAndIncludes,
-		);
+		];
 	}
 	private function _completeRequiredByRecords () {
 		foreach ($this->filesPhpDependencies as $fullPath => & $requirements) {
@@ -106,8 +106,8 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		return $dependentFilesByRequiresAndIncludes;
 	}
 	private function _completeDependenciesByFileContentCapture (& $fileInfo) {
-		$capturedItems = array();
-		$regExps = array(
+		$capturedItems = [];
+		$regExps = [
 			// do not read anything from require() and include(),
 			// these functions are always used for dynamicly included files
 			//"#([^a-zA-Z0-9_\\/\*])(require)([^_a-zA-Z0-9])([^;]*);#m" => array('$1', array(3, 4)),
@@ -115,11 +115,11 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 
 			// read everything from require_once() and include_once(),
 			// these functions are always used for fixed including to declare content classes
-			"#([^a-zA-Z0-9_\\/\*])(require_once)([^;]*);#m"	=> array('$1', array(3)),
-			"#([^a-zA-Z0-9_\\/\*])(include_once)([^;]*);#m"	=> array('$1', array(3)),
-		);
+			"#([^a-zA-Z0-9_\\/\*])(require_once)([^;]*);#m"	=> ['$1', [3]],
+			"#([^a-zA-Z0-9_\\/\*])(include_once)([^;]*);#m"	=> ['$1', [3]],
+		];
 		foreach ($regExps as $regExp => $backReferences) {
-			$matches = array();
+			$matches = [];
 			$catched = preg_match_all($regExp, $fileInfo->content, $matches, PREG_OFFSET_CAPTURE);
 			if ($catched > 0) {
 				// xcv(array($fileInfo->fullPath, $matches));
@@ -139,7 +139,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 					}
 					// end of fix
 					$catchedTextLength = mb_strlen($matchItem[0]);
-					$capturedItems[] = array($backReferenceStr, $catchedTextIndex, $catchedTextLength);
+					$capturedItems[] = [$backReferenceStr, $catchedTextIndex, $catchedTextLength];
 				}
 			}
 		}
@@ -152,14 +152,14 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 	private function _completeDependenciesByReqsAndInclsReplaceConstsAndEval (& $fileInfo, & $capturedItems) {
 		$fullPathLastSlash = strrpos($fileInfo->fullPath, '/');
 		$fullPathDir = $fullPathLastSlash !== FALSE ? substr($fileInfo->fullPath, 0, $fullPathLastSlash) : $fileInfo->fullPath ;
-		$capturedItemKeysToUnset = array();
+		$capturedItemKeysToUnset = [];
 		ob_start();
-		$this->errorHandlerData = array();
+		$this->errorHandlerData = [];
 		foreach ($capturedItems as $key => & $capturedItem) {
 			$capturedText = trim($capturedItem[0], "\t \r\n()");
 			$capturedText = str_replace(
-				array('__FILE__', '__DIR__',),
-				array("'".$fileInfo->fullPath."'", "'".$fullPathDir."'",),
+				['__FILE__', '__DIR__',],
+				["'".$fileInfo->fullPath."'", "'".$fullPathDir."'",],
 				$capturedText
 			);
 			$addDependency = TRUE;
@@ -173,7 +173,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 				// if there was any unknown variables in captured include_once() or require_once() content,
 				// do not add any evaluated dependency, because there is not relevant eval result
 				$addDependency = FALSE;
-				$this->errorHandlerData = array();
+				$this->errorHandlerData = [];
 			} else {
 				$capturedText = ob_get_contents();
 			}
@@ -192,14 +192,14 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 	private function _removeProperlyCapturedReqsAndInclsFromPhpFilesContents (& $fileInfo, & $capturedItems) {
 		if (count($capturedItems) > 0) {
 			$newFileContent = '';
-			$previousItem = array();
+			$previousItem = [];
 			$currentIndex = 0;
 			$currentLength = 0;
 			//var_dump([$fileInfo->fullPath, $capturedItems]);
 			foreach ($capturedItems as $key => & $capturedItem) {
 				$previousItem = ($key > 0)
 					? $capturedItems[$key - 1]
-					: array(0, 0, 0) ;
+					: [0, 0, 0] ;
 				$previousIndex = $previousItem[1];
 				$previousLength = $previousItem[2];
 				$currentIndex = $capturedItem[1];
@@ -213,8 +213,8 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		}
 	}
 	private function _completeDependenciesByReqsAndInclsAbsolutizeCapturedPaths (& $fileInfo, & $capturedItems) {
-		$byRequiresAndIncludes = array();
-		$result = array();
+		$byRequiresAndIncludes = [];
+		$result = [];
 		foreach ($capturedItems as $key => $capturedItem) {
 			$requiredOrIncluded = $capturedItem[3];
 			$realPath = realpath($requiredOrIncluded);
@@ -256,9 +256,9 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		return array_keys($result);
 	}
 	private function _completePhpFileDependenciesByAutoloadDeclaration (& $fileInfo) {
-		$result = array();
+		$result = [];
 		$autoloadJobResult = $this->executeJobAndGetResult(
-			'autoloadJob', array('file' => $fileInfo->fullPath), 'json'
+			'autoloadJob', ['file' => $fileInfo->fullPath], 'json'
 		);
 		//var_dump([$fileInfo->fullPath, $autoloadJobResult]);
 		if ($autoloadJobResult instanceof stdClass && $autoloadJobResult->success) {
@@ -311,13 +311,13 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 			$content = ob_get_clean();
 			// complete included files by target file
 		}
-		$this->sendJsonResultAndExit((object) array(
+		$this->sendJsonResultAndExit((object) [
 			'success'			=> $success,
 			'includedFiles'		=> self::CompleteIncludedFilesByTargetFile(),
 			'exceptionsMessages'=> $this->exceptionsMessages,
 			'exceptionsTraces'	=> $this->exceptionsTraces,
 			'content'			=> $content,
-		));
+		]);
 	}
 	private function _prepareIncludePathsOrComposerAutoloadAndErrorHandlers ($file) {
 		// try to find composer loader usualy placed in $documentRoot/vendor/autoload.php
@@ -330,27 +330,27 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		$alreadyIncludedFiles = get_included_files();
 		// check if packager use include_once("vendor/autoload.php") or not
 		if (in_array($wrongComposerAutoloadFullPath, $alreadyIncludedFiles)) {
-			$this->exceptionsMessages = array(
+			$this->exceptionsMessages = [
 				"Do not use 'include_once(\"vendor/autoload.php\");' for result packing.",
 				"Use direct path instead: 'include_once(\"vendor/mvccore/packager/src/Packager/Php.php\");'"
-			);
+			];
 			return FALSE;
 		}
 		$sourcesDir = trim($this->cfg->sourcesDir, '/');
 		$composerAutoloadFullPath = $sourcesDir . '/vendor/autoload.php';
-		$errorMsgs = array();
-		$errorTraces = array();
+		$errorMsgs = [];
+		$errorTraces = [];
 		if (file_exists($composerAutoloadFullPath)) {
 			// if project is using composer autoloader
 			try {
 				$this->composerClassLoader = include_once($composerAutoloadFullPath);
 			} catch (Exception $e1) {
 				//var_dump($e1);
-				$errorMsgs = array($e1->getMessage());
+				$errorMsgs = [$e1->getMessage()];
 				$errorTraces = $e1->getTrace();
 			} catch (Error $e2) {
 				//var_dump($e2);
-				$errorMsgs = array($e2->getMessage());
+				$errorMsgs = [$e2->getMessage()];
 				$errorTraces = $e2->getTrace();
 			} finally {
 				if ($errorMsgs) {
@@ -363,33 +363,33 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 				// autoload or in composer autoload static includes array
 				return FALSE;
 			}
-			spl_autoload_register(array(__CLASS__, 'AutoloadCall'), false, true);
+			spl_autoload_register([__CLASS__, 'AutoloadCall'], false, true);
 		} else {
 			// if composer autoload doesn't exists, MvcCore project is probably
 			// developed with manualy placed files in docment root, '/App' dir or in '/Libs' dir,
-			spl_autoload_register(array(__CLASS__, 'AutoloadCall'));
+			spl_autoload_register([__CLASS__, 'AutoloadCall']);
 		}
 		// set custom error handlers to catch eval warnings and errors
-		register_shutdown_function(array(__CLASS__, 'ShutdownHandler'));
-		set_exception_handler(array(__CLASS__, 'ExceptionHandler'));
-		set_error_handler(array(__CLASS__, 'ErrorHandler'));
-		$this->errorResponse = array(
+		register_shutdown_function([__CLASS__, 'ShutdownHandler']);
+		set_exception_handler([__CLASS__, 'ExceptionHandler']);
+		set_error_handler([__CLASS__, 'ErrorHandler']);
+		$this->errorResponse = [
 			'autoloadJob',
-			(object) array(
+			(object) [
 				'success'			=> FALSE,
-				'includedFiles'		=> array(),
+				'includedFiles'		=> [],
 				'exceptionsMessages'=> $errorMsgs,
 				'exceptionsTraces'	=> $errorTraces,
 				'content'			=> '',
-			)
-		);
+			]
+		];
 		return TRUE;
 	}
 	public static function CompleteIncludedFilesByTargetFile () {
 		$includedFilesCountTillNow = self::$instance->includedFilesCountTillNow;
 		//$allIncludedFiles = array_slice(get_included_files(), $includedFilesCountTillNow);
 		$allIncludedFiles = array_slice(self::$instance->includedFiles, $includedFilesCountTillNow);
-		$autoLoadedFiles = array();
+		$autoLoadedFiles = [];
 		foreach ($allIncludedFiles as $includedFileFullPath) {
 			$autoLoadedFiles[] = str_replace('\\', '/', $includedFileFullPath);
 		}
@@ -413,7 +413,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		while (strpos($path, '//') !== FALSE)
 			$path = str_replace('//', '/', $path);
 		$parts = explode('/', $path);
-		$absolutes = array();
+		$absolutes = [];
 		foreach ($parts as $part) {
 			if (strlen($part) === 0) {
 				$absolutes[] = $part;

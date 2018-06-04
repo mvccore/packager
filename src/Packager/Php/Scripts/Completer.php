@@ -98,7 +98,7 @@ class Packager_Php_Scripts_Completer extends Packager_Php_Base
 		$this->_processWrapperCodeRemovePrivateElements();
 	}
 	private function _processWrapperCodeRemovePublicElements () {
-		foreach (array('require_once', 'include_once', 'require', 'include') as $statement) {
+		foreach (['require_once', 'include_once', 'require', 'include'] as $statement) {
 			if (!(
 				isset(self::$phpReplacementsStatistics[$statement]) && 
 				self::$phpReplacementsStatistics[$statement] > 0
@@ -122,7 +122,7 @@ class Packager_Php_Scripts_Completer extends Packager_Php_Base
 	private function _processWrapperCodeRemovePrivateElements () {
 		// go thought all wrapper private elements and decide 
 		// if there will necessary by dependencies to keep private element or not
-		$privateElementsRemoved = array();
+		$privateElementsRemoved = [];
 		foreach (self::$wrapperInternalElementsDependencies as $internalElement => $dependecies) {
 			$keepPrivateElementInWrapper = FALSE;
 			// go thought statistics and try to catch replaced function (with bigger statistic int than 0) in dependencies string
@@ -158,8 +158,8 @@ class Packager_Php_Scripts_Completer extends Packager_Php_Base
 	}
 	private function _removeWrapperPhpFunctionEquivalent ($originalPhpFunctionName) {
 		$commentTemplate = __CLASS__ . '::{startEnd}({functionName})';
-		$startStr	= str_replace(array('{startEnd}', '{functionName}'), array('start', $originalPhpFunctionName), $commentTemplate);
-		$endStr		= str_replace(array('{startEnd}', '{functionName}'), array('end', $originalPhpFunctionName), $commentTemplate);
+		$startStr	= str_replace(['{startEnd}', '{functionName}'], ['start', $originalPhpFunctionName], $commentTemplate);
+		$endStr		= str_replace(['{startEnd}', '{functionName}'], ['end', $originalPhpFunctionName], $commentTemplate);
 		$startPos = mb_strpos($this->wrapperCode, $startStr);
 		
 		/*if ($startPos === FALSE) {

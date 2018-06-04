@@ -16,7 +16,7 @@ class Packager_Php extends Packager_Php_Completer
 	 * 
 	 * @return Packager_Php
 	 */
-	public static function Create ($cfg = array()) {
+	public static function Create ($cfg = []) {
 		return parent::Create($cfg);
 	}
 	/**
@@ -26,7 +26,7 @@ class Packager_Php extends Packager_Php_Completer
 	 * 
 	 * @return Packager_Php
 	 */
-	public static function Get ($cfg = array()) {
+	public static function Get ($cfg = []) {
 		return parent::Get($cfg);
 	}
 	/**
@@ -58,7 +58,7 @@ class Packager_Php extends Packager_Php_Completer
 	 * 
 	 * @return Packager_Php
 	 */
-	public function SetExcludePatterns ($excludePatterns = array()) {
+	public function SetExcludePatterns ($excludePatterns = []) {
 		return parent::SetExcludePatterns($excludePatterns);
 	}
 	/**
@@ -69,7 +69,7 @@ class Packager_Php extends Packager_Php_Completer
 	 * 
 	 * @return Packager_Php
 	 */
-	public function AddExcludePatterns ($excludePatterns = array()) {
+	public function AddExcludePatterns ($excludePatterns = []) {
 		return parent::AddExcludePatterns($excludePatterns);
 	}
 	/**
@@ -82,7 +82,7 @@ class Packager_Php extends Packager_Php_Completer
 	 * 
 	 * @return Packager_Php
 	 */
-	public function SetPatternReplacements ($patternReplacements = array()) {
+	public function SetPatternReplacements ($patternReplacements = []) {
 		return parent::SetPatternReplacements($patternReplacements);
 	}
 	/**
@@ -94,7 +94,7 @@ class Packager_Php extends Packager_Php_Completer
 	 * 
 	 * @return Packager_Php
 	 */
-	public function AddPatternReplacements ($patternReplacements = array()) {
+	public function AddPatternReplacements ($patternReplacements = []) {
 		return parent::AddPatternReplacements($patternReplacements);
 	}
 	/**
@@ -106,7 +106,7 @@ class Packager_Php extends Packager_Php_Completer
 	 * 
 	 * @return Packager_Php
 	 */
-	public function SetStringReplacements ($stringReplacements = array()) {
+	public function SetStringReplacements ($stringReplacements = []) {
 		return parent::SetStringReplacements($stringReplacements);
 	}
 	/**
@@ -117,7 +117,7 @@ class Packager_Php extends Packager_Php_Completer
 	 * 
 	 * @return Packager_Php
 	 */
-	public function AddStringReplacements ($stringReplacements = array()) {
+	public function AddStringReplacements ($stringReplacements = []) {
 		return parent::AddStringReplacements($stringReplacements);
 	}
 	/**
@@ -131,7 +131,7 @@ class Packager_Php extends Packager_Php_Completer
 	 * 
 	 * @return Packager_Php
 	 */
-	public function SetIncludeFirst ($includeFirst = array()) {
+	public function SetIncludeFirst ($includeFirst = []) {
 		return parent::SetIncludeFirst($includeFirst);
 	}
 	/**
@@ -141,11 +141,11 @@ class Packager_Php extends Packager_Php_Completer
 	 * before or after existing list by second param.
 	 * 
 	 * @param array|string $includeFirst
-	 * @param string       $mode         'append' or 'prepend'
+	 * @param string	   $mode		 'append' or 'prepend'
 	 * 
 	 * @return Packager_Php
 	 */
-	public function AddIncludeFirst ($includeFirst = array(), $mode = 'append') {
+	public function AddIncludeFirst ($includeFirst = [], $mode = 'append') {
 		return parent::AddIncludeFirst($includeFirst, $mode);
 	}
 	
@@ -160,7 +160,7 @@ class Packager_Php extends Packager_Php_Completer
 	 * 
 	 * @return Packager_Php
 	 */
-	public function SetIncludeLast ($includeLast = array()) {
+	public function SetIncludeLast ($includeLast = []) {
 		return parent::SetIncludeLast($includeLast);
 	}
 	/**
@@ -173,11 +173,11 @@ class Packager_Php extends Packager_Php_Completer
 	 * or use (new Packager_Php)->SetIncludeLast() to overwrite it.
 	 * 
 	 * @param array|string $includeLast
-	 * @param string       $mode         'append' or 'prepend'
+	 * @param string	   $mode		 'append' or 'prepend'
 	 * 
 	 * @return Packager_Php
 	 */
-	public function AddIncludeLast ($includeLast = array(), $mode = 'append') {
+	public function AddIncludeLast ($includeLast = [], $mode = 'append') {
 		return parent::AddIncludeLast($includeLast, $mode);
 	}
 	/**
@@ -258,7 +258,7 @@ class Packager_Php extends Packager_Php_Completer
 	 * 
 	 * @return Packager_Php
 	 */
-	public function MergeConfiguration ($cfg = array()) {
+	public function MergeConfiguration ($cfg = []) {
 		return parent::MergeConfiguration($cfg);
 	}
 	/**
@@ -268,7 +268,7 @@ class Packager_Php extends Packager_Php_Completer
 	 * 
 	 * @return Packager_Php
 	 */
-	public function Run ($cfg = array()) {
+	public function Run ($cfg = []) {
 		parent::Run($cfg);
 		list($jobMethod, $params) = $this->completeJobAndParams();
 		$this->$jobMethod($params);

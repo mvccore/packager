@@ -23,13 +23,13 @@ composer require mvccore/packager
 - minimalizing PHP scripts
 - PHP packing has now 4 options, how implemented file system wrapping functions could behave:
   - strict package mode (`\Packager_Php::FS_MODE_STRICT_PACKAGE`)
-    (everything is only possible to get from `index.php`, very fast for specific application types in **IIS/PHP/op_cache**)
+	(everything is only possible to get from `index.php`, very fast for specific application types in **IIS/PHP/op_cache**)
   - strict hard drive mode (`\Packager_Php::FS_MODE_STRICT_HDD`)
-    (no file system wrapping functions)
+	(no file system wrapping functions)
   - preserve php package mode (`\Packager_Php::FS_MODE_PRESERVE_PACKAGE`)
-    (first there is check if it is possible to get anything from `index.php`, then from hard drive)
+	(first there is check if it is possible to get anything from `index.php`, then from hard drive)
   - preserve hard drive mode (`\Packager_Php::FS_MODE_PRESERVE_HDD`)
-    (first there is check if it is possible to get anything from hard drive, then from `index.php`)
+	(first there is check if it is possible to get anything from hard drive, then from `index.php`)
 - there are implemented those file system wrapping functions and constants:
   - `__DIR__` and `__FILE__`
   - `require_once();`, `include_once();`, `require();`, `include();`

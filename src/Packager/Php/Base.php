@@ -11,14 +11,14 @@ class Packager_Php_Base extends Packager_Common_Base
 	const NAMESPACE_NAMED_SEMICOLONS = 3;
 	protected static $wrapperClassName = '\Packager_Php_Wrapper';
 	protected static $wrapperStringDeclarator = 'PACKAGER_';
-	protected static $wrapperReplacements = array(
+	protected static $wrapperReplacements = [
 		T_DIR			=> NULL, // callable closure function, initialized later
 		T_FILE			=> NULL, // callable closure function, initialized later
-		T_REQUIRE_ONCE	=> array('require_once','%WrapperClass%::RequireOnce'),
-		T_INCLUDE_ONCE	=> array('include_once','%WrapperClass%::IncludeOnce'),
-		T_REQUIRE		=> array('require',		'%WrapperClass%::RequireStandard'), 
-		T_INCLUDE		=> array('include',		'%WrapperClass%::IncludeStandard'), 
-		T_STRING		=> array(
+		T_REQUIRE_ONCE	=> ['require_once','%WrapperClass%::RequireOnce'],
+		T_INCLUDE_ONCE	=> ['include_once','%WrapperClass%::IncludeOnce'],
+		T_REQUIRE		=> ['require',		'%WrapperClass%::RequireStandard'], 
+		T_INCLUDE		=> ['include',		'%WrapperClass%::IncludeStandard'], 
+		T_STRING		=> [
 			'DirectoryIterator' 			=> '%WrapperClass%_DirectoryIterator',
 			// 'RecursiveDirectoryIterator'	=> 'RecursiveDirectoryIterator', // not implemented
 			'SplFileInfo' 					=> '%WrapperClass%_SplFileInfo',
@@ -33,17 +33,17 @@ class Packager_Php_Base extends Packager_Common_Base
 			'simplexml_load_file'			=> '%WrapperClass%::SimplexmlLoadFile',
 			'parse_ini_file'				=> '%WrapperClass%::ParseIniFile',
 			'md5_file'						=> '%WrapperClass%::Md5File',
-		),
-	);
-	protected static $includeFirstDefault = array(
-	);
-	protected static $includeLastDefault = array(
+		],
+	];
+	protected static $includeFirstDefault = [
+	];
+	protected static $includeLastDefault = [
 		'/index.php',
-	);
-	protected static $excludePatternsDefault = array(
+	];
+	protected static $excludePatternsDefault = [
 		'#^/Libs/startup\.php$#',
 		'#^/vendor/mvccore/mvccore/src/startup\.php$#',
-	);
+	];
 	/**
 	 *	0 - Turn off all error reporting 
 	 *	1 -	Running errors (E_ERROR | E_WARNING | E_PARSE)
@@ -53,46 +53,46 @@ class Packager_Php_Base extends Packager_Common_Base
 	 *	5 - All errors (E_ALL)
 	 */
 	protected static $errorReportingLevelDefault = 5; // E_ALL
-	protected static $phpReplacementsStatistics = array();
-	protected static $wrapperInternalElementsDependencies = array(
+	protected static $phpReplacementsStatistics = [];
+	protected static $wrapperInternalElementsDependencies = [
 		'NormalizePath'							=> ',require_once,include_once,require,include,readfile,file_get_contents,parse_ini_file,simplexml_load_file,filemtime,filesize,file_exists,DirectoryIterator,md5_file,is_dir,mkdir,is_file,',
 		'Warning'								=> ',require_once,include_once,require,include,readfile,file_get_contents,parse_ini_file,simplexml_load_file,filemtime,filesize,',
 		'_getFileContent'						=> ',require_once,include_once,require,include,readfile,file_get_contents,parse_ini_file,simplexml_load_file,md5_file,',
 		'_includeFile'							=> ',require_once,include_once,require,include,',
 		'_isProtocolPath'						=> ',readfile,file_get_contents,simplexml_load_file,',
 		'_changeItself'							=> ',mkdir,',
-	);
-	protected $filesPhpDependencies = array();
-	protected $filesPhpOrder = array();
+	];
+	protected $filesPhpDependencies = [];
+	protected $filesPhpOrder = [];
 	protected $wrapperCode = '';
 	protected $result = '';
 	protected $resultFilesInfo = '';
 	protected $resultFilesContents = '';
-	protected $unsafeOrderDetection = array();
+	protected $unsafeOrderDetection = [];
 	protected $anyPhpContainsNamespace = FALSE;
 	protected $globalNamespaceOpened = TRUE;
 
-	public function __construct ($cfg = array()) {
+	public function __construct ($cfg = []) {
 		parent::__construct($cfg);
 	}
-	public static function SetIncludeFirstDefault (array $includeFirstDefault = array()) {
+	public static function SetIncludeFirstDefault (array $includeFirstDefault = []) {
 		static::$includeFirstDefault = $includeFirstDefault;
 	}
-	public static function SetIncludeLastDefault (array $includeLastDefault = array()) {
+	public static function SetIncludeLastDefault (array $includeLastDefault = []) {
 		static::$includeLastDefault = $includeLastDefault;
 	}
-	public static function SetExcludePatternsDefault (array $excludePatternsDefault = array()) {
+	public static function SetExcludePatternsDefault (array $excludePatternsDefault = []) {
 		static::$excludePatternsDefault = $excludePatternsDefault;
 	}
-	public function Run ($cfg = array()) {
+	public function Run ($cfg = []) {
 		parent::Run($cfg);
 		$this->_checkAndSetUpCompletePhpConfiguration();
 		$this->_prepareScriptsReplacer();
-		$this->files = (object) array(
-			'all'		=> array(),
-			'php'		=> array(),
-			'static'	=> array(),
-		);
+		$this->files = (object) [
+			'all'		=> [],
+			'php'		=> [],
+			'static'	=> [],
+		];
 		return $this;
 	}
 	private function _checkAndSetUpCompletePhpConfiguration () {
@@ -124,10 +124,10 @@ class Packager_Php_Base extends Packager_Common_Base
 		}
 	}
 	private function _prepareScriptsReplacer () {
-		$phpFunctionsToProcess = array();
+		$phpFunctionsToProcess = [];
 		if ($this->cfg->phpFsMode != Packager_Php::FS_MODE_STRICT_HDD) {
 			$defaultCollection = array_merge(
-				array('require_once', 'include_once', 'require', 'include'),
+				['require_once', 'include_once', 'require', 'include'],
 				array_keys(self::$wrapperReplacements[T_STRING])
 			);
 			foreach ($defaultCollection as $phpFunctionName) {

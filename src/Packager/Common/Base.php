@@ -2,65 +2,65 @@
 
 class Packager_Common_Base {
 	protected $cfg;
-	protected $files = array();
+	protected $files = [];
 	protected $cliScriptName;
 	protected $compilationType = ''; // PHP || PHAR
-	protected $exceptionsMessages = array();
-	protected $exceptionsTraces = array();
+	protected $exceptionsMessages = [];
+	protected $exceptionsTraces = [];
 	protected $includedFilesCountTillNow = 0;
-	protected $errorHandlerData = array();
-	protected $errorResponse = array();
-	protected $autoLoadedFiles = array();
-	protected static $templatesExtensions = array('phtml');
-	protected static $fileTypesStoringTypes = array(
-		'gzip'	=> array(
+	protected $errorHandlerData = [];
+	protected $errorResponse = [];
+	protected $autoLoadedFiles = [];
+	protected static $templatesExtensions = ['phtml'];
+	protected static $fileTypesStoringTypes = [
+		'gzip'	=> [
 			'css', 'htc', 'js', 'txt', 'svg'
-		),
-		'binary'	=> array(
+		],
+		'binary'	=> [
 			'ico', 'gif', 'png', 'jpg', 'jpeg', 
 			'zip', 'ttf', 'eot', 'otf', 'woff', 'woff2',
-		),
-		'base64'	=> array(
+		],
+		'base64'	=> [
 			// 'ini',
-		),
-		'template'	=> array(
+		],
+		'template'	=> [
 			'phtml',
-		),
-		'text'	=> array(
+		],
+		'text'	=> [
 			'ini', 'htm', 'html', 'xml', 'xsd', 'csv',
-		),
-	);
+		],
+	];
 	protected static $instance;
-	private static $_cfgDefault = array(
+	private static $_cfgDefault = [
 		'sourcesDir'				=> '',
 		'releaseFile'				=> '',
-		'excludePatterns'			=> array(),
-		'includePatterns'			=> array(),
-		'stringReplacements'		=> array(),
-		'patternReplacements'		=> array(),
+		'excludePatterns'			=> [],
+		'includePatterns'			=> [],
+		'stringReplacements'		=> [],
+		'patternReplacements'		=> [],
 		'minifyTemplates'			=> 0,
 		'minifyPhp'					=> 0,
-		'keepPhpDocComments'		=> array(),
+		'keepPhpDocComments'		=> [],
 		// PHP compiling only:
 		'autoloadingOrderDetection'	=> TRUE,
-		'includeFirst'				=> array(),	
-		'includeLast'				=> array(),
+		'includeFirst'				=> [],	
+		'includeLast'				=> [],
 		'phpFsMode'					=> 'PHP_PRESERVE_HDD',
-		'phpFunctionsToReplace'		=> array(),
-		'phpFunctionsToKeep'		=> array(),
-		'phpFunctionsToProcess'		=> array(),
+		'phpFunctionsToReplace'		=> [],
+		'phpFunctionsToKeep'		=> [],
+		'phpFunctionsToProcess'		=> [],
 		//'errorReportingLevel'		=> 5,		// E_ALL
-	);
-	private static $_htmlStyles = array(
+	];
+	private static $_htmlStyles = [
 		'success'	=> 'html,body{background:#005700;}',
 		'error'		=> 'html,body{background:#cd1818;}.xdebug-error,.xdebug-error th,.xdebug-error td{color:#000;text-shadow:none !important;font-size:125%;}.xdebug-var-dump font[color*=cc0000]{background:#fff;text-shadow:none;}',
-	);
-	private static $_responseTemplates = array(
+	];
+	private static $_responseTemplates = [
 		'text'	=> "\n======================= %title =======================\n\n\n%h1\n\n\n%content\n\n",
 		'html'	=> '<!DOCTYPE HTML><html lang="en-US"><head><meta charset="UTF-8"><title>%title</title><style type="text/css">html,body{margin:30px;font-size:14px;color:#fff;text-align:left;line-height:1.5em;font-weight:bold;font-family:"consolas",courier new,monotype;text-shadow:1px 1px 0 rgba(0,0,0,.4);}h1{font-size:200%;line-height:1.5em;}h2{font-size:150%;line-height:1.5em;}%style</style></head><body><h1>%h1</h1>%content</body></html>',
-	);
-	public function __construct ($cfg = array()) {
-		$cfg = is_array($cfg) ? $cfg : array();
+	];
+	public function __construct ($cfg = []) {
+		$cfg = is_array($cfg) ? $cfg : [];
 		foreach (self::$_cfgDefault as $key => $value) {
 			if (!isset($cfg[$key])) {
 				$cfg[$key] = self::$_cfgDefault[$key];
@@ -68,16 +68,16 @@ class Packager_Common_Base {
 		}
 		$this->cfg = $cfg;
 	}
-	public static function Create ($cfg = array()) {
+	public static function Create ($cfg = []) {
 		if (!self::$instance) {
 			// set custom error handlers to catch eval warnings and errors
-			set_error_handler(array(__CLASS__, 'ErrorHandler'));
-			set_exception_handler(array(__CLASS__, 'ErrorHandler'));
+			set_error_handler([__CLASS__, 'ErrorHandler']);
+			set_exception_handler([__CLASS__, 'ErrorHandler']);
 			self::$instance = new static($cfg);
 		}
 		return self::$instance;
 	}
-	public static function Get ($cfg = array()) {
+	public static function Get ($cfg = []) {
 		if (!self::$instance) {
 			self::Create($cfg);
 		} else {
@@ -98,65 +98,65 @@ class Packager_Common_Base {
 		$this->cfg['releaseFile'] = $releaseFileFullPath;
 		return $this;
 	}
-	public function SetExcludePatterns ($excludePatterns = array()) {
+	public function SetExcludePatterns ($excludePatterns = []) {
 		if (gettype($excludePatterns) == 'array') {
 			$this->cfg['excludePatterns'] = $excludePatterns;
 		} else {
-			$this->cfg['excludePatterns'] = array($excludePatterns);
+			$this->cfg['excludePatterns'] = [$excludePatterns];
 		}
 		return $this;
 	}
-	public function AddExcludePatterns ($excludePatterns = array()) {
+	public function AddExcludePatterns ($excludePatterns = []) {
 		if (gettype($excludePatterns) == 'array') {
-			$this->MergeConfiguration(array('excludePatterns' => $excludePatterns));
+			$this->MergeConfiguration(['excludePatterns' => $excludePatterns]);
 		} else {
 			$this->cfg['excludePatterns'][] = $excludePatterns;
 		}
 		return $this;
 	}
-	public function SetIncludePatterns ($includePatterns = array()) {
+	public function SetIncludePatterns ($includePatterns = []) {
 		if (gettype($includePatterns) == 'array') {
 			$this->cfg['includePatterns'] = $includePatterns;
 		} else {
-			$this->cfg['includePatterns'] = array($includePatterns);
+			$this->cfg['includePatterns'] = [$includePatterns];
 		}
 		return $this;
 	}
-	public function AddIncludePatterns ($includePatterns = array()) {
+	public function AddIncludePatterns ($includePatterns = []) {
 		if (gettype($includePatterns) == 'array') {
-			$this->MergeConfiguration(array('includePatterns' => $includePatterns));
+			$this->MergeConfiguration(['includePatterns' => $includePatterns]);
 		} else {
 			$this->cfg['includePatterns'][] = $includePatterns;
 		}
 		return $this;
 	}
-	public function SetPatternReplacements ($patternReplacements = array()) {
+	public function SetPatternReplacements ($patternReplacements = []) {
 		if (gettype($patternReplacements) == 'array') {
 			$this->cfg['patternReplacements'] = $patternReplacements;
 		} else {
-			$this->cfg['patternReplacements'] = array($patternReplacements);
+			$this->cfg['patternReplacements'] = [$patternReplacements];
 		}
 		return $this;
 	}
-	public function AddPatternReplacements ($patternReplacements = array()) {
+	public function AddPatternReplacements ($patternReplacements = []) {
 		if (gettype($patternReplacements) == 'array') {
-			$this->MergeConfiguration(array('patternReplacements' => $patternReplacements));
+			$this->MergeConfiguration(['patternReplacements' => $patternReplacements]);
 		} else {
 			$this->cfg['patternReplacements'][] = $patternReplacements;
 		}
 		return $this;
 	}
-	public function SetStringReplacements ($stringReplacements = array()) {
+	public function SetStringReplacements ($stringReplacements = []) {
 		if (gettype($stringReplacements) == 'array') {
 			$this->cfg['stringReplacements'] = $stringReplacements;
 		} else {
-			$this->cfg['stringReplacements'] = array($stringReplacements);
+			$this->cfg['stringReplacements'] = [$stringReplacements];
 		}
 		return $this;
 	}
-	public function AddStringReplacements ($stringReplacements = array()) {
+	public function AddStringReplacements ($stringReplacements = []) {
 		if (gettype($stringReplacements) == 'array') {
-			$this->MergeConfiguration(array('stringReplacements' => $stringReplacements));
+			$this->MergeConfiguration(['stringReplacements' => $stringReplacements]);
 		} else {
 			$this->cfg['stringReplacements'][] = $stringReplacements;
 		}
@@ -170,19 +170,19 @@ class Packager_Common_Base {
 		$this->cfg['minifyPhp'] = (bool)$minifyPhp;
 		return $this;
 	}
-	public function SetKeepPhpDocComments ($keepPhpDocComments = array()) {
+	public function SetKeepPhpDocComments ($keepPhpDocComments = []) {
 		$this->cfg['keepPhpDocComments'] = $keepPhpDocComments;
 		return $this;
 	}
-	public function SetIncludeFirst ($includeFirst = array()) {
+	public function SetIncludeFirst ($includeFirst = []) {
 		if (gettype($includeFirst) == 'array') {
 			$this->cfg['includeFirst'] = $includeFirst;
 		} else {
-			$this->cfg['includeFirst'] = array($includeFirst);
+			$this->cfg['includeFirst'] = [$includeFirst];
 		}
 		return $this;
 	}
-	public function AddIncludeFirst ($includeFirst = array(), $mode = 'append') {
+	public function AddIncludeFirst ($includeFirst = [], $mode = 'append') {
 		if (gettype($includeFirst) == 'array') {
 			if ($mode == 'prepend') {
 				for ($i = count($includeFirst) - 1; $i >= 0; $i--) {
@@ -202,15 +202,15 @@ class Packager_Common_Base {
 		}
 		return $this;
 	}
-	public function SetIncludeLast ($includeLast = array()) {
+	public function SetIncludeLast ($includeLast = []) {
 		if (gettype($includeLast) == 'array') {
 			$this->cfg['includeLast'] = $includeLast;
 		} else {
-			$this->cfg['includeLast'] = array($includeLast);
+			$this->cfg['includeLast'] = [$includeLast];
 		}
 		return $this;
 	}
-	public function AddIncludeLast ($includeLast = array(), $mode = 'append') {
+	public function AddIncludeLast ($includeLast = [], $mode = 'append') {
 		if (gettype($includeLast) == 'array') {
 			if ($mode == 'prepend') {
 				for ($i = count($includeLast) - 1; $i >= 0; $i--) {
@@ -239,16 +239,16 @@ class Packager_Common_Base {
 		return $this;
 	}
 	public function ReplacePhpFunctions () {
-		$result = isset($this->cfg['phpFunctionsToReplace']) ? $this->cfg['phpFunctionsToReplace'] : array() ;
+		$result = isset($this->cfg['phpFunctionsToReplace']) ? $this->cfg['phpFunctionsToReplace'] : [] ;
 		$this->cfg['phpFunctionsToReplace'] = array_merge($result, func_get_arg(0));
 		return $this;
 	}
 	public function KeepPhpFunctions () {
-		$result = isset($this->cfg['phpFunctionsToKeep']) ? $this->cfg['phpFunctionsToKeep'] : array() ;
+		$result = isset($this->cfg['phpFunctionsToKeep']) ? $this->cfg['phpFunctionsToKeep'] : [] ;
 		$this->cfg['phpFunctionsToKeep'] = array_merge($result, func_get_arg(0));
 		return $this;
 	}
-	public function MergeConfiguration ($cfg = array()) {
+	public function MergeConfiguration ($cfg = []) {
 		foreach ($cfg as $key1 => & $value1) {
 			if ($value1 instanceof stdClass) $value1 = (array)$value1;
 			if (gettype($value1) == 'array') {
@@ -256,10 +256,10 @@ class Packager_Common_Base {
 					if ($this->cfg[$key1] instanceof stdClass) {
 						$this->cfg[$key1] = (array) $this->cfg[$key1];
 					} else if (gettype($this->cfg[$key1]) != 'array') {
-						$this->cfg[$key1] = array($this->cfg[$key1]);
+						$this->cfg[$key1] = [$this->cfg[$key1]];
 					}
 				} else {
-					$this->cfg[$key1] = array();
+					$this->cfg[$key1] = [];
 				}
 				foreach ($value1 as $key2 => & $value2) {
 					$this->cfg[$key1][$key2] = $value2;
@@ -270,7 +270,7 @@ class Packager_Common_Base {
 		}
 		return $this;
 	}
-	public function Run ($cfg = array()) {
+	public function Run ($cfg = []) {
 		$this->cfg = (object) $this->cfg;
 		$this->compilationType = strtoupper(str_replace('Packager_', '', get_class($this)));
 		$this->_checkCommonConfiguration($cfg);
@@ -284,12 +284,12 @@ class Packager_Common_Base {
 	 * 
 	 * @return void
 	 */
-	public function PrintFilesToPack ($cfg = array()) {
+	public function PrintFilesToPack ($cfg = []) {
 		$this->Run($cfg);
 		// complete $this->files as ussual
 		$this->completeAllFiles();
-		$phpFiles = array();
-		$staticFiles = array();
+		$phpFiles = [];
+		$staticFiles = [];
 		foreach($this->files->all as $path => $fileItem){
 			if ($fileItem->extension == 'php') {
 				$phpFiles[] = $path;
@@ -305,11 +305,11 @@ class Packager_Common_Base {
 
 	/************************************* static ************************************/
 	protected static function decodeJson (& $cUrlContentStr) {
-		$result = (object) array(
+		$result = (object) [
 			'success'	=> FALSE,
 			'data'		=> NULL,
 			'message'	=> '',
-		);
+		];
 		$jsonData = json_decode($cUrlContentStr);
 		if (json_last_error() == JSON_ERROR_NONE) {
 			$result = $jsonData;
@@ -335,13 +335,13 @@ class Packager_Common_Base {
 			$semiFinalBacktraceRec = (object) $backTrace[count($backTrace) - 2];
 			if ($semiFinalBacktraceRec->class == 'Packager_Php_Completer' && $semiFinalBacktraceRec->function == 'autoloadJob') {
 				header("HTTP/1.1 200 OK");
-				$response = (object) array(
+				$response = (object) [
 					'success'			=> 2,
 					'includedFiles'		=> Packager_Php_Scripts_Dependencies::CompleteIncludedFilesByTargetFile(),
 					'exceptionsMessages'=> self::$instance->exceptionsMessages,
 					'exceptionsTraces'	=> self::$instance->exceptionsTraces,
 					'content'			=> '',
-				);
+				];
 				self::$instance->sendJsonResultAndExit($response);
 			}
 		}
@@ -363,11 +363,11 @@ class Packager_Common_Base {
 		$result = '';
 		$space = '';
 		$tokens = token_get_all($code);
-		$tokensToRemove = array(
+		$tokensToRemove = [
 			T_COMMENT		=> 1,
 			T_ML_COMMENT	=> 1,
 			T_WHITESPACE	=> 1,
-		);
+		];
 		if (count($this->cfg->keepPhpDocComments) === 0) 
 			$tokensToRemove[T_DOC_COMMENT] = 1;
 		foreach ($tokens as & $token) {
@@ -396,7 +396,7 @@ class Packager_Common_Base {
 	}
 	protected function shrinkPhpCodeReducePhpDocComment ($code) {
 		$keepPhpDocComments = $this->cfg->keepPhpDocComments;
-		$result = array();
+		$result = [];
 		foreach ($keepPhpDocComments as $keepPhpDocComment) {
 			if ($keepPhpDocComment == '@var') {
 				preg_match("#(@var)\s+([^\s]+)#", $code, $matchesVar);
@@ -419,12 +419,12 @@ class Packager_Common_Base {
 					$dolarPos = mb_strpos($code, '$', $paramPos + $paramLength + 1);
 					if ($dolarPos === FALSE) break;
 					$dolarPosPlusOne = $dolarPos + 1;
-					$nextPos = array(
+					$nextPos = [
 						mb_strpos($code, '\r', $dolarPosPlusOne),
 						mb_strpos($code, '\n', $dolarPosPlusOne),
 						mb_strpos($code, ' ', $dolarPosPlusOne),
 						mb_strpos($code, '\t', $dolarPosPlusOne)
-					);
+					];
 					foreach ($nextPos as $key => & $nextPosItem) if ($nextPosItem === FALSE) unset($nextPos[$key]);
 					if (!$nextPos) break;
 					$nextPosInt = min($nextPos);
@@ -444,11 +444,11 @@ class Packager_Common_Base {
 	}
 	protected function completeJobAndParams () {
 		$jobMethod = 'mainJob';
-		$params = array();
+		$params = [];
 		if (php_sapi_name() == 'cli') {
-			$scriptArgsItems = array_merge($_SERVER['argv'], array());
+			$scriptArgsItems = array_merge($_SERVER['argv'], []);
 			$this->cliScriptName = array_shift($scriptArgsItems); // unset php script name - script.php
-			$params = array();
+			$params = [];
 			foreach ($scriptArgsItems as $scriptArgsItem) {
 				$firstEqualPos = strpos($scriptArgsItem, '=');
 				if ($firstEqualPos === FALSE) {
@@ -471,9 +471,9 @@ class Packager_Common_Base {
 			$jobMethod = $params['job'];
 			unset($params['job']);
 		}
-		return array($jobMethod, $params);
+		return [$jobMethod, $params];
 	}
-	protected function executeJobAndGetResult ($job = '', $arguments = array(), $resultType = 'json') {
+	protected function executeJobAndGetResult ($job = '', $arguments = [], $resultType = 'json') {
 		$jobResult = '';
 		if (php_sapi_name() == 'cli') {
 			$command = 'php ' . $this->cliScriptName . ' job=' . $job;
@@ -505,11 +505,11 @@ class Packager_Common_Base {
 		if ($resultType == 'json') {
 			return self::decodeJson($jobResult);
 		} else {
-			return (object) array(
+			return (object) [
 				'success'	=> TRUE,
 				'data'		=> $jobResult,
 				'type'		=> 'html',
-			);
+			];
 		}
 	}
 	protected function sendJsonResultAndExit ($jsonData) {
@@ -523,7 +523,7 @@ class Packager_Common_Base {
 		// get project source code recursive iterator
 		$rdi = new \RecursiveDirectoryIterator($this->cfg->sourcesDir);
 		$rii = new \RecursiveIteratorIterator($rdi);
-		$allFiles = array();
+		$allFiles = [];
 		foreach($rii as $item){
 			if (!$item->isDir()) {
 				
@@ -541,7 +541,7 @@ class Packager_Common_Base {
 				
 				$relPathDir = substr($relPath, 0, strlen($relPath) - strlen($fileName) - 1);
 				
-				$fileItem = (object) array(
+				$fileItem = (object) [
 					'relPath'	 		=> $relPath,
 					'fullPath'	 		=> $fullPath,
 					'relPathDir'		=> $relPathDir,
@@ -549,7 +549,7 @@ class Packager_Common_Base {
 					'extension'			=> $extension,
 					'processed'			=> FALSE,
 					'content'			=> file_get_contents($fullPath),
-				);
+				];
 
 				if ($this->compilationType == 'PHP') {
 					$fileItem->instance				= $item;
@@ -617,7 +617,7 @@ class Packager_Common_Base {
 		if (gettype($content) == 'string') {
 			$contentStr = $content;
 		} else {
-			$contentItems = array();
+			$contentItems = [];
 			foreach ($content as $item) {
 				$contentItems[] = $this->_sendResultRenderErrorsContentItem($outputType, $item);
 			}
@@ -631,8 +631,8 @@ class Packager_Common_Base {
 		}
 		$responseTmpl = self::$_responseTemplates[$outputType];
 		$response = str_replace(
-			array('%title', '%h1', '%content', '%style'),
-			array(get_class($this), $title, $contentStr, self::$_htmlStyles[$type]),
+			['%title', '%h1', '%content', '%style'],
+			[get_class($this), $title, $contentStr, self::$_htmlStyles[$type]],
 			$responseTmpl
 		);
 		echo $response;
@@ -693,8 +693,8 @@ class Packager_Common_Base {
 	private function _processGetRequest ($url) {
 		$ch = curl_init($url);
 		$timeout = 60;
-		$options = array(
-			CURLOPT_HTTPHEADER		=> array(
+		$options = [
+			CURLOPT_HTTPHEADER		=> [
 				'Accept: text/javascript',
 				'Accept-Encoding: sdch, br',
 				'Accept-Charset: utf-8,windows-1250;q=0.7,*;q=0.3',
@@ -704,7 +704,7 @@ class Packager_Common_Base {
 				'Connection: keep-alive',
 				'Pragma: no-cache',
 				'Upgrade-Insecure-Requests: 1',
-			),
+			],
 			CURLOPT_CONNECTTIMEOUT	=> $timeout,
 			CURLOPT_TIMEOUT			=> $timeout,
 			CURLOPT_MAXREDIRS		=> 10,
@@ -713,7 +713,7 @@ class Packager_Common_Base {
 			CURLOPT_AUTOREFERER		=> TRUE,
 			CURLOPT_SSL_VERIFYPEER	=> FALSE,
 			CURLOPT_SSL_VERIFYHOST	=> 2,
-		);
+		];
 		curl_setopt_array($ch, $options);
 		$content = curl_exec($ch);
 		$info = (object) curl_getinfo($ch);
@@ -721,11 +721,11 @@ class Packager_Common_Base {
 		$code = intval($info->http_code);
 		curl_close($ch);
 		//var_dump($content);
-		return (object) array(
+		return (object) [
 			'code'		=> $code,
 			'info'		=> $info,
 			'content'	=> $content,
-		);
+		];
 	}
 	private function _sendResultRenderErrorsContentItem ($outputType, $item) {
 		if (
@@ -734,7 +734,7 @@ class Packager_Common_Base {
 			!isset($item['file']) &&
 			!isset($item['line'])
 		) {
-			$contentItems = array();
+			$contentItems = [];
 			foreach ($item as $value) {
 				$contentItems[] = $this->_sendResultRenderErrorsContentItem($outputType, (array) $value);
 			}
