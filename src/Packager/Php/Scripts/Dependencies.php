@@ -130,12 +130,17 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 					}
 					$catchedTextIndex = $matchItem[1];
 					// this is very very very crazy result fix from `preg_match_all()` with PREG_OFFSET_CAPTURE
-					$catchedTextIndexFix = mb_strpos(
-						$fileInfo->content, $matches[2][0][0],
-						$catchedTextIndex - mb_strlen($matches[2][0][0]) - 4
-					);
-					if ($catchedTextIndexFix !== $catchedTextIndex && $catchedTextIndexFix !== FALSE) {
-						$catchedTextIndex = $catchedTextIndexFix;
+					$catchedTextIndexFixMatchItem = $matches[2][0][0];
+					$catchedTextIndexFixOffset = $catchedTextIndex - mb_strlen($catchedTextIndexFixMatchItem) - 4;
+					if ($catchedTextIndexFixOffset > 0 && mb_strlen($fileInfo->content) > $catchedTextIndexFixOffset + mb_strlen($catchedTextIndexFixMatchItem)) {
+						$catchedTextIndexFix = mb_strpos(
+							$fileInfo->content, 
+							$catchedTextIndexFixMatchItem,
+							$catchedTextIndexFixOffset
+						);
+						if ($catchedTextIndexFix !== $catchedTextIndex && $catchedTextIndexFix !== FALSE) {
+							$catchedTextIndex = $catchedTextIndexFix;
+						}
 					}
 					// end of fix
 					$catchedTextLength = mb_strlen($matchItem[0]);
