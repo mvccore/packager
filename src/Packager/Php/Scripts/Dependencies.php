@@ -282,8 +282,8 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 					"Autoload error by including file: $newLine"
 					 . "'$relPath' $newLine"
 					 . "Is this file used also in your development versions? $newLine"
-					 . "Or does this file generate any output by simple include() $newLine "
-					 . "which breaks compiling process?",
+					 . "Or does this file generates any output by calling simple $newLine "
+					 . "`include(\$thisFileFullPath);`, which breaks compiling process?",
 					$fileInfo->fullPath . "\r\n" . $autoloadJobResult->data,
 					'error'
 				);
