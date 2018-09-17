@@ -525,7 +525,12 @@ class Packager_Php_Wrapper
 				break;
 			}
 		}
-		return $catched;
+		if ($catched) return TRUE;
+		self::_changeItself(
+			'/*____\\Packager_Php_Wrapper::$Info____*/',
+			"'".$path."'=>array('index'=>-1,'mtime'=>".time().",'size'=>0,'lines'=>array(0,0)),"
+		);
+		return is_dir($filename);
 	}
 	// Packager_Php_Scripts_Completer::end(is_dir)
 
