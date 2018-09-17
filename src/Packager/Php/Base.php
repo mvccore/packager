@@ -151,11 +151,13 @@ class Packager_Php_Base extends Packager_Common_Base
 
 		static::$wrapperReplacements[T_DIR] = function (& $fileInfo) {
 			$relPathDir = $fileInfo->relPathDir;
-			return "str_replace('\\\','/',__DIR__).'$relPathDir'";
+			//return "PACKAGER_PHP_FILE_BASE.'$relPathDir'";
+			return 'PACKAGER_PHP_FILE_BASE.\'' . $relPathDir . '\'';
 		};
 		static::$wrapperReplacements[T_FILE] = function (& $fileInfo) {
 			$relPath = $fileInfo->relPath;
-			return "str_replace('\\\','/',__DIR__).'$relPath'";
+			//return "PACKAGER_PHP_FILE_BASE.'$relPath'";
+			return 'PACKAGER_PHP_FILE_BASE.\'' . $relPath . '\'';
 		};
 		
 		Packager_Php_Scripts_Replacer::SetPhpFunctionsToProcess($this->cfg->phpFunctionsToProcess);

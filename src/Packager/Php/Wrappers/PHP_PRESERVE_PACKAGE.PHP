@@ -1,5 +1,7 @@
 <?php
 
+define('PACKAGER_PHP_FILE_BASE', str_replace('\\','/',__DIR__));
+
 class Packager_Php_Wrapper
 {
 	/** @var string */

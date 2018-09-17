@@ -156,7 +156,9 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 	}
 	private function _completeDependenciesByReqsAndInclsReplaceConstsAndEval (& $fileInfo, & $capturedItems) {
 		$fullPathLastSlash = strrpos($fileInfo->fullPath, '/');
-		$fullPathDir = $fullPathLastSlash !== FALSE ? substr($fileInfo->fullPath, 0, $fullPathLastSlash) : $fileInfo->fullPath ;
+		$fullPathDir = $fullPathLastSlash !== FALSE 
+			? substr($fileInfo->fullPath, 0, $fullPathLastSlash) 
+			: $fileInfo->fullPath ;
 		$capturedItemKeysToUnset = [];
 		ob_start();
 		$this->errorHandlerData = [];
