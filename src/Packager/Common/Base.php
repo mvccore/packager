@@ -99,7 +99,7 @@ class Packager_Common_Base {
 		return $this;
 	}
 	public function SetExcludePatterns ($excludePatterns = []) {
-		if (gettype($excludePatterns) == 'array') {
+		if (is_array($excludePatterns)) {
 			$this->cfg['excludePatterns'] = $excludePatterns;
 		} else {
 			$this->cfg['excludePatterns'] = [$excludePatterns];
@@ -107,7 +107,7 @@ class Packager_Common_Base {
 		return $this;
 	}
 	public function AddExcludePatterns ($excludePatterns = []) {
-		if (gettype($excludePatterns) == 'array') {
+		if (is_array($excludePatterns)) {
 			$this->MergeConfiguration(['excludePatterns' => $excludePatterns]);
 		} else {
 			$this->cfg['excludePatterns'][] = $excludePatterns;
@@ -115,7 +115,7 @@ class Packager_Common_Base {
 		return $this;
 	}
 	public function SetIncludePatterns ($includePatterns = []) {
-		if (gettype($includePatterns) == 'array') {
+		if (is_array($includePatterns)) {
 			$this->cfg['includePatterns'] = $includePatterns;
 		} else {
 			$this->cfg['includePatterns'] = [$includePatterns];
@@ -123,7 +123,7 @@ class Packager_Common_Base {
 		return $this;
 	}
 	public function AddIncludePatterns ($includePatterns = []) {
-		if (gettype($includePatterns) == 'array') {
+		if (is_array($includePatterns)) {
 			$this->MergeConfiguration(['includePatterns' => $includePatterns]);
 		} else {
 			$this->cfg['includePatterns'][] = $includePatterns;
@@ -131,7 +131,7 @@ class Packager_Common_Base {
 		return $this;
 	}
 	public function SetPatternReplacements ($patternReplacements = []) {
-		if (gettype($patternReplacements) == 'array') {
+		if (is_array($patternReplacements)) {
 			$this->cfg['patternReplacements'] = $patternReplacements;
 		} else {
 			$this->cfg['patternReplacements'] = [$patternReplacements];
@@ -139,7 +139,7 @@ class Packager_Common_Base {
 		return $this;
 	}
 	public function AddPatternReplacements ($patternReplacements = []) {
-		if (gettype($patternReplacements) == 'array') {
+		if (is_array($patternReplacements)) {
 			$this->MergeConfiguration(['patternReplacements' => $patternReplacements]);
 		} else {
 			$this->cfg['patternReplacements'][] = $patternReplacements;
@@ -147,7 +147,7 @@ class Packager_Common_Base {
 		return $this;
 	}
 	public function SetStringReplacements ($stringReplacements = []) {
-		if (gettype($stringReplacements) == 'array') {
+		if (is_array($stringReplacements)) {
 			$this->cfg['stringReplacements'] = $stringReplacements;
 		} else {
 			$this->cfg['stringReplacements'] = [$stringReplacements];
@@ -155,7 +155,7 @@ class Packager_Common_Base {
 		return $this;
 	}
 	public function AddStringReplacements ($stringReplacements = []) {
-		if (gettype($stringReplacements) == 'array') {
+		if (is_array($stringReplacements)) {
 			$this->MergeConfiguration(['stringReplacements' => $stringReplacements]);
 		} else {
 			$this->cfg['stringReplacements'][] = $stringReplacements;
@@ -175,7 +175,7 @@ class Packager_Common_Base {
 		return $this;
 	}
 	public function SetIncludeFirst ($includeFirst = []) {
-		if (gettype($includeFirst) == 'array') {
+		if (is_array($includeFirst)) {
 			$this->cfg['includeFirst'] = $includeFirst;
 		} else {
 			$this->cfg['includeFirst'] = [$includeFirst];
@@ -183,7 +183,7 @@ class Packager_Common_Base {
 		return $this;
 	}
 	public function AddIncludeFirst ($includeFirst = [], $mode = 'append') {
-		if (gettype($includeFirst) == 'array') {
+		if (is_array($includeFirst)) {
 			if ($mode == 'prepend') {
 				for ($i = count($includeFirst) - 1; $i >= 0; $i--) {
 					array_unshift($this->cfg['includeFirst'], $includeFirst[$i]);
@@ -203,7 +203,7 @@ class Packager_Common_Base {
 		return $this;
 	}
 	public function SetIncludeLast ($includeLast = []) {
-		if (gettype($includeLast) == 'array') {
+		if (is_array($includeLast)) {
 			$this->cfg['includeLast'] = $includeLast;
 		} else {
 			$this->cfg['includeLast'] = [$includeLast];
@@ -211,7 +211,7 @@ class Packager_Common_Base {
 		return $this;
 	}
 	public function AddIncludeLast ($includeLast = [], $mode = 'append') {
-		if (gettype($includeLast) == 'array') {
+		if (is_array($includeLast)) {
 			if ($mode == 'prepend') {
 				for ($i = count($includeLast) - 1; $i >= 0; $i--) {
 					array_unshift($this->cfg['includeLast'], $includeLast[$i]);
@@ -251,11 +251,11 @@ class Packager_Common_Base {
 	public function MergeConfiguration ($cfg = []) {
 		foreach ($cfg as $key1 => & $value1) {
 			if ($value1 instanceof stdClass) $value1 = (array)$value1;
-			if (gettype($value1) == 'array') {
+			if (is_array($value1)) {
 				if (isset($this->cfg[$key1])) {
 					if ($this->cfg[$key1] instanceof stdClass) {
 						$this->cfg[$key1] = (array) $this->cfg[$key1];
-					} else if (gettype($this->cfg[$key1]) != 'array') {
+					} else if (!is_array($this->cfg[$key1])) {
 						$this->cfg[$key1] = [$this->cfg[$key1]];
 					}
 				} else {

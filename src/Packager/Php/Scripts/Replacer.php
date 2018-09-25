@@ -308,7 +308,7 @@ class Packager_Php_Scripts_Replacer
 				// check if before replaced function call is backslash allready and if backslash is also first char in new part
 				if (mb_substr(self::$wrapperClassName, 0, 1) == '\\' && $i > 0) {
 					$previousToken = $this->tokens[$i - 1];
-					if (gettype($previousToken) == 'array' && $previousToken[1] == '\\') {
+					if (is_array($previousToken) && $previousToken[1] == '\\') {
 						// previous token is already a backslash - remove backslash from new part
 						$newPart = mb_substr($newPart, 1);
 					}
