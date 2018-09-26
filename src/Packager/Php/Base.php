@@ -101,7 +101,7 @@ class Packager_Php_Base extends Packager_Common_Base
 		}
 		foreach (static::$includeFirstDefault as $relPath) {
 			$absPath = $this->cfg->sourcesDir . $relPath;
-			if (!in_array($absPath, $this->cfg->includeFirst)) {
+			if (!in_array($absPath, $this->cfg->includeFirst, TRUE)) {
 				array_unshift($this->cfg->includeFirst, $absPath);
 			}
 		}
@@ -110,12 +110,12 @@ class Packager_Php_Base extends Packager_Common_Base
 		}
 		foreach (static::$includeLastDefault as $relPath) {
 			$absPath = $this->cfg->sourcesDir . $relPath;
-			if (!in_array($absPath, $this->cfg->includeLast)) {
+			if (!in_array($absPath, $this->cfg->includeLast, TRUE)) {
 				$this->cfg->includeLast[] = $absPath;
 			}
 		}
 		foreach (static::$excludePatternsDefault as $pattern) {
-			if (!in_array($pattern, $this->cfg->excludePatterns)) {
+			if (!in_array($pattern, $this->cfg->excludePatterns,TRUE)) {
 				$this->cfg->excludePatterns[] = $pattern;
 			}
 		}

@@ -159,7 +159,7 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 				foreach ($filesDependenciesItem->requires as $requiresItem) {
 					if (!isset($this->filesPhpOrder[$requiresItem])) {
 						// if file what is required by currently processed file has not ordered yet
-						if (in_array($requiresItem, $filesDependenciesItem->requiredBy)) {
+						if (in_array($requiresItem, $filesDependenciesItem->requiredBy, TRUE)) {
 							// if current field requires antoehr file but another file also requires current file - it's unsafe cycle!
 							$unsafeOrderDetectionRequires[] = $this->files->all[$requiresItem]->relPath;
 						} else {
@@ -177,11 +177,11 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 			// add unsafe order detected files into global array to notify developer at the end
 			if (count($unsafeOrderDetectionRequires) > 0) {
 				$relPath = $this->files->all[$fullPath]->relPath;
-				if (!in_array($relPath, $this->unsafeOrderDetection)) {
+				if (!in_array($relPath, $this->unsafeOrderDetection, TRUE)) {
 					$this->unsafeOrderDetection[] = $relPath;
 				}
 				foreach ($unsafeOrderDetectionRequires as $unsafeOrderDetectionRequire) {
-					if (!in_array($unsafeOrderDetectionRequire, $this->unsafeOrderDetection)) {
+					if (!in_array($unsafeOrderDetectionRequire, $this->unsafeOrderDetection, TRUE)) {
 						$this->unsafeOrderDetection[] = $unsafeOrderDetectionRequire;
 					}
 				}

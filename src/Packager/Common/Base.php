@@ -599,7 +599,7 @@ class Packager_Common_Base {
 	}
 	protected function encodeFilesToUtf8 (& $allFiles) {
 		foreach ($allFiles as $fullPath => & $fileInfo) {
-			if (!in_array($fileInfo->extension, static::$fileTypesStoringTypes['binary'])) {
+			if (!in_array($fileInfo->extension, static::$fileTypesStoringTypes['binary'], TRUE)) {
 				self::_convertFilecontentToUtf8Automaticly($fileInfo);
 			}
 		}

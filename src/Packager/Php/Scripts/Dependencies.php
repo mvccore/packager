@@ -51,7 +51,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 			$autoloadedByDeclaration = $this->_completePhpFileDependenciesByAutoloadDeclaration($fileInfo);
 			// if there is no record about autoloaded file and it is not foreing file - add autoloaded file at the end
 			foreach ($autoloadedByDeclaration as $autoLoadItem) {
-				if (isset($this->files->all[$autoLoadItem]) && !in_array($autoLoadItem, $byRequiresAndIncludes)) {
+				if (isset($this->files->all[$autoLoadItem]) && !in_array($autoLoadItem, $byRequiresAndIncludes, TRUE)) {
 					$byRequiresAndIncludes[] = $autoLoadItem;
 				}
 			}
@@ -74,14 +74,14 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 	}
 	private function _completeRequiredByRecordsRecursive ($searchedFullPath, & $searchedRequirementsRequiredBy) {
 		foreach ($this->filesPhpDependencies as $fullPath => $requirements) {
-			if (in_array($searchedFullPath, $requirements->requires)) {
-				if (!in_array($fullPath, $searchedRequirementsRequiredBy)) {
+			if (in_array($searchedFullPath, $requirements->requires, TRUE)) {
+				if (!in_array($fullPath, $searchedRequirementsRequiredBy, TRUE)) {
 					$searchedRequirementsRequiredBy[] = $fullPath;
 					$requiredByLocal = $this->_completeRequiredByRecordsRecursive(
 						$searchedFullPath, $searchedRequirementsRequiredBy
 					);
 					foreach ($requiredByLocal as $requiredByLocalItem) {
-						if (!in_array($requiredByLocalItem, $searchedRequirementsRequiredBy)) {
+						if (!in_array($requiredByLocalItem, $searchedRequirementsRequiredBy, TRUE)) {
 							$searchedRequirementsRequiredBy[] = $requiredByLocalItem;
 						}
 					}
@@ -336,7 +336,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		// count allready included files
 		$alreadyIncludedFiles = get_included_files();
 		// check if packager use include_once("vendor/autoload.php") or not
-		if (in_array($wrongComposerAutoloadFullPath, $alreadyIncludedFiles)) {
+		if (in_array($wrongComposerAutoloadFullPath, $alreadyIncludedFiles, TRUE)) {
 			$this->exceptionsMessages = [
 				"Do not use 'include_once(\"vendor/autoload.php\");' for result packing.",
 				"Use direct path instead: 'include_once(\"vendor/mvccore/packager/src/Packager/Php.php\");'"

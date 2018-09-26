@@ -173,10 +173,10 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 		$this->files->static = array_values($this->files->static);
 	}
 	private function _processStaticFileContent (& $fileInfo, $storingType) {
-		if (in_array($fileInfo->extension, self::$_fileTypesForWhiteSpaceTrim)) {
+		if (in_array($fileInfo->extension, self::$_fileTypesForWhiteSpaceTrim, TRUE)) {
 			$fileInfo->content = trim($fileInfo->content);
 		}
-		if (in_array($fileInfo->extension, static::$templatesExtensions)) {
+		if (in_array($fileInfo->extension, static::$templatesExtensions, TRUE)) {
 			// process pattern and string replacements by config
 			$this->processPatternAndStringReplacements($fileInfo);
 			// process php code and wrap configured functions

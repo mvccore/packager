@@ -78,7 +78,7 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 	}
 	private function _processPhpCode () {
 		foreach ($this->files as $fullPath => $fileInfo) {
-			if ($fileInfo->extension != 'php' && !in_array($fileInfo->extension, static::$templatesExtensions)) continue;
+			if ($fileInfo->extension != 'php' && !in_array($fileInfo->extension, static::$templatesExtensions, TRUE)) continue;
 			if ($this->cfg->patternReplacements) {
 				foreach ($this->cfg->patternReplacements as $pattern => $replacement) {
 					if (is_numeric($pattern)) {
@@ -102,7 +102,7 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 			if ($this->cfg->minifyPhp) {
 				$fileInfo->content = $this->shrinkPhpCode($fileInfo->content);
 			}
-			if ($this->cfg->minifyTemplates && in_array($fileInfo->extension, static::$templatesExtensions)) {
+			if ($this->cfg->minifyTemplates && in_array($fileInfo->extension, static::$templatesExtensions, TRUE)) {
 				//include_once(__DIR__.'/../Libs/Minify/HTML.php');
 				@include_once('vendor/autoload.php');
 				$fileInfo->content = Minify_HTML::minify($fileInfo->content);
