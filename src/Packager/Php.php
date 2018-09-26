@@ -262,7 +262,7 @@ class Packager_Php extends Packager_Php_Completer
 		return parent::MergeConfiguration($cfg);
 	}
 	/**
-	 * Run PHP compilation process, print output to CLI or browser
+	 * Run PHP compilation process, print output to CLI or browser.
 	 * 
 	 * @param array $cfg 
 	 * 
