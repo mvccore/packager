@@ -1,5 +1,7 @@
 <?php
 
+if(!defined('T_TRAIT')) define('T_TRAIT', 362);
+
 class Packager_Php_Scripts_Replacer
 {
 	protected static $dynamicClassFnDeterminators = [
@@ -170,7 +172,7 @@ class Packager_Php_Scripts_Replacer
 				}
 			}
 			// if token is "class" keyword - open stage
-			if ($tokenId === T_CLASS) {
+			if ($tokenId === T_CLASS || $tokenId === T_TRAIT) {
 				$this->classState = 1;
 				$this->classBracketsLevel = 0;
 				// prepare bools for class methods

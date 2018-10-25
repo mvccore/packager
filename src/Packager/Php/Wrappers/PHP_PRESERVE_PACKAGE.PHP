@@ -329,7 +329,7 @@ class Packager_Php_Wrapper
 	 * 
 	 * @return string
 	 */
-	private static function & _getFileContent ($path, $decodeGzip = TRUE) {
+	private static function _getFileContent ($path, $decodeGzip = TRUE) {
 		if (!isset(self::$Info[$path])) return FALSE;
 		$record = self::$Info[$path];
 		$index = $record['index'];
