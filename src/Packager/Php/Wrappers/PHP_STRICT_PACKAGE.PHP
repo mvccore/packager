@@ -558,7 +558,7 @@ class Packager_Php_Wrapper
 			}
 			if ($r) self::_changeItself(
 				'/*____\\Packager_Php_Wrapper::$Info____*/',
-				"'".$path."'=>array('index'=>-1,'mtime'=>".time().",'size'=>0,'lines'=>array(0,0)),"
+				"'".$path."'=>['index'=>-1,'mtime'=>".time().",'size'=>0,'lines'=>array(0,0)],"
 			);
 		}
 		return $r;
@@ -596,6 +596,9 @@ class Packager_Php_Wrapper
 		}
 		@fclose($oh);
 		@fclose($nh);
+		$r2 = FALSE;
+		$r3 = FALSE;
+		$r4 = FALSE;
 		if ($r1) {
 			$newOldSelf = $oldSelf . '.' . uniqid();
 			$r2 = rename($oldSelf, $newOldSelf);
@@ -630,6 +633,43 @@ class Packager_Php_Wrapper
 		}
 	}
 	// Packager_Php_Scripts_Completer::end(file_get_contents)
+	
+	// Packager_Php_Scripts_Completer::start(file)
+	/**
+	 * Return file content string
+	 * 
+	 * @param string   $filename
+	 * @param int      $flags
+	 * @param resource $context
+	 * 
+	 * @return \string[]|bool
+	 */
+	public static function File ($filename, $flags = 0, $context = NULL) {
+		if (self::_isProtocolPath($filename)) return call_user_func_array('file', func_get_args());
+		$path = self::NormalizePath($filename);
+		$content = self::_getFileContent($path, TRUE);
+		if ($content === FALSE) {
+			self::Warning('', $filename, 'file');
+			return FALSE;
+		} else {
+			$lines = explode("\n", str_replace(["\r\n", "\r"], "\n", $content));
+			// if `TRUE`, there are no PHP_EOL at line ends
+			$fileIgnoreNewLines = $flags > 1 && $flags !== 4 && $flags !== 5;
+			// if `TRUE`, empty string lines are skipped - only if `$fileIgnoreNewLines` is `TRUE`
+			$fileSkipEmptyLines = $flags > 3;
+			if ($fileIgnoreNewLines && $fileSkipEmptyLines) {
+				foreach ($lines as $key => & $line) {
+					if (mb_strlen($line) === 0)
+						unset($lines[$key]);
+				}
+			} else if (!$fileIgnoreNewLines) {
+				foreach ($lines as $key => & $line) 
+					$line .= PHP_EOL;
+			}
+			return $lines;
+		}
+	}
+	// Packager_Php_Scripts_Completer::end(file)
 	
 	// Packager_Php_Scripts_Completer::start(parse_ini_file)
 	/**

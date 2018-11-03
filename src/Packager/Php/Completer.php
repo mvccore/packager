@@ -160,7 +160,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 			$this->_processStaticFileContent($fileInfo, $storingType);
 			
 			$glue = ($this->resultFilesInfo == '') ? '' : "\n";
-			$this->resultFilesInfo .= $glue . "'$relPath'=>array('index'=>$i,'mtime'=>$filemtime,'size'=>$filesize,'store'=>'$storingType'),";
+			$this->resultFilesInfo .= $glue . "'$relPath'=>['index'=>$i,'mtime'=>$filemtime,'size'=>$filesize,'store'=>'$storingType'],";
 			
 			$glue = ($this->resultFilesContents == '') ? '' : "\n";
 			$this->resultFilesContents .= 

@@ -55,11 +55,11 @@ class Packager_Php_Base extends Packager_Common_Base
 	protected static $errorReportingLevelDefault = 5; // E_ALL
 	protected static $phpReplacementsStatistics = [];
 	protected static $wrapperInternalElementsDependencies = [
-		'NormalizePath'							=> ',require_once,include_once,require,include,readfile,file_get_contents,parse_ini_file,simplexml_load_file,filemtime,filesize,file_exists,DirectoryIterator,md5_file,is_dir,mkdir,is_file,',
-		'Warning'								=> ',require_once,include_once,require,include,readfile,file_get_contents,parse_ini_file,simplexml_load_file,filemtime,filesize,',
-		'_getFileContent'						=> ',require_once,include_once,require,include,readfile,file_get_contents,parse_ini_file,simplexml_load_file,md5_file,',
+		'NormalizePath'							=> ',require_once,include_once,require,include,readfile,file_get_contents,file,parse_ini_file,simplexml_load_file,filemtime,filesize,file_exists,DirectoryIterator,md5_file,is_dir,mkdir,is_file,',
+		'Warning'								=> ',require_once,include_once,require,include,readfile,file_get_contents,file,parse_ini_file,simplexml_load_file,filemtime,filesize,',
+		'_getFileContent'						=> ',require_once,include_once,require,include,readfile,file_get_contents,file,parse_ini_file,simplexml_load_file,md5_file,',
 		'_includeFile'							=> ',require_once,include_once,require,include,',
-		'_isProtocolPath'						=> ',readfile,file_get_contents,simplexml_load_file,',
+		'_isProtocolPath'						=> ',readfile,file_get_contents,file,simplexml_load_file,',
 		'_changeItself'							=> ',mkdir,',
 	];
 	protected $filesPhpDependencies = [];
