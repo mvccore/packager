@@ -228,7 +228,7 @@ class Packager_Php extends Packager_Php_Completer
 	 * named functions will not be used in original way to read/write anything from hard drive,
 	 * all specified functions will be replaced with wrapper calls to give results from memory variables.
 	 * It's possible to name 'include' and 'require', but all 'include_once' and 'require_once' 
-	 * are replaced automaticly if there is safely detected line content - string only, no variables inside
+	 * are replaced automatically if there is safely detected line content - string only, no variables inside
 	 * 
 	 * @param string $phpFuncStr,...
 	 * 
@@ -241,7 +241,7 @@ class Packager_Php extends Packager_Php_Completer
 	 * Define all php functions you don't want to replace with internal php file calls as strings,
 	 * named functions will be used in original way to read/write anything from hard drive.
 	 * It's possible to name 'include' and 'require', but all 'include_once' and 'require_once' 
-	 * are replaced automaticly if there is safely detected line content - string only, no variables inside
+	 * are replaced automatically if there is safely detected line content - string only, no variables inside
 	 * 
 	 * @param string $phpFuncStr 
 	 * 
@@ -252,7 +252,7 @@ class Packager_Php extends Packager_Php_Completer
 	}
 	/**
 	 * Merge multilevel configuration array with previously initialized values.
-	 * New values sended into this function will be used as preferred.
+	 * New values sent into this function will be used as preferred.
 	 * 
 	 * @param array $cfg
 	 * 

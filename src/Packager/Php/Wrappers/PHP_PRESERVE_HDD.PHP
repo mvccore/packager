@@ -27,13 +27,13 @@ class Packager_Php_Wrapper
 	public static $Contents = array();
 
 	/** @var array */
-	public static $Info = array('____\Packager_Php_Wrapper::$Info____'); // replaced automaticly in build process
+	public static $Info = array('____\Packager_Php_Wrapper::$Info____'); // replaced automatically in build process
 
 	/** @var int */
-	private static $_baseLinesCount = '____\Packager_Php_Wrapper::$_baseLinesCount____'; // replaced automaticly in build process
+	private static $_baseLinesCount = '____\Packager_Php_Wrapper::$_baseLinesCount____'; // replaced automatically in build process
 
 	/** @var bool */
-	private static $_minifiedPhp = '____\Packager_Php_Wrapper::$_minifiedPhp____'; // replaced automaticly in build process
+	private static $_minifiedPhp = '____\Packager_Php_Wrapper::$_minifiedPhp____'; // replaced automatically in build process
 	
 	/** @var array */
 	private static $_contexts = array();
@@ -530,14 +530,14 @@ class Packager_Php_Wrapper
 		if (is_dir($filename)) return TRUE;
 		$path = self::NormalizePath($filename);
 		if (isset(self::$Info[$path])) return TRUE;
-		$catched = FALSE;
+		$caught = FALSE;
 		foreach (self::$Info as $pathKey => & $item) {
 			if (strpos($pathKey, $path) === 0) {
-				$catched = TRUE;
+				$caught = TRUE;
 				break;
 			}
 		}
-		return $catched;
+		return $caught;
 	}
 	// Packager_Php_Scripts_Completer::end(is_dir)
 

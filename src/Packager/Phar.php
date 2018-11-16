@@ -137,7 +137,7 @@ class Packager_Phar extends Packager_Phar_ResultCompleter
 	}
 	/**
 	 * Merge multilevel configuration array with previously initialized values.
-	 * New values sended into this function will be used preferred.
+	 * New values sent into this function will be used preferred.
 	 * 
 	 * @param array $cfg
 	 * 

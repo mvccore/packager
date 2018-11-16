@@ -120,31 +120,31 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		];
 		foreach ($regExps as $regExp => $backReferences) {
 			$matches = [];
-			$catched = preg_match_all($regExp, $fileInfo->content, $matches, PREG_OFFSET_CAPTURE);
-			if ($catched > 0) {
+			$caught = preg_match_all($regExp, $fileInfo->content, $matches, PREG_OFFSET_CAPTURE);
+			if ($caught > 0) {
 				// xcv(array($fileInfo->fullPath, $matches));
 				foreach ($matches[0] as $matchKey => $matchItem) {
 					$backReferenceStr = '';
 					foreach ($backReferences[1] as $backReferenceIndex) {
 						$backReferenceStr .= $matches[$backReferenceIndex][$matchKey][0];
 					}
-					$catchedTextIndex = $matchItem[1];
+					$caughtTextIndex = $matchItem[1];
 					// this is very very very crazy result fix from `preg_match_all()` with PREG_OFFSET_CAPTURE
-					$catchedTextIndexFixMatchItem = $matches[2][0][0];
-					$catchedTextIndexFixOffset = $catchedTextIndex - mb_strlen($catchedTextIndexFixMatchItem) - 4;
-					if ($catchedTextIndexFixOffset > 0 && mb_strlen($fileInfo->content) > $catchedTextIndexFixOffset + mb_strlen($catchedTextIndexFixMatchItem)) {
-						$catchedTextIndexFix = mb_strpos(
+					$caughtTextIndexFixMatchItem = $matches[2][0][0];
+					$caughtTextIndexFixOffset = $caughtTextIndex - mb_strlen($caughtTextIndexFixMatchItem) - 4;
+					if ($caughtTextIndexFixOffset > 0 && mb_strlen($fileInfo->content) > $caughtTextIndexFixOffset + mb_strlen($caughtTextIndexFixMatchItem)) {
+						$caughtTextIndexFix = mb_strpos(
 							$fileInfo->content, 
-							$catchedTextIndexFixMatchItem,
-							$catchedTextIndexFixOffset
+							$caughtTextIndexFixMatchItem,
+							$caughtTextIndexFixOffset
 						);
-						if ($catchedTextIndexFix !== $catchedTextIndex && $catchedTextIndexFix !== FALSE) {
-							$catchedTextIndex = $catchedTextIndexFix;
+						if ($caughtTextIndexFix !== $caughtTextIndex && $caughtTextIndexFix !== FALSE) {
+							$caughtTextIndex = $caughtTextIndexFix;
 						}
 					}
 					// end of fix
-					$catchedTextLength = mb_strlen($matchItem[0]);
-					$capturedItems[] = [$backReferenceStr, $catchedTextIndex, $catchedTextLength];
+					$caughtTextLength = mb_strlen($matchItem[0]);
+					$capturedItems[] = [$backReferenceStr, $caughtTextIndex, $caughtTextLength];
 				}
 			}
 		}

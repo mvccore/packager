@@ -600,7 +600,7 @@ class Packager_Common_Base {
 	protected function encodeFilesToUtf8 (& $allFiles) {
 		foreach ($allFiles as $fullPath => & $fileInfo) {
 			if (!in_array($fileInfo->extension, static::$fileTypesStoringTypes['binary'], TRUE)) {
-				self::_convertFilecontentToUtf8Automaticly($fileInfo);
+				self::_convertFilecontentToUtf8Automatically($fileInfo);
 			}
 		}
 	}
@@ -665,7 +665,7 @@ class Packager_Common_Base {
 			);
 		}
 	}
-	private function _convertFilecontentToUtf8Automaticly (& $fileInfo) {
+	private function _convertFilecontentToUtf8Automatically (& $fileInfo) {
 		//$this->errorHandlerData = array();
 		// remove UTF-8 BOM
 		if (substr($fileInfo->content, 0, 3) == pack("CCC",0xef,0xbb,0xbf)) {

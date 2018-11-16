@@ -372,7 +372,7 @@ class Packager_Php_Scripts_Replacer
 	}
 	protected function getClassDynamicFunctionEnvironment ($functionIndex) {
 		// go backwards and try to catch T_STATIC or not
-		$staticCatched = FALSE;
+		$staticCaught = FALSE;
 		$continueTokens = self::$dynamicClassFnDeterminators['continueTokens'];
 		$endingTokens = self::$dynamicClassFnDeterminators['endingTokens'];
 		for ($i = $functionIndex - 1; $i > -1; $i -= 1) {
@@ -384,7 +384,7 @@ class Packager_Php_Scripts_Replacer
 				} else if (isset($endingTokens[$tokenId])) {
 					break;
 				} else if ($tokenId == T_STATIC) {
-					$staticCatched = TRUE;
+					$staticCaught = TRUE;
 					break;
 				} else {
 					break;
@@ -397,7 +397,7 @@ class Packager_Php_Scripts_Replacer
 				}
 			}
 		}
-		return $staticCatched ? FALSE : TRUE;
+		return $staticCaught ? FALSE : TRUE;
 	}
 	protected static function addToReplacementStatistics ($replacementKey) {
 		if (!isset(self::$phpReplacementsStatistics[$replacementKey])) {

@@ -10,9 +10,9 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 		$this->_orderDependenciesByCounts();
 		// order by completed dependencies
 		$this->_orderPhpFilesByDependencies();
-		// reorder by prefered configuration
-		$this->_orderPhpFilesByPreferedConfiguration('includeFirst');
-		$this->_orderPhpFilesByPreferedConfiguration('includeLast');
+		// reorder by preferred configuration
+		$this->_orderPhpFilesByPreferredConfiguration('includeFirst');
+		$this->_orderPhpFilesByPreferredConfiguration('includeLast');
 		// free memory
 		$this->filesPhpDependencies = [];
 	}
@@ -213,7 +213,7 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 			);
 		}
 	}
-	private function _orderPhpFilesByPreferedConfiguration ($cfgKey) {
+	private function _orderPhpFilesByPreferredConfiguration ($cfgKey) {
 		if (count($this->cfg->$cfgKey) > 0) {
 			$filesPhpOrder = $this->filesPhpOrder;
 			$fullPathsToReorder = [];
