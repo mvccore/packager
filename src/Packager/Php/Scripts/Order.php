@@ -205,7 +205,7 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 			$filesFullPathsPrinted = ob_get_clean() . '</pre>';
 			$this->sendResult(
 				"There was not possible to determinate declaration order for files bellow. <br />"
-				."Please set order for these files manualy by config arrays in keys: <br />"
+				."Please set order for these files manually by config arrays in keys: <br />"
 				."\$config['includeFirst'] = array(...);<br />"
 				."\$config['includeLast'] = array(...);",
 				$filesFullPathsPrinted, 

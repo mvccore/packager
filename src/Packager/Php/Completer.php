@@ -261,7 +261,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 				. implode("\n", $this->files->static);
 			if (count($this->unsafeOrderDetection)) {
 				$content .= "\n\n\nDeclaration order for files below was not detected certainly\n"
-				. "If there will occur any exceptions by running result, complete order for these files manualy.\n\n"
+				. "If there will occur any exceptions by running result, complete order for these files manually.\n\n"
 				. implode("\n", $this->unsafeOrderDetection);
 			}
 			$content .= "\n\n\nDONE";
@@ -281,7 +281,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 				. "</div>";
 			if (count($this->unsafeOrderDetection)) {
 				$content .= "<h2>Declaration order for files below was not detected certainly</h2>"
-				. "<p>If there will occur any exceptions by running result, complete order for these files manualy.</p>"
+				. "<p>If there will occur any exceptions by running result, complete order for these files manually.</p>"
 				. '<div class="files">'
 					. implode('<br />', $this->unsafeOrderDetection)
 				. "</div>";

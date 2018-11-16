@@ -333,7 +333,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		$lastSlash = mb_strrpos($scriptFileName, DIRECTORY_SEPARATOR);
 		$documentRoot = ($lastSlash !== FALSE) ? mb_substr($scriptFileName, 0, $lastSlash) : $scriptFileName ;
 		$wrongComposerAutoloadFullPath = $documentRoot . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
-		// count allready included files
+		// count already included files
 		$alreadyIncludedFiles = get_included_files();
 		// check if packager use include_once("vendor/autoload.php") or not
 		if (in_array($wrongComposerAutoloadFullPath, $alreadyIncludedFiles, TRUE)) {
@@ -373,7 +373,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 			spl_autoload_register([__CLASS__, 'AutoloadCall'], false, true);
 		} else {
 			// if composer autoload doesn't exists, MvcCore project is probably
-			// developed with manualy placed files in docment root, '/App' dir or in '/Libs' dir,
+			// developed with manually placed files in document root, '/App' dir or in '/Libs' dir,
 			spl_autoload_register([__CLASS__, 'AutoloadCall']);
 		}
 		// set custom error handlers to catch eval warnings and errors

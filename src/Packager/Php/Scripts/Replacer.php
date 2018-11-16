@@ -307,7 +307,7 @@ class Packager_Php_Scripts_Replacer
 			if (isset(self::$phpFunctionsToProcess[$oldPart])) {
 				// yes - by configuration is necessary to replace this php function call - do it
 				$newPart = str_replace('%WrapperClass%', self::$wrapperClassName, $replacement->$oldPart);
-				// check if before replaced function call is backslash allready and if backslash is also first char in new part
+				// check if before replaced function call is backslash already and if backslash is also first char in new part
 				if (mb_substr(self::$wrapperClassName, 0, 1) == '\\' && $i > 0) {
 					$previousToken = $this->tokens[$i - 1];
 					if (is_array($previousToken) && $previousToken[1] == '\\') {
