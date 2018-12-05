@@ -157,7 +157,8 @@ class Packager_Php_Scripts_Completer extends Packager_Php_Base
 		}
 	}
 	private function _removeWrapperPhpFunctionEquivalent ($originalPhpFunctionName) {
-		$commentTemplate = __CLASS__ . '::{startEnd}({functionName})';
+		$selfClass = version_compare(PHP_VERSION, '5.5', '>') ? self::class : __CLASS__;
+		$commentTemplate = $selfClass . '::{startEnd}({functionName})';
 		$startStr	= str_replace(['{startEnd}', '{functionName}'], ['start', $originalPhpFunctionName], $commentTemplate);
 		$endStr		= str_replace(['{startEnd}', '{functionName}'], ['end', $originalPhpFunctionName], $commentTemplate);
 		$startPos = mb_strpos($this->wrapperCode, $startStr);

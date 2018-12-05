@@ -347,6 +347,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		$composerAutoloadFullPath = $sourcesDir . '/vendor/autoload.php';
 		$errorMsgs = [];
 		$errorTraces = [];
+		$selfClass = version_compare(PHP_VERSION, '5.5', '>') ? self::class : __CLASS__;
 		if (file_exists($composerAutoloadFullPath)) {
 			// if project is using composer autoloader
 			try {
@@ -370,16 +371,16 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 				// auto load or in composer auto load static includes array
 				return FALSE;
 			}
-			spl_autoload_register([__CLASS__, 'AutoloadCall'], false, true);
+			spl_autoload_register([$selfClass, 'AutoloadCall'], false, true);
 		} else {
 			// if composer auto load doesn't exists, MvcCore project is probably
 			// developed with manually placed files in document root, '/App' dir or in '/Libs' dir,
-			spl_autoload_register([__CLASS__, 'AutoloadCall']);
+			spl_autoload_register([$selfClass, 'AutoloadCall']);
 		}
 		// set custom error handlers to catch eval warnings and errors
-		register_shutdown_function([__CLASS__, 'ShutdownHandler']);
-		set_exception_handler([__CLASS__, 'ExceptionHandler']);
-		set_error_handler([__CLASS__, 'ErrorHandler']);
+		register_shutdown_function([$selfClass, 'ShutdownHandler']);
+		set_exception_handler([$selfClass, 'ExceptionHandler']);
+		set_error_handler([$selfClass, 'ErrorHandler']);
 		$this->errorResponse = [
 			'autoloadJob',
 			(object) [

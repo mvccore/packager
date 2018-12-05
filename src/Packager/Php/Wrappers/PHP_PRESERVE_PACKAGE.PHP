@@ -210,10 +210,11 @@ class Packager_Php_Wrapper
 			if (mb_strlen($content) === 0) {
 				$templateClosure = self::_getFileContent($path, TRUE);
 				$content = self::_getTemplateClosureBody($templateClosure);
+				$selfClass = version_compare(PHP_VERSION, '5.5', '>') ? self::class : __CLASS__;
 				// http://php.net/manual/en/language.variables.basics.php
 				$content = preg_replace(
 					"#([^\\\])(\\\$this)([^a-zA-Z0-9_\x7f-\xff])#im",
-					"$1".__CLASS__."::\$Context$3",
+					"$1".$selfClass."::\$Context$3",
 					$content
 				);
 				$index = self::$Info[$path]['index'];
@@ -1210,7 +1211,8 @@ class Packager_Php_Wrapper_SplFileInfo extends SplFileInfo {
 		} else if ($this->_info) {
 			return $this->_info['size'];
 		} else {
-			trigger_error("[".__CLASS__."::".__METHOD__."] File doesn't exists.", E_WARNING);
+			$selfClass = version_compare(PHP_VERSION, '5.5', '>') ? self::class : __CLASS__;
+			trigger_error("[".$selfClass."::".__METHOD__."] File doesn't exists.", E_WARNING);
 			return FALSE;
 		}
 	}
@@ -1346,7 +1348,8 @@ class Packager_Php_Wrapper_SplFileInfo extends SplFileInfo {
 
 	private function _notImplemented ($methodName) {
 		Packager_Php_Wrapper::PrintBacktrace();
-		throw new RuntimeException(__CLASS__."::" . $methodName . "(): Not implemented.");
+		$selfClass = version_compare(PHP_VERSION, '5.5', '>') ? self::class : __CLASS__;
+		throw new RuntimeException($selfClass."::" . $methodName . "(): Not implemented.");
 	}
 }
 // Packager_Php_Scripts_Completer::end(DirectoryIterator)
