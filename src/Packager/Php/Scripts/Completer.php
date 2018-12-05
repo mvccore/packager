@@ -151,7 +151,7 @@ class Packager_Php_Scripts_Completer extends Packager_Php_Base
 		}
 		// there is not necessary to have there a field section, 
 		// if there are no static files to include in result and 
-		// if there is remoed Init() method
+		// if there is removed Init() method
 		if (count($this->files->static) === 0 && $initMethodRemoved) {
 			$this->_removeWrapperPhpFunctionEquivalent('fields');
 		}

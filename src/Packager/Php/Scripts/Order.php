@@ -129,7 +129,7 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 			if (!isset($this->filesPhpDependencies[$require])) continue; // file has been ordered by another file
 			if (isset($filesToOrder[$require])) continue; // recursive requiring
 			$fileItem = $this->filesPhpDependencies[$require];
-			if (!$fileItem->requires) continue; // file does'nt require anything
+			if (!$fileItem->requires) continue; // file doesn't require anything
 			
 			$filesToOrder = array_merge([$require => 1], $filesToOrder);
 
@@ -160,7 +160,7 @@ class Packager_Php_Scripts_Order extends Packager_Php_Scripts_Completer
 					if (!isset($this->filesPhpOrder[$requiresItem])) {
 						// if file what is required by currently processed file has not ordered yet
 						if (in_array($requiresItem, $filesDependenciesItem->requiredBy, TRUE)) {
-							// if current field requires antoehr file but another file also requires current file - it's unsafe cycle!
+							// if current field requires another file but another file also requires current file - it's unsafe cycle!
 							$unsafeOrderDetectionRequires[] = $this->files->all[$requiresItem]->relPath;
 						} else {
 							// not all required files for current files has been ordered

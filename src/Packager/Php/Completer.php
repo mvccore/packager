@@ -13,15 +13,15 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 		$this->completePhpFilesDependenciesByAutoloadDeclaration($params['file']);
 	}
 	protected function mainJob ($params = []) {
-		// complete $this->files as ussual
+		// complete $this->files as usual
 		$this->completeAllFiles();
-		// complete dependencies array by include_once(), require_once() and autoloading
+		// complete dependencies array by include_once(), require_once() and auto loading
 		$this->completePhpFilesDependencies();
 		// complete order for php files declaration by completed data
 		$this->completePhpFilesOrder();
 		// complete $this->files->php array and $this->files->static array, unset $this->files->all
 		$this->_completePhpAndStaticFiles();
-		// process php code filesystem functions replacements
+		// process php code file system functions replacements
 		$this->processPhpCode();
 		// complete files records and php code together
 		$this->_completeResult();

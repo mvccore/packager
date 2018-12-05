@@ -40,7 +40,7 @@ class Packager_Php extends Packager_Php_Completer
 		return parent::SetSourceDir($fullOrRelativePath);
 	}
 	/**
-	 * Set compilation result file, if exist, it will be overwriten
+	 * Set compilation result file, if exist, it will be overwritten
 	 * 
 	 * @param string $releaseFileFullPath 
 	 * 
@@ -202,8 +202,8 @@ class Packager_Php extends Packager_Php_Completer
 	}
 	/**
 	 * Set mode for wrapper class how to behave when any replaced file system php 
-	 * function will be called - it here will be searching in memory and after in hdd 
-	 * or hdd first and then memory or no memory or no hdd.
+	 * function will be called - it here will be searching in memory and after in HDD 
+	 * or HDD first and then memory or no memory or no HDD.
 	 * 
 	 * @param string $fsMode 
 	 * 

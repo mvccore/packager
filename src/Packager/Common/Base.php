@@ -286,7 +286,7 @@ class Packager_Common_Base {
 	 */
 	public function PrintFilesToPack ($cfg = []) {
 		$this->Run($cfg);
-		// complete $this->files as ussual
+		// complete $this->files as usual
 		$this->completeAllFiles();
 		$phpFiles = [];
 		$staticFiles = [];
@@ -579,8 +579,8 @@ class Packager_Common_Base {
 		foreach ($includePatterns as & $includePattern) {
 			$includePattern = $includePattern;
 		}
-		foreach ($excludePatterns as & $excludePattern) {
-			$excludePattern = $excludePattern;
+		foreach ($excludePatterns as $excludePattern) {
+			//$excludePattern = $excludePattern;
 			foreach ($allFiles as $fullPath => & $fileInfo) {
 				@preg_match($excludePattern, $fileInfo->relPath, $excludeMatches);
 				if ($excludeMatches) {
@@ -598,7 +598,7 @@ class Packager_Common_Base {
 		}
 	}
 	protected function encodeFilesToUtf8 (& $allFiles) {
-		foreach ($allFiles as $fullPath => & $fileInfo) {
+		foreach ($allFiles as $fullPath => $fileInfo) {
 			if (!in_array($fileInfo->extension, static::$fileTypesStoringTypes['binary'], TRUE)) {
 				self::_convertFilecontentToUtf8Automatically($fileInfo);
 			}

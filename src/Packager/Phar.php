@@ -35,7 +35,7 @@ class Packager_Phar extends Packager_Phar_ResultCompleter
 		return parent::SetSourceDir($fullOrRelativePath);
 	}
 	/**
-	 * Set compilation result file, if exist, it will be overwriten
+	 * Set compilation result file, if exist, it will be overwritten
 	 * 
 	 * @param string $releaseFileFullPath 
 	 * 

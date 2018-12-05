@@ -82,7 +82,7 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 			if ($this->cfg->patternReplacements) {
 				foreach ($this->cfg->patternReplacements as $pattern => $replacement) {
 					if (is_numeric($pattern)) {
-						// if there is numeric key - values is always patern to replace with empty string
+						// if there is numeric key - values is always pattern to replace with empty string
 						$patternLocal = $replacement;
 						while (preg_match($patternLocal, $fileInfo->content)) {
 							$fileInfo->content = preg_replace($patternLocal, '', $fileInfo->content);

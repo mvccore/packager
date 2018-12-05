@@ -47,9 +47,9 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		// capture all dependent files defined by require, require_once, include, include_once as relative paths
 		$byRequiresAndIncludes = $this->_completeDependenciesByRequiresAndIncludes($fullPath, $fileInfo);
 		if ($this->cfg->autoloadingOrderDetection) {
-			// try to load file and try to capture what was necessary to autoload
+			// try to load file and try to capture what was necessary to auto load
 			$autoloadedByDeclaration = $this->_completePhpFileDependenciesByAutoloadDeclaration($fileInfo);
-			// if there is no record about autoloaded file and it is not foreing file - add autoloaded file at the end
+			// if there is no record about auto loaded file and it is not foreign file - add auto loaded file at the end
 			foreach ($autoloadedByDeclaration as $autoLoadItem) {
 				if (isset($this->files->all[$autoLoadItem]) && !in_array($autoLoadItem, $byRequiresAndIncludes, TRUE)) {
 					$byRequiresAndIncludes[] = $autoLoadItem;
@@ -109,7 +109,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		$capturedItems = [];
 		$regExps = [
 			// do not read anything from require() and include(),
-			// these functions are always used for dynamicly included files
+			// these functions are always used for dynamically included files
 			//"#([^a-zA-Z0-9_\\/\*])(require)([^_a-zA-Z0-9])([^;]*);#m" => array('$1', array(3, 4)),
 			//"#([^a-zA-Z0-9_\\/\*])(include)([^_a-zA-Z0-9])([^;]*);#m" => array('$1', array(3, 4)),
 
@@ -254,7 +254,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 			}
 			$byRequiresAndIncludes[$key] = str_replace('\\', '/', $fullPath);
 		}
-		// remove duplicates and foreing files
+		// remove duplicates and foreign files
 		foreach ($byRequiresAndIncludes as $key => $byRequiresAndIncludesItem) {
 			if (isset($this->files->all[$byRequiresAndIncludesItem]) && !isset($result[$byRequiresAndIncludesItem])) {
 				$result[$byRequiresAndIncludesItem] = 1;
@@ -281,7 +281,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 				$relPath = $fileInfo->relPath;
 				$newLine = php_sapi_name() == 'cli' ? "\n" : "<br />";
 				$this->sendResult(
-					"Autoload error by including file: $newLine"
+					"Auto load error by including file: $newLine"
 					 . "'$relPath' $newLine"
 					 . "Is this file used also in your development versions? $newLine"
 					 . "Or does this file generates any output by calling simple $newLine "
@@ -304,7 +304,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 			$this->includedFiles = get_included_files();
 			$this->includedFilesCountTillNow = count($this->includedFiles);
 			if ($this->_prepareIncludePathsOrComposerAutoloadAndErrorHandlers($file)) {
-				// proces target file include command
+				// process target file include command
 				try {
 					include($file);
 				} catch (Exception $e) {
@@ -327,7 +327,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		]);
 	}
 	private function _prepareIncludePathsOrComposerAutoloadAndErrorHandlers ($file) {
-		// try to find composer loader usualy placed in $documentRoot/vendor/autoload.php
+		// try to find composer loader usually placed in $documentRoot/vendor/autoload.php
 		$scriptFileName = $_SERVER['SCRIPT_FILENAME'];
 		$scriptFileName = strtoupper(mb_substr($scriptFileName, 0, 1)) . mb_substr($scriptFileName, 1);
 		$lastSlash = mb_strrpos($scriptFileName, DIRECTORY_SEPARATOR);
@@ -367,12 +367,12 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 			}
 			if ($this->_isFileIncluded($file)) {
 				// file has no dependency, because it's part of composer
-				// autoload or in composer autoload static includes array
+				// auto load or in composer auto load static includes array
 				return FALSE;
 			}
 			spl_autoload_register([__CLASS__, 'AutoloadCall'], false, true);
 		} else {
-			// if composer autoload doesn't exists, MvcCore project is probably
+			// if composer auto load doesn't exists, MvcCore project is probably
 			// developed with manually placed files in document root, '/App' dir or in '/Libs' dir,
 			spl_autoload_register([__CLASS__, 'AutoloadCall']);
 		}

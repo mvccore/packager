@@ -246,7 +246,7 @@ class Packager_Php_Scripts_Replacer
 		}
 		// determinate class closed moment - if class state is 2 and curly bracket counters are both 0
 		if ($this->functionsStates[$monitorLastIndex] === 2 && $this->functionsBracketsLevels[$monitorLastIndex] === 0) {
-			// manage static vs dynamic class function booleans
+			// manage static vs dynamic class function bools
 			if ($this->classFnDynamicEnvironment && $this->classFnDynamicMonitorIndex === $monitorLastIndex) {
 				$this->classFnDynamicEnvironment = FALSE;
 				$this->classFnDynamicMonitorIndex = -1;

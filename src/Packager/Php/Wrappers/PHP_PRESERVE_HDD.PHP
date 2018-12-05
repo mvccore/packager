@@ -279,7 +279,7 @@ class Packager_Php_Wrapper
 	}
 	
 	/**
-	 * Set up current context into contexts array to remember it after subtemplate has been rendered
+	 * Set up current context into contexts array to remember it after sub-template has been rendered
 	 * 
 	 * @param mixed $context
 	 * 
@@ -291,7 +291,7 @@ class Packager_Php_Wrapper
 	}
 	
 	/**
-	 * Remove current context from contexts array and reset previous (remember any context after subtemplate has been rendered)
+	 * Remove current context from contexts array and reset previous (remember any context after sub-template has been rendered)
 	 * 
 	 * @return void
 	 */
