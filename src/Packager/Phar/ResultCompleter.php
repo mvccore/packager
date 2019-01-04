@@ -170,11 +170,6 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 			if ($this->_jsonResult->data) return;
 		}
 		
-		$archive->setStub('<'.'?php '
-			.PHP_EOL.'Phar::mapPhar();'
-			.'include_once("phar://' . $releaseFileNameWithoutExt . '.phar/index.php");'
-			.'__HALT_COMPILER();');
-		
 		$incScripts = [];
 		$incStatics = [];
 		$archive->startBuffering();
@@ -186,9 +181,17 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 				$incStatics[] = $fileInfo->relPath;
 			}
 		}
+		
+		$archive->setStub('<'.'?php '
+			.PHP_EOL.'Phar::mapPhar();'
+			.'include_once("phar://' . $releaseFileNameWithoutExt . '.phar/index.php");'
+			.'__HALT_COMPILER();');
+
 		$archive->stopBuffering();
+		
 		//$archive->compressFiles(Phar::GZ);
 		//@$archive->buildFromIterator(); // writes archive on hard drive
+		
 		unset($archive); // frees memory, run rename operation without any conflict
 		
 		$this->_jsonResult->data = [
