@@ -63,7 +63,7 @@ class Packager_Php_Scripts_Replacer
 		$this->cfg = & $cfg;
 		$this->tokens = & $tokens;
 		$this->result = '';
-		$this->classState = 0;
+		$this->classState = 0; // 0 not in class, 1 - between `class` or `trait` keyword and `{`, 2 inside class
 		$this->classBracketsLevel = 0;
 		$this->functionsStates = [0];
 		$this->functionsBracketsLevels = [0];
@@ -163,6 +163,7 @@ class Packager_Php_Scripts_Replacer
 		}
 	}
 	protected function monitorClass ($token, $currentIndex) {
+		//$debug = strpos($this->fileInfo->relPath, '/MvcCore/View/Rendering.php') !== FALSE;
 		if (is_array($token)) {
 			$tokenId = $token[0];
 			// manage curly brackets (to determinate class closed moment to switch back $this->classState to "0")
@@ -170,9 +171,8 @@ class Packager_Php_Scripts_Replacer
 				if ($tokenId === T_CURLY_OPEN || $tokenId === T_DOLLAR_OPEN_CURLY_BRACES) {
 					$this->classBracketsLevel += 1;
 				}
-			}
-			// if token is "class" keyword - open stage
-			if ($tokenId === T_CLASS || $tokenId === T_TRAIT) {
+			} else if ($tokenId === T_CLASS || $tokenId === 362/*T_TRAIT*/) {
+				// if token is "class" or "trait" keyword - open stage
 				$this->classState = 1;
 				$this->classBracketsLevel = 0;
 				// prepare bools for class methods
@@ -190,6 +190,7 @@ class Packager_Php_Scripts_Replacer
 				} else if ($token === '}') {
 					$this->classBracketsLevel -= 1;
 				}
+				//if ($debug && ($token == '{' || $token == '}')) var_dump([$token, $this->classState, $this->classBracketsLevel]);
 			}
 		}
 		// determinate class closed moment - if class state is 2 and curly bracket counters are both 0
@@ -345,8 +346,18 @@ class Packager_Php_Scripts_Replacer
 					if ($subToken == $this->statementEndOperator) {
 						$subInstance = new self($this->fileInfo, $this->cfg, $subTokens);
 						$newSubPart = $subInstance->runReplacementsProcessing();
+						/*var_dump($this->classFnDynamicEnvironment);
+						var_dump([
+							'fileInfo->relPath'			=> $this->fileInfo->relPath,
+							'namespaceState'			=> $this->namespaceState,
+							'classState'				=> $this->classState,
+							'classBracketsLevel'		=> $this->classBracketsLevel,
+							'functionsStates'			=> $this->functionsStates,
+							'functionsOpenIndexes'		=> $this->functionsOpenIndexes,
+							'functionsBracketsLevels'	=> $this->functionsBracketsLevels,
+						]);*/
 						if ($this->classFnDynamicEnvironment) {
-							$newPart .= $newSubPart . ', $this)' . $this->statementEndOperator;
+							$newPart .= $newSubPart . ',$this)' . $this->statementEndOperator;
 						} else {
 							$newPart .= $newSubPart . ')' . $this->statementEndOperator;
 						}

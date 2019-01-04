@@ -246,7 +246,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 	}
 	private function _saveResult () {
 		$releaseFile = $this->cfg->releaseFile;
-		unlink($releaseFile);
+		if (file_exists($releaseFile)) unlink($releaseFile);
 		file_put_contents($releaseFile, $this->result);
 	}
 	protected function notify ($title = 'Successfully packed') {
