@@ -5,8 +5,8 @@ include_once(__DIR__.'/../Common/Base.php');
 class Packager_Phar_ResultCompleter extends Packager_Common_Base
 {
 	private static $_pharNotAllowedMsg = [
-		'It is not allowed to create PHAR archive on your computer.',
-		'Go to "php.ini" and allow PHAR archive creation by set up "phar.readonly = 0".'
+		"It is not allowed to create PHAR archive on your computer.",
+		"Go to 'php.ini' and allow PHAR archive creation by set up 'phar.readonly = 0'."
 	];
 	private $_jsonResult;
 	protected function mainJob ($params = []) {
@@ -66,6 +66,8 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 			'data'		=> [],
 		];
 		try {
+			clearstatcache(TRUE, $params['phar']);
+			clearstatcache(TRUE, $params['php']);
 			rename($params['phar'],  $params['php']);
 		} catch (Exception $e) {
 			$result->success = FALSE;
@@ -122,8 +124,12 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 		unset($releaseFileNameExpl[count($releaseFileNameExpl) - 1]);
 		$releaseFileNameWithoutExt = implode('.', $releaseFileNameExpl);
 		
-		@unlink($releaseDir . '/' . $releaseFileNameWithoutExt . '.phar');
-		@unlink($releaseDir . '/' . $releaseFileNameWithoutExt . '.php');
+		$releaseFilePhp = $releaseDir . '/' . $releaseFileNameWithoutExt . '.php';
+		$releaseFilePhar = $releaseDir . '/' . $releaseFileNameWithoutExt . '.phar';
+		clearstatcache(TRUE, $releaseFilePhp);
+		clearstatcache(TRUE, $releaseFilePhar);
+		if (file_exists($releaseFilePhp)) unlink($releaseFilePhp);
+		if (file_exists($releaseFilePhar))  unlink($releaseFilePhar);
 
 		return [
 			$releaseDir, $releaseFileNameWithoutExt
@@ -142,9 +148,10 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 			$m = $e1->getMessage();
 			if (mb_strpos($m, 'disabled by the php.ini setting phar.readonly') !== FALSE) {
 				$this->_jsonResult->success = FALSE;
+				$phpIniLoadedFile = str_replace('\\', '/', php_ini_loaded_file());
 				$this->_jsonResult->data = [
 					self::$_pharNotAllowedMsg[0],
-					str_replace('php.ini', php_ini_loaded_file(), self::$_pharNotAllowedMsg[1]),
+					str_replace('php.ini', $phpIniLoadedFile, self::$_pharNotAllowedMsg[1]),
 				];
 			} else {
 				$this->_jsonResult->success = FALSE;
@@ -170,7 +177,7 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 		
 		$incScripts = [];
 		$incStatics = [];
-		//$archive->startBuffering();
+		$archive->startBuffering();
 		foreach ($this->files as $fileInfo) {
 			$archive[$fileInfo->relPath] = $fileInfo->content;
 			if ($fileInfo->extension == 'php') {
@@ -179,9 +186,9 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 				$incStatics[] = $fileInfo->relPath;
 			}
 		}
-		//$archive->stopBuffering();
+		$archive->stopBuffering();
 		//$archive->compressFiles(Phar::GZ);
-		@$archive->buildFromIterator(); // writes archive on hard drive
+		//@$archive->buildFromIterator(); // writes archive on hard drive
 		unset($archive); // frees memory, run rename operation without any conflict
 		
 		$this->_jsonResult->data = [

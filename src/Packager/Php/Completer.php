@@ -245,9 +245,13 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 		}
 	}
 	private function _saveResult () {
-		$releaseFile = $this->cfg->releaseFile;
-		if (file_exists($releaseFile)) unlink($releaseFile);
-		file_put_contents($releaseFile, $this->result);
+		$releaseFilePhp = $this->cfg->releaseFile;
+		$releaseFilePhar = mb_substr($releaseFilePhp, 0, -4) . '.phar';
+		clearstatcache(TRUE, $releaseFilePhp);
+		clearstatcache(TRUE, $releaseFilePhar);
+		if (file_exists($releaseFilePhp)) unlink($releaseFilePhp);
+		if (file_exists($releaseFilePhar))  unlink($releaseFilePhar);
+		file_put_contents($releaseFilePhp, $this->result);
 	}
 	protected function notify ($title = 'Successfully packed') {
 		$scriptsCount = count($this->files->php);

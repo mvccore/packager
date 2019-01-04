@@ -171,7 +171,7 @@ class Packager_Php_Scripts_Replacer
 				if ($tokenId === T_CURLY_OPEN || $tokenId === T_DOLLAR_OPEN_CURLY_BRACES) {
 					$this->classBracketsLevel += 1;
 				}
-			} else if ($tokenId === T_CLASS || $tokenId === 362/*T_TRAIT*/) {
+			} else if ($tokenId === T_CLASS || $tokenId === T_TRAIT) {
 				// if token is "class" or "trait" keyword - open stage
 				$this->classState = 1;
 				$this->classBracketsLevel = 0;
@@ -190,8 +190,8 @@ class Packager_Php_Scripts_Replacer
 				} else if ($token === '}') {
 					$this->classBracketsLevel -= 1;
 				}
-				//if ($debug && ($token == '{' || $token == '}')) var_dump([$token, $this->classState, $this->classBracketsLevel]);
 			}
+			//if ($debug && ($token == '{' || $token == '}')) var_dump([$token, $currentIndex, $this->classState, $this->classBracketsLevel]);
 		}
 		// determinate class closed moment - if class state is 2 and curly bracket counters are both 0
 		if ($this->classState === 2 && $this->classBracketsLevel === 0) {
@@ -346,7 +346,8 @@ class Packager_Php_Scripts_Replacer
 					if ($subToken == $this->statementEndOperator) {
 						$subInstance = new self($this->fileInfo, $this->cfg, $subTokens);
 						$newSubPart = $subInstance->runReplacementsProcessing();
-						/*var_dump($this->classFnDynamicEnvironment);
+						/*
+						var_dump($this->classFnDynamicEnvironment);
 						var_dump([
 							'fileInfo->relPath'			=> $this->fileInfo->relPath,
 							'namespaceState'			=> $this->namespaceState,
@@ -355,7 +356,12 @@ class Packager_Php_Scripts_Replacer
 							'functionsStates'			=> $this->functionsStates,
 							'functionsOpenIndexes'		=> $this->functionsOpenIndexes,
 							'functionsBracketsLevels'	=> $this->functionsBracketsLevels,
-						]);*/
+							'tokens'					=> $this->tokens,
+						]);
+						echo '<pre><code>';
+						echo $this->fileInfo->content;
+						echo '</code></pre>';
+						*/
 						if ($this->classFnDynamicEnvironment) {
 							$newPart .= $newSubPart . ',$this)' . $this->statementEndOperator;
 						} else {

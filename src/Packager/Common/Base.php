@@ -323,12 +323,15 @@ class Packager_Common_Base {
 		return $result;
 	}
 	public static function ErrorHandler ($severity = NULL, $message = NULL, $file = NULL, $line = NULL, $context = NULL) {
-		var_dump(func_get_args());
-		
 		$backTrace = debug_backtrace();
 		foreach ($backTrace as & $backTraceItem) {
 			unset($backTraceItem['args'], $backTraceItem['object']);
 		}
+
+		var_dump($backTrace);
+		//var_dump(error_get_last());
+		var_dump(func_get_args());
+		
 		self::$instance->errorHandlerData = func_get_args();
 		self::$instance->exceptionsTraces = $backTrace;
 
