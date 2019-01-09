@@ -33,7 +33,9 @@ class Packager_Common_Base {
 	protected static $instance;
 	private static $_cfgDefault = [
 		'sourcesDir'				=> '',
-		'releaseFile'				=> '',
+		'releaseDir'				=> '',
+		'releaseFileName'			=> '/index.php',
+		'staticCopies'				=> [],
 		'excludePatterns'			=> [],
 		'includePatterns'			=> [],
 		'stringReplacements'		=> [],
@@ -95,8 +97,12 @@ class Packager_Common_Base {
 		}
 		return $this;
 	}
-	public function SetReleaseFile ($releaseFileFullPath = '') {
-		$this->cfg['releaseFile'] = $releaseFileFullPath;
+	public function SetReleaseDir ($fullOrRelativePath = '') {
+		$this->cfg['releaseDir'] = $fullOrRelativePath;
+		return $this;
+	}
+	public function SetReleaseFileName ($releaseFileName = '/index.php') {
+		$this->cfg['releaseFileName'] = $releaseFileName;
 		return $this;
 	}
 	public function SetExcludePatterns ($excludePatterns = []) {
@@ -249,6 +255,10 @@ class Packager_Common_Base {
 		$this->cfg['phpFunctionsToKeep'] = array_merge($result, func_get_arg(0));
 		return $this;
 	}
+	public function SetStaticCopies ($staticCopies = [/* '/from-dir' => '/to-dir', '/filename', '/dirname' */]) {
+		$this->cfg['staticCopies'] = $staticCopies;
+		return $this;
+	}
 	public function MergeConfiguration ($cfg = []) {
 		foreach ($cfg as $key1 => & $value1) {
 			if ($value1 instanceof stdClass) $value1 = (array)$value1;
@@ -271,22 +281,20 @@ class Packager_Common_Base {
 		}
 		return $this;
 	}
-	public function Run ($cfg = []) {
+	public function PreRun () {
 		$this->cfg = (object) $this->cfg;
 		$this->compilationType = strtoupper(str_replace('Packager_', '', get_class($this)));
-		$this->_checkCommonConfiguration($cfg);
+		$this->_checkCommonConfiguration();
 		$this->_changeCurrentWorkingDirectoryToProjectRoot();
 		return $this;
 	}
 	/**
-	 * Print all files included by exclude/include pattern rules directly to output
-	 * 
-	 * @param array $cfg 
+	 * Print all files included by exclude/include pattern rules directly to output.
 	 * 
 	 * @return void
 	 */
-	public function PrintFilesToPack ($cfg = []) {
-		$this->Run($cfg);
+	public function PrintFilesToPack () {
+		$this->PreRun();
 		// complete $this->files as usual
 		$this->completeAllFiles();
 		$phpFiles = [];
@@ -660,11 +668,11 @@ class Packager_Common_Base {
 				'error'
 			);
 		}
-		if (!$this->cfg->releaseFile) {
+		if (!$this->cfg->releaseDir) {
 			$this->sendResult(
-				"Release file not defined or empty string.", 
-				"Define release file:<br /><br />"
-					. "\$config['releaseFile'] = '/path/to/release/directory/with/index.php';", 
+				"Release directory not defined or empty string.", 
+				"Define release directory:<br /><br />"
+					. "\$config['releaseDir'] = '/path/to/release/directory';", 
 				'error'
 			);
 		}

@@ -1,8 +1,8 @@
 <?php
 
-include_once(__DIR__.'/../Common/Base.php');
+include_once(__DIR__.'/../Common/StaticCopies.php');
 
-class Packager_Phar_ResultCompleter extends Packager_Common_Base
+class Packager_Phar_ResultCompleter extends Packager_Common_StaticCopies
 {
 	private static $_pharNotAllowedMsg = [
 		"It is not allowed to create PHAR archive on your computer.",
@@ -10,6 +10,11 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 	];
 	private $_jsonResult;
 	protected function mainJob ($params = []) {
+		// clean all files in release directory
+		$this->cleanReleaseDir();
+		// statically copy files and folders
+		$this->copyStaticFilesAndFolders();
+		// complete result file
 		$firstJobResult = $this->executeJobAndGetResult(
 			'completingJob', []
 		);
@@ -25,6 +30,7 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 				'json'
 			);
 			if ($secondJobResult instanceof stdClass && $secondJobResult->success) {
+				// notify about success
 				$this->notify($firstJobResult->data->incl);
 			} else {
 				if ($secondJobResult->type == 'json') {
@@ -113,12 +119,8 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 		}
 	}
 	private function _completeBuildPaths () {
-		$releaseFileAbsPath = str_replace('\\', '/', $this->cfg->releaseFile);
-		$lastSlashPos = strrpos($releaseFileAbsPath, '/');
-		if ($lastSlashPos === FALSE) die('Something is wrong with your release file path. Fix it. No slash character found.');
-		
-		$releaseFileName = substr($releaseFileAbsPath, $lastSlashPos + 1);
-		$releaseDir = substr($releaseFileAbsPath, 0, $lastSlashPos);
+		$releaseDir = $this->cfg->releaseDir;
+		$releaseFileName = $this->cfg->releaseFileName;
 		
 		$releaseFileNameExpl = explode('.', $releaseFileName);
 		unset($releaseFileNameExpl[count($releaseFileNameExpl) - 1]);
@@ -206,24 +208,33 @@ class Packager_Phar_ResultCompleter extends Packager_Common_Base
 	protected function notify ($incFiles) {
 		$scriptsCount = count($incFiles->scripts);
 		$staticsCount = count($incFiles->statics);
+		$staticallyCopiedCount = count($this->staticallyCopiedFiles);
 		$totalCount = $scriptsCount + $staticsCount;
 		if (php_sapi_name() == 'cli') {
-			$content = "Total included files: $totalCount\n\n"
-				. "\nIncluded PHP files ($scriptsCount):\n\n"
+			$content = "Total included PHP and static files in package: $totalCount\n"
+				. "Statically copied files into release directory: $staticallyCopiedCount\n\n"
+				. "\nIncluded PHP files in package ($scriptsCount):\n\n"
 				. implode("\n", $incFiles->scripts)
-				. "\n\n\nIncluded static files ($staticsCount):\n\n"
+				. "\n\n\nIncluded static files in package ($staticsCount):\n\n"
 				. implode("\n", $incFiles->statics)
+				. "\n\n\nStatically copied files into release directory ($staticallyCopiedCount):\n\n"
+				. implode("\n", $this->staticallyCopiedFiles)
 				. "\n\n\nDONE";
 			$this->sendResult('Successfully packed', $content);
 		} else {
-			$content = "<div>Total included files: $totalCount</div>"
-				. "<h2>Included PHP files ($scriptsCount):</h2>"
+			$content = "<div>Total included PHP and static files in package: $totalCount</div>"
+				. "<div>Statically copied files into release directory: $staticallyCopiedCount</div>"
+				. "<h2>Included PHP files in package ($scriptsCount):</h2>"
 				. '<div class="files">'
-					. implode("<br />", $incFiles->scripts)
+					. implode('<br />', $incFiles->scripts)
 				. "</div>"
-				. "<h2>Included static files ($staticsCount):</h2>"
+				. "<h2>Included static files in package ($staticsCount):</h2>"
 				. '<div class="files">'
-					. implode("<br />", $incFiles->statics)
+					. implode('<br />', $incFiles->statics)
+				. "</div>"
+				. "<h2>Statically copied files into release directory ($staticallyCopiedCount):</h2>"
+				. '<div class="files">'
+					. implode('<br />', $this->staticallyCopiedFiles)
 				. "</div>"
 				. "<h2>DONE</h2>";
 			$this->sendResult('Successfully packed', $content, 'success');

@@ -1,6 +1,7 @@
 <?php
 
 include_once(__DIR__.'/Scripts/Dependencies.php');
+include_once(__DIR__.'/../Common/StaticCopies.php');
 
 class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 {
@@ -13,6 +14,10 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 		$this->completePhpFilesDependenciesByAutoloadDeclaration($params['file']);
 	}
 	protected function mainJob ($params = []) {
+		// clean all files in release directory
+		$this->cleanReleaseDir();
+		// statically copy files and folders
+		$this->copyStaticFilesAndFolders();
 		// complete $this->files as usual
 		$this->completeAllFiles();
 		// complete dependencies array by include_once(), require_once() and auto loading
@@ -245,7 +250,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 		}
 	}
 	private function _saveResult () {
-		$releaseFilePhp = $this->cfg->releaseFile;
+		$releaseFilePhp = $this->cfg->releaseDir . $this->cfg->releaseFileName;
 		$releaseFilePhar = mb_substr($releaseFilePhp, 0, -4) . '.phar';
 		clearstatcache(TRUE, $releaseFilePhp);
 		clearstatcache(TRUE, $releaseFilePhar);
@@ -256,13 +261,17 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 	protected function notify ($title = 'Successfully packed') {
 		$scriptsCount = count($this->files->php);
 		$staticsCount = count($this->files->static);
+		$staticallyCopiedCount = count($this->staticallyCopiedFiles);
 		$totalCount = $scriptsCount + $staticsCount;
 		if (php_sapi_name() == 'cli') {
-			$content = "Total included files: $totalCount\n\n"
-				. "\nIncluded PHP files ($scriptsCount):\n\n"
+			$content = "Total included PHP and static files in package: $totalCount\n"
+				. "Statically copied files into release directory: $staticallyCopiedCount\n\n"
+				. "\nIncluded PHP files in package ($scriptsCount):\n\n"
 				. implode("\n", $this->files->php)
-				. "\n\n\nIncluded static files ($staticsCount):\n\n"
-				. implode("\n", $this->files->static);
+				. "\n\n\nIncluded static files in package ($staticsCount):\n\n"
+				. implode("\n", $this->files->static)
+				. "\n\n\nStatically copied files into release directory ($staticallyCopiedCount):\n\n"
+				. implode("\n", $this->staticallyCopiedFiles);
 			if (count($this->unsafeOrderDetection)) {
 				$content .= "\n\n\nDeclaration order for files below was not detected certainly\n"
 				. "If there will occur any exceptions by running result, complete order for these files manually.\n\n"
@@ -274,14 +283,19 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 				$content
 			);
 		} else {
-			$content = "<div>Total included files: $totalCount</div>"
-				. "<h2>Included PHP files ($scriptsCount):</h2>"
+			$content = "<div>Total included PHP and static files in package: $totalCount</div>"
+				. "<div>Statically copied files into release directory: $staticallyCopiedCount</div>"
+				. "<h2>Included PHP files in package ($scriptsCount):</h2>"
 				. '<div class="files">'
 					. implode('<br />', $this->files->php)
 				. "</div>"
-				. "<h2>Included static files ($staticsCount):</h2>"
+				. "<h2>Included static files in package ($staticsCount):</h2>"
 				. '<div class="files">'
 					. implode('<br />', $this->files->static)
+				. "</div>"
+				. "<h2>Statically copied files into release directory ($staticallyCopiedCount):</h2>"
+				. '<div class="files">'
+					. implode('<br />', $this->staticallyCopiedFiles)
 				. "</div>";
 			if (count($this->unsafeOrderDetection)) {
 				$content .= "<h2>Declaration order for files below was not detected certainly</h2>"

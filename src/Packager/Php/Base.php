@@ -1,9 +1,9 @@
 <?php
 
-include_once(__DIR__.'/../Common/Base.php');
+include_once(__DIR__.'/../Common/StaticCopies.php');
 include_once(__DIR__.'/Scripts/Replacer.php');
 
-class Packager_Php_Base extends Packager_Common_Base
+class Packager_Php_Base extends Packager_Common_StaticCopies
 {
 	const NAMESPACE_NONE = 0;
 	const NAMESPACE_GLOBAL_CURLY_BRACKETS = 1;
@@ -84,8 +84,8 @@ class Packager_Php_Base extends Packager_Common_Base
 	public static function SetExcludePatternsDefault (array $excludePatternsDefault = []) {
 		static::$excludePatternsDefault = $excludePatternsDefault;
 	}
-	public function Run ($cfg = []) {
-		parent::Run($cfg);
+	public function Run () {
+		parent::PreRun();
 		$this->_checkAndSetUpCompletePhpConfiguration();
 		$this->_prepareScriptsReplacer();
 		$this->files = (object) [

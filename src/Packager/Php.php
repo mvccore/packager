@@ -40,14 +40,24 @@ class Packager_Php extends Packager_Php_Completer
 		return parent::SetSourceDir($fullOrRelativePath);
 	}
 	/**
-	 * Set compilation result file, if exist, it will be overwritten
+	 * Set compilation result(s) directory, all files will be removed first.
 	 * 
-	 * @param string $releaseFileFullPath 
+	 * @param string $fullOrRelativePath 
 	 * 
-	 * @return Packager_Php
+	 * @return Packager_Phar
 	 */
-	public function SetReleaseFile ($releaseFileFullPath = '') {
-		return parent::SetReleaseFile($releaseFileFullPath);
+	public function SetReleaseDir ($fullOrRelativePath = '') {
+		return parent::SetReleaseDir($fullOrRelativePath);
+	}
+	/**
+	 * Set compilation result PHP script file name, '/index.php` by default.
+	 * 
+	 * @param string $releaseFileName 
+	 * 
+	 * @return Packager_Phar
+	 */
+	public function SetReleaseFileName ($releaseFileName = '/index.php') {
+		return parent::SetReleaseFileName($releaseFileName);
 	}
 	/**
 	 * Set preg_replace() patterns array or single string about
@@ -251,6 +261,18 @@ class Packager_Php extends Packager_Php_Completer
 		return parent::KeepPhpFunctions(func_get_args());
 	}
 	/**
+	 * Set array with statically copied files or directories from `./development` to `./release` directory.
+	 * If key is numeric, source and destination relative path are the same. If key is string, source
+	 * relative path is defined by array key and destination relative path is defined by array value.
+	 * 
+	 * @param array $staticCopies 
+	 * 
+	 * @return Packager_Php
+	 */
+	public function SetStaticCopies ($staticCopies = [/* '/from-dir' => '/to-dir', '/filename', '/dirname' */]) {
+		return parent::SetStaticCopies($staticCopies);
+	}
+	/**
 	 * Merge multilevel configuration array with previously initialized values.
 	 * New values sent into this function will be used as preferred.
 	 * 
@@ -264,13 +286,12 @@ class Packager_Php extends Packager_Php_Completer
 	/**
 	 * Run PHP compilation process, print output to CLI or browser.
 	 * 
-	 * @param array $cfg 
-	 * 
 	 * @return Packager_Php
 	 */
-	public function Run ($cfg = []) {
-		parent::Run($cfg);
+	public function Run () {
+		parent::Run();
 		list($jobMethod, $params) = $this->completeJobAndParams();
 		$this->$jobMethod($params);
+		return $this;
 	}
 }
