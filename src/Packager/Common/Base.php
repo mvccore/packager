@@ -488,11 +488,17 @@ class Packager_Common_Base {
 	protected function executeJobAndGetResult ($job = '', $arguments = [], $resultType = 'json') {
 		$jobResult = '';
 		if (php_sapi_name() == 'cli') {
-			$command = 'php ' . $this->cliScriptName . ' job=' . $job;
+			$phpBinary = str_replace('\\', '/', PHP_BINARY);
+			$phpBinaryDir = dirname($phpBinary);
+			$phpBinaryFile = mb_substr($phpBinary, mb_strlen($phpBinaryDir) + 1);
+			$cwd = getcwd();
+			chdir($phpBinaryDir);
+			$command = $phpBinaryFile . ' ' . $this->cliScriptName . ' job=' . $job;
 			foreach ($arguments as $key => $value) {
 				$command .= ' ' . $key . '=' . base64_encode($value);
 			}
 			$jobResult = @exec($command, $out);
+			chdir($cwd);
 			//var_dump(array($jobResult, $command, $out));
 		} else {
 			$protocol = (isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) == 'on') ? 'https://' : 'http://';
