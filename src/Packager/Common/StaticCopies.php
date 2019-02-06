@@ -10,11 +10,14 @@ class Packager_Common_StaticCopies extends Packager_Common_Base
 	private static $_winDirsLinkItems = [];
 
 	protected function cleanReleaseDir () {
-		$this->cfg->sourcesDir = str_replace('\\', '/', realpath($this->cfg->sourcesDir));
-		$this->cfg->releaseDir = str_replace('\\', '/', realpath($this->cfg->releaseDir));
 		$releaseDir = $this->cfg->releaseDir;
+		if (!is_dir($releaseDir))
+			mkdir($releaseDir, 0777);
+		$this->cfg->sourcesDir = str_replace('\\', '/', realpath($this->cfg->sourcesDir));
+		$releaseDir = str_replace('\\', '/', realpath($releaseDir));
+		$this->cfg->releaseDir = $releaseDir;
 		clearstatcache();
-		$rdi = new \RecursiveDirectoryIterator($this->cfg->releaseDir);
+		$rdi = new \RecursiveDirectoryIterator($releaseDir);
 		$rii = new \RecursiveIteratorIterator($rdi);
 		$dirsFullPaths = [];
 		foreach ($rii as $item) {

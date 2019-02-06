@@ -115,8 +115,8 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 
 			// read everything from require_once() and include_once(),
 			// these functions are always used for fixed including to declare content classes
-			"#([^a-zA-Z0-9_\\/\*])(require_once)([^;]*);#m"	=> ['$1', [3]],
-			"#([^a-zA-Z0-9_\\/\*])(include_once)([^;]*);#m"	=> ['$1', [3]],
+			"#([^a-zA-Z0-9_\\/\*])(require_once)([^;]*);#mu"	=> ['$1', [3]],
+			"#([^a-zA-Z0-9_\\/\*])(include_once)([^;]*);#mu"	=> ['$1', [3]],
 		];
 		foreach ($regExps as $regExp => $backReferences) {
 			$matches = [];
@@ -130,6 +130,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 					}
 					$caughtTextIndex = $matchItem[1];
 					// this is very very very crazy result fix from `preg_match_all()` with PREG_OFFSET_CAPTURE
+					/*
 					$caughtTextIndexFixMatchItem = $matches[2][0][0];
 					$caughtTextIndexFixOffset = $caughtTextIndex - mb_strlen($caughtTextIndexFixMatchItem) - 4;
 					if ($caughtTextIndexFixOffset > 0 && mb_strlen($fileInfo->content) > $caughtTextIndexFixOffset + mb_strlen($caughtTextIndexFixMatchItem)) {
@@ -142,6 +143,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 							$caughtTextIndex = $caughtTextIndexFix;
 						}
 					}
+					*/
 					// end of fix
 					$caughtTextLength = mb_strlen($matchItem[0]);
 					$capturedItems[] = [$backReferenceStr, $caughtTextIndex, $caughtTextLength];
@@ -204,7 +206,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 			$currentLength = 0;
 			//var_dump([$fileInfo->fullPath, $capturedItems]);
 			foreach ($capturedItems as $key => & $capturedItem) {
-				$previousItem = ($key > 0)
+				$previousItem = ($key > 0 && isset($capturedItems[$key - 1]))
 					? $capturedItems[$key - 1]
 					: [0, 0, 0] ;
 				$previousIndex = $previousItem[1];
