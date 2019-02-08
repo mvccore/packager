@@ -9,11 +9,15 @@ class Packager_Php_Base extends Packager_Common_StaticCopies
 	const NAMESPACE_GLOBAL_CURLY_BRACKETS = 1;
 	const NAMESPACE_NAMED_CURLY_BRACKETS = 2;
 	const NAMESPACE_NAMED_SEMICOLONS = 3;
+	const PACKAGER_COMMAND_FUNCTION = '@packager';
+	const PACKAGER_COMMAND_REPLACEMENTS_OFF = 'REPLACEMENTS_OFF';
+	const PACKAGER_COMMAND_REPLACEMENTS_ON = 'REPLACEMENTS_ON';
 	protected static $wrapperClassName = '\Packager_Php_Wrapper';
 	protected static $wrapperStringDeclarator = 'PACKAGER_';
 	protected static $wrapperReplacements = [
 		T_DIR			=> NULL, // callable closure function, initialized later
 		T_FILE			=> NULL, // callable closure function, initialized later
+		T_DOC_COMMENT	=> NULL, // callable closure function, initialized later
 		T_REQUIRE_ONCE	=> ['require_once','%WrapperClass%::RequireOnce'],
 		T_INCLUDE_ONCE	=> ['include_once','%WrapperClass%::IncludeOnce'],
 		T_REQUIRE		=> ['require',		'%WrapperClass%::RequireStandard'], 
@@ -149,15 +153,31 @@ class Packager_Php_Base extends Packager_Common_StaticCopies
 		
 		self::$wrapperReplacements[T_STRING] = (object) self::$wrapperReplacements[T_STRING];
 
-		static::$wrapperReplacements[T_DIR] = function (& $fileInfo) {
+		static::$wrapperReplacements[T_DIR] = function (& $replacer, & $fileInfo, & $oldPart) {
 			$relPathDir = $fileInfo->relPathDir;
 			//return "PACKAGER_PHP_FILE_BASE.'$relPathDir'";
 			return 'PACKAGER_PHP_FILE_BASE.\'' . $relPathDir . '\'';
 		};
-		static::$wrapperReplacements[T_FILE] = function (& $fileInfo) {
+		static::$wrapperReplacements[T_FILE] = function (& $replacer, & $fileInfo, & $oldPart) {
 			$relPath = $fileInfo->relPath;
 			//return "PACKAGER_PHP_FILE_BASE.'$relPath'";
 			return 'PACKAGER_PHP_FILE_BASE.\'' . $relPath . '\'';
+		};
+		$pckgrCmdSubstr = self::PACKAGER_COMMAND_FUNCTION . '(';
+		$pckgrCmdOff = self::PACKAGER_COMMAND_REPLACEMENTS_OFF;
+		$pckgrCmdOn = self::PACKAGER_COMMAND_REPLACEMENTS_ON;
+		static::$wrapperReplacements[T_DOC_COMMENT] = function (& $replacer, & $fileInfo, & $oldPart) use ($pckgrCmdSubstr, $pckgrCmdOff, $pckgrCmdOn) {
+			$packagerCommandBeginPos = mb_strpos($oldPart, $pckgrCmdSubstr);
+			if ($packagerCommandBeginPos === FALSE) return $oldPart;
+			$packagerCommandBeginPos += mb_strlen($pckgrCmdSubstr);
+			$packagerCommandEndPos = mb_strpos($oldPart, ')', $packagerCommandBeginPos);
+			$packagerCommand = mb_substr($oldPart, $packagerCommandBeginPos, $packagerCommandEndPos - $packagerCommandBeginPos);
+			if ($packagerCommand === $pckgrCmdOff) {
+				$replacer->SetEnabled(FALSE);
+			} else if ($packagerCommand === $pckgrCmdOn) {
+				$replacer->SetEnabled(TRUE);
+			}
+			return $oldPart;
 		};
 		
 		Packager_Php_Scripts_Replacer::SetPhpFunctionsToProcess($this->cfg->phpFunctionsToProcess);

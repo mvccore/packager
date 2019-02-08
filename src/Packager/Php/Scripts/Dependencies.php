@@ -115,8 +115,8 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 
 			// read everything from require_once() and include_once(),
 			// these functions are always used for fixed including to declare content classes
-			"#([^a-zA-Z0-9_\\/\*])(require_once)([^;]*);#mu"	=> ['$1', [3]],
-			"#([^a-zA-Z0-9_\\/\*])(include_once)([^;]*);#mu"	=> ['$1', [3]],
+			"#([^a-zA-Z0-9_\\/\*])(require_once)(\s|\()([^;]*);#mu"	=> ['$1', [4]],
+			"#([^a-zA-Z0-9_\\/\*])(include_once)(\s|\()([^;]*);#mu"	=> ['$1', [4]],
 		];
 		foreach ($regExps as $regExp => $backReferences) {
 			$matches = [];

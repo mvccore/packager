@@ -21,12 +21,13 @@ class Packager_Php_Scripts_Replacer
 	protected static $wrapperReplacements = [];
 	protected static $phpReplacementsStatistics = [];
 	protected static $wrapperClassName = '';
-	protected static $phpFsMode = '';
+	protected static $phpFsModeStrictHdd = FALSE;
 	protected $cfg;
 	protected $result = '';
 	protected $scriptContent = '';
 	protected $statementEndOperator = ';';
 	protected $fileInfo = NULL;
+	protected $enabled = TRUE;
 	protected $tokens = [];
 	protected $namespaceState = 0;
 	protected $classState = 0;
@@ -44,7 +45,7 @@ class Packager_Php_Scripts_Replacer
 		self::$wrapperClassName = $wrapperClassName;
 	}
 	public static function SetPhpFsMode ($phpFsMode = '') {
-		self::$phpFsMode = $phpFsMode;
+		self::$phpFsModeStrictHdd = $phpFsMode === Packager_Php::FS_MODE_STRICT_HDD;
 	}
 	public static function GetReplacementsStatistics () {
 		return self::$phpReplacementsStatistics;
@@ -73,6 +74,10 @@ class Packager_Php_Scripts_Replacer
 
 		$this->classFnStaticEnvironment = FALSE;
 		$this->classFnStaticMonitorIndex = -1;
+	}
+	public function & SetEnabled ($enabled) {
+		$this->enabled = $enabled;
+		return $this;
 	}
 	protected function runReplacementsProcessing () {
 		$newPart = '';
@@ -275,9 +280,9 @@ class Packager_Php_Scripts_Replacer
 			// if there is configured item in replacements array in type: callable closure function,
 			// there will be probably replacements for __FILE__ and __DIR__ replacements,
 			// call these functions to process replacements
-			$newPart = $replacement($this->fileInfo);
+			$newPart = $replacement($this, $this->fileInfo, $oldPart);
 		} else {
-			if (self::$phpFsMode == Packager_Php::FS_MODE_STRICT_HDD) {
+			if (self::$phpFsModeStrictHdd || !$this->enabled) {
 				$newPart = $oldPart;
 			} else {
 				if (is_object($replacement)) {
