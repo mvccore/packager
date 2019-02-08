@@ -183,6 +183,5 @@ class Packager_Php_Base extends Packager_Common_StaticCopies
 		Packager_Php_Scripts_Replacer::SetPhpFunctionsToProcess($this->cfg->phpFunctionsToProcess);
 		Packager_Php_Scripts_Replacer::SetWrapperReplacements(static::$wrapperReplacements);
 		Packager_Php_Scripts_Replacer::SetWrapperClassName(static::$wrapperClassName);
-		Packager_Php_Scripts_Replacer::SetPhpFsMode($this->cfg->phpFsMode);
 	}
 }

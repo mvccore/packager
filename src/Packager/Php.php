@@ -8,6 +8,7 @@ class Packager_Php extends Packager_Php_Completer
 	const FS_MODE_PRESERVE_PACKAGE = 'PHP_PRESERVE_PACKAGE';
 	const FS_MODE_STRICT_HDD = 'PHP_STRICT_HDD';
 	const FS_MODE_STRICT_PACKAGE = 'PHP_STRICT_PACKAGE';
+	const FS_MODE_PHP_LIBRARY = 'PHP_LIBRARY';
 
 	/**
 	 * Create singleton instance with configuration

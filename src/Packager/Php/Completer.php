@@ -59,10 +59,14 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 	private function _completeResult () {
 		self::_setUpExtensionsAndStoringTypes();
 		$this->_completeResultPhpCodeAndScriptFilesRecords();
-		if ($this->cfg->phpFsMode != Packager_Php::FS_MODE_STRICT_HDD) {
+		if (
+			$this->cfg->phpFsMode != Packager_Php::FS_MODE_STRICT_HDD && 
+			$this->cfg->phpFsMode != Packager_Php::FS_MODE_PHP_LIBRARY
+		) {
 			$this->_completeResultStaticFilesRecords();
 		}
-		$this->completeWrapperCode();
+		if ($this->cfg->phpFsMode !== Packager_Php::FS_MODE_PHP_LIBRARY)
+			$this->completeWrapperCode();
 		$this->_completeWholeResult();
 	}
 	private static function _setUpExtensionsAndStoringTypes () {
@@ -199,25 +203,29 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 	}
 	private function _completeWholeResult () {
 		// insert files info into wrapper code
-		$this->wrapperCode = str_replace(
-			"'____" . self::$wrapperClassName . "::\$Info____'", 
-			"/*____" . self::$wrapperClassName . "::\$Info____*/" . $this->resultFilesInfo . "\n", 
-			$this->wrapperCode
-		);
-
-		$baseCode = '<'.'?php'
-			. ($this->anyPhpContainsNamespace ? "\nnamespace{" : "")
-			. "\n" . 'error_reporting('.$this->cfg->errorReportingLevel.');'
-			. "\n" . $this->wrapperCode 
-			. "\n" . $this->resultFilesContents 
-			. "\n";
-		$baseCodeLinesCount = substr_count($baseCode, "\n") + 1;
-
-		$baseCode = str_replace(
-			"'____" . self::$wrapperClassName . "::\$_baseLinesCount____'", 
-			$baseCodeLinesCount, 
-			$baseCode
-		);
+		if ($this->wrapperCode !== '') {
+			// for wrappers:
+			$this->wrapperCode = str_replace(
+				"'____" . self::$wrapperClassName . "::\$Info____'", 
+				"/*____" . self::$wrapperClassName . "::\$Info____*/" . $this->resultFilesInfo . "\n", 
+				$this->wrapperCode
+			);
+			$baseCode = '<'.'?php'
+				. ($this->anyPhpContainsNamespace ? "\nnamespace{" : "")
+				. "\n" . 'error_reporting('.$this->cfg->errorReportingLevel.');'
+				. "\n" . $this->wrapperCode 
+				. "\n" . $this->resultFilesContents 
+				. "\n";
+			$baseCodeLinesCount = substr_count($baseCode, "\n") + 1;
+			$baseCode = str_replace(
+				"'____" . self::$wrapperClassName . "::\$_baseLinesCount____'", 
+				$baseCodeLinesCount, 
+				$baseCode
+			);
+		} else {
+			// for packed library only:
+			$baseCode = '<'."?php\n";
+		}
 
 		$this->result = $baseCode . $this->result;
 

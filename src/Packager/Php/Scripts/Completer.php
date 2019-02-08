@@ -6,13 +6,16 @@ include_once(__DIR__.'/Replacer.php');
 class Packager_Php_Scripts_Completer extends Packager_Php_Base
 {
 	protected function processPhpCode () {
+		$processPhpReplacements = $this->cfg->phpFsMode !== Packager_Php::FS_MODE_STRICT_HDD &&
+								  $this->cfg->phpFsMode !== Packager_Php::FS_MODE_PHP_LIBRARY;
 		foreach ($this->files->php as & $fileInfo) {
 
 			// process pattern and string replacements by config
 			$this->processPatternAndStringReplacements($fileInfo);
 			
 			// process php code and wrap configured functions
-			$fileInfo->content = Packager_Php_Scripts_Replacer::ProcessReplacements($fileInfo, $this->cfg);
+			if ($processPhpReplacements)
+				$fileInfo->content = Packager_Php_Scripts_Replacer::ProcessReplacements($fileInfo, $this->cfg);
 
 			// minify if necessary
 			if ($this->cfg->minifyPhp) {

@@ -21,7 +21,6 @@ class Packager_Php_Scripts_Replacer
 	protected static $wrapperReplacements = [];
 	protected static $phpReplacementsStatistics = [];
 	protected static $wrapperClassName = '';
-	protected static $phpFsModeStrictHdd = FALSE;
 	protected $cfg;
 	protected $result = '';
 	protected $scriptContent = '';
@@ -43,9 +42,6 @@ class Packager_Php_Scripts_Replacer
 	}
 	public static function SetWrapperClassName ($wrapperClassName = '') {
 		self::$wrapperClassName = $wrapperClassName;
-	}
-	public static function SetPhpFsMode ($phpFsMode = '') {
-		self::$phpFsModeStrictHdd = $phpFsMode === Packager_Php::FS_MODE_STRICT_HDD;
 	}
 	public static function GetReplacementsStatistics () {
 		return self::$phpReplacementsStatistics;
@@ -281,25 +277,21 @@ class Packager_Php_Scripts_Replacer
 			// there will be probably replacements for __FILE__ and __DIR__ replacements,
 			// call these functions to process replacements
 			$newPart = $replacement($this, $this->fileInfo, $oldPart);
-		} else {
-			if (self::$phpFsModeStrictHdd || !$this->enabled) {
-				$newPart = $oldPart;
-			} else {
-				if (is_object($replacement)) {
-					// if we have current php function call between php replacements
-					$newPart = $this->processPhpCodeReplacementObjectType(
-						$replacement, $oldPart, $i
-					);
-				} else if (is_array($replacement)) {
-					// if there is configured item in replacements array in type: string,
-					// there will be probably replacements for requires and includes or any other php statement
-					// determinate if current statement is necessary to process by config
-					// and fill $newPart variable with proper content
-					list($i, $newPart) = $this->processPhpCodeReplacementArrayType(
-						$replacement, $oldPart, $tokenId, $i
-					);
-				}
-			}
+		} else if (!$this->enabled) {
+			$newPart = $oldPart;
+		} else if (is_object($replacement)) {
+			// if we have current php function call between php replacements
+			$newPart = $this->processPhpCodeReplacementObjectType(
+				$replacement, $oldPart, $i
+			);
+		} else if (is_array($replacement)) {
+			// if there is configured item in replacements array in type: string,
+			// there will be probably replacements for requires and includes or any other php statement
+			// determinate if current statement is necessary to process by config
+			// and fill $newPart variable with proper content
+			list($i, $newPart) = $this->processPhpCodeReplacementArrayType(
+				$replacement, $oldPart, $tokenId, $i
+			);
 		}
 		return [$i, $newPart];
 	}
