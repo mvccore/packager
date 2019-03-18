@@ -502,9 +502,9 @@ class Packager_Common_Base {
 			//var_dump(array($jobResult, $command, $out));
 		} else {
 			$protocol = (isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) == 'on') ? 'https://' : 'http://';
-			$absoluteUrl = $protocol . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'];
+			$serverPort = isset($_SERVER['SERVER_PORT']) && strval($_SERVER['SERVER_PORT']) !== '80' ? ':' . $_SERVER['SERVER_PORT'] : '';
+			$absoluteUrl = $protocol . $_SERVER['SERVER_NAME'] . $serverPort . $_SERVER['REQUEST_URI'];
 			$subProcessUrl = $absoluteUrl . '?job=' . $job;
-			//var_dump($arguments);
 			foreach ($arguments as $key => $value) {
 				$subProcessUrl .= '&' . $key . '=' . base64_encode($value);
 			}
