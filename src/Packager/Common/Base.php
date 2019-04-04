@@ -286,9 +286,10 @@ class Packager_Common_Base {
 		$this->compilationType = strtoupper(str_replace('Packager_', '', get_class($this)));
 		$this->_checkCommonConfiguration();
 		$this->_changeCurrentWorkingDirectoryToProjectRoot();
+		$this->_setUpStrictExceptionsMode();
 		return $this;
 	}
-	/**
+	/**allLevelsToExceptions
 	 * Print all files included by exclude/include pattern rules directly to output.
 	 * 
 	 * @return void
@@ -785,5 +786,24 @@ class Packager_Common_Base {
 			}
 		}
 		if ($projectRootDir && $startDir !== $projectRootDir) chdir($projectRootDir);
+	}
+	private function _setUpStrictExceptionsMode () {
+		$prevErrorHandler = NULL;
+		$errorLevels = array_fill_keys([E_ERROR,E_RECOVERABLE_ERROR,E_CORE_ERROR,E_USER_ERROR,E_WARNING,E_CORE_WARNING,E_USER_WARNING], TRUE);
+		$prevErrorHandler = set_error_handler(
+			function(
+				$errLevel, $errMessage, $errFile, $errLine, $errContext
+			) use (
+				& $prevErrorHandler, $errorLevels
+			) {
+				if ($errFile === '' && defined('HHVM_VERSION'))  // https://github.com/facebook/hhvm/issues/4625
+					$errFile = func_get_arg(5)[1]['file'];
+				if (isset($errorLevels[$errLevel]))
+					throw new \ErrorException($errMessage, $errLevel, $errLevel, $errFile, $errLine);
+				return $prevErrorHandler 
+					? call_user_func_array($prevErrorHandler, func_get_args()) 
+					: FALSE;
+			}
+		);
 	}
 }

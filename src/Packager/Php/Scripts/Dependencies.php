@@ -291,6 +291,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 					$fileInfo->fullPath . "\r\n" . $autoloadJobResult->data,
 					'error'
 				);
+				var_dump($autoloadJobResult);
 			}
 		}
 		return $result;
