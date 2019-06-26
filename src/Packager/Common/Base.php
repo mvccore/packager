@@ -337,9 +337,9 @@ class Packager_Common_Base {
 			unset($backTraceItem['args'], $backTraceItem['object']);
 		}
 
-		var_dump($backTrace);
+		//var_dump($backTrace);
 		//var_dump(error_get_last());
-		var_dump(func_get_args());
+		//var_dump(func_get_args());
 		
 		self::$instance->errorHandlerData = func_get_args();
 		self::$instance->exceptionsTraces = $backTrace;
@@ -347,6 +347,7 @@ class Packager_Common_Base {
 		if (isset($backTrace[count($backTrace) - 2])) {
 			$semiFinalBacktraceRec = (object) $backTrace[count($backTrace) - 2];
 			if ($semiFinalBacktraceRec->class == 'Packager_Php_Completer' && $semiFinalBacktraceRec->function == 'autoloadJob') {
+
 				if (!headers_sent()) header("HTTP/1.1 200 OK");
 				$response = (object) [
 					'success'			=> 2,
