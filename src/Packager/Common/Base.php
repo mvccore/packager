@@ -347,7 +347,7 @@ class Packager_Common_Base {
 		if (isset($backTrace[count($backTrace) - 2])) {
 			$semiFinalBacktraceRec = (object) $backTrace[count($backTrace) - 2];
 			if ($semiFinalBacktraceRec->class == 'Packager_Php_Completer' && $semiFinalBacktraceRec->function == 'autoloadJob') {
-				header("HTTP/1.1 200 OK");
+				if (!headers_sent()) header("HTTP/1.1 200 OK");
 				$response = (object) [
 					'success'			=> 2,
 					'includedFiles'		=> Packager_Php_Scripts_Dependencies::CompleteIncludedFilesByTargetFile(),
@@ -533,8 +533,10 @@ class Packager_Common_Base {
 	}
 	protected function sendJsonResultAndExit ($jsonData) {
 		$jsonOut = json_encode($jsonData);
-		header('Content-Type: text/javascript; charset=utf-8');
-		header('Content-Length: ' . mb_strlen($jsonOut));
+		if (!headers_sent()) {
+			header('Content-Type: text/javascript; charset=utf-8');
+			header('Content-Length: ' . mb_strlen($jsonOut));
+		}
 		echo $jsonOut;
 		exit;
 	}
