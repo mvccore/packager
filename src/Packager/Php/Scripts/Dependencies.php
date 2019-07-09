@@ -297,6 +297,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		return $result;
 	}
 	protected function completePhpFilesDependenciesByAutoloadDeclaration ($file = '') {
+		ob_clean();
 		$success = TRUE;
 		$content = '';
 		if (!$file) {

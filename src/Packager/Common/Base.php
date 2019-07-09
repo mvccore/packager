@@ -337,36 +337,44 @@ class Packager_Common_Base {
 			unset($backTraceItem['args'], $backTraceItem['object']);
 		}
 
-		//var_dump($backTrace);
-		//var_dump(error_get_last());
-		//var_dump(func_get_args());
 		
+		ob_start();
+		echo '<pre>';
+		var_dump($backTrace);
+		var_dump(error_get_last());
+		var_dump(func_get_args());
+		echo '</pre>';
+		$content = ob_get_clean();
+		
+		//$content = '';
+
+
 		self::$instance->errorHandlerData = func_get_args();
 		self::$instance->exceptionsTraces = $backTrace;
 
 		if (isset($backTrace[count($backTrace) - 2])) {
 			$semiFinalBacktraceRec = (object) $backTrace[count($backTrace) - 2];
 			if ($semiFinalBacktraceRec->class == 'Packager_Php_Completer' && $semiFinalBacktraceRec->function == 'autoloadJob') {
-
-				if (!headers_sent()) header("HTTP/1.1 200 OK");
+				//if (!headers_sent()) 
+					header("HTTP/1.1 200 OK");
 				$response = (object) [
 					'success'			=> 2,
 					'includedFiles'		=> Packager_Php_Scripts_Dependencies::CompleteIncludedFilesByTargetFile(),
 					'exceptionsMessages'=> self::$instance->exceptionsMessages,
 					'exceptionsTraces'	=> self::$instance->exceptionsTraces,
-					'content'			=> '',
+					'content'			=> $content,
 				];
 				self::$instance->sendJsonResultAndExit($response);
 			}
 		}
 	}
 	public static function ExceptionHandler (/*\Exception */$exception = NULL, $exit = TRUE) {
-		if (!is_null($exception)) var_dump($exception);
+		//if (!is_null($exception)) var_dump($exception);
 	}
 	public static function ShutdownHandler () {
-		$exception = error_get_last();
-		if (!is_null($exception)) var_dump($exception);
-		var_dump(get_included_files());
+		//$exception = error_get_last();
+		//if (!is_null($exception)) var_dump($exception);
+		//var_dump(get_included_files());
 	}
 	/************************************* dynamic ************************************/
 	protected function shrinkPhpCode (& $code = '') {
@@ -534,10 +542,10 @@ class Packager_Common_Base {
 	}
 	protected function sendJsonResultAndExit ($jsonData) {
 		$jsonOut = json_encode($jsonData);
-		if (!headers_sent()) {
+		//if (!headers_sent()) {
 			header('Content-Type: text/javascript; charset=utf-8');
 			header('Content-Length: ' . mb_strlen($jsonOut));
-		}
+		//}
 		echo $jsonOut;
 		exit;
 	}
@@ -598,9 +606,9 @@ class Packager_Common_Base {
 	protected function excludeFilesByCfg (& $allFiles) {
 		$excludePatterns = $this->cfg->excludePatterns;
 		$includePatterns = $this->cfg->includePatterns;
-		foreach ($includePatterns as & $includePattern) {
+		/*foreach ($includePatterns as & $includePattern) {
 			$includePattern = $includePattern;
-		}
+		}*/
 		foreach ($excludePatterns as $excludePattern) {
 			//$excludePattern = $excludePattern;
 			foreach ($allFiles as $fullPath => & $fileInfo) {
