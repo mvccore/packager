@@ -578,7 +578,6 @@ class Packager_Common_Base {
 					'fileName'			=> $fileName,
 					'extension'			=> $extension,
 					'processed'			=> FALSE,
-					'content'			=> file_get_contents($fullPath),
 				];
 
 				if ($this->compilationType == 'PHP') {
@@ -594,6 +593,9 @@ class Packager_Common_Base {
 		}
 		
 		$this->excludeFilesByCfg($allFiles);
+		
+		foreach ($allFiles as $fullPath => $fileInfo)
+			$allFiles[$fullPath]->content = file_get_contents($fullPath);
 		
 		$this->encodeFilesToUtf8($allFiles);
 		
