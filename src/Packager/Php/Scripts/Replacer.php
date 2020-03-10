@@ -22,7 +22,7 @@ class Packager_Php_Scripts_Replacer
 	protected static $phpReplacementsStatistics = [];
 	protected static $wrapperClassName = '';
 	protected $cfg;
-	protected $result = '';
+	protected $result = [];
 	protected $scriptContent = '';
 	protected $statementEndOperator = ';';
 	protected $fileInfo = NULL;
@@ -46,20 +46,30 @@ class Packager_Php_Scripts_Replacer
 	public static function GetReplacementsStatistics () {
 		return self::$phpReplacementsStatistics;
 	}
-	public static function ProcessReplacements (& $fileInfo, & $cfg) {
+	public static function ProcessScriptsReplacements (& $fileInfo, & $cfg) {
 		$instance = new self($fileInfo, $cfg, token_get_all($fileInfo->content));
-		return $instance->runReplacementsProcessing();
+		$instance->runReplacementsProcessing();
+		return implode('', $instance->result);
+	}
+	public static function ProcessTemplatesReplacements (& $fileInfo, & $cfg) {
+		$instance1 = new self($fileInfo, $cfg, token_get_all($fileInfo->content));
+		$instance1->runReplacementsProcessing();
+		$code = implode('', $instance1->result);
+		$instance2 = new self($fileInfo, $cfg, token_get_all($code));
+		$instance2->runTemplatesProcessing();
+		return implode('', $instance2->result);
 	}
 	public static function ProcessNamespaces (& $fileInfo, & $cfg) {
 		$instance = new self($fileInfo, $cfg, token_get_all("<"."?php\n".$fileInfo->content));
-		return $instance->runNamespacesProcessing();
+		$instance->runNamespacesProcessing();
+		return implode('', $instance->result);
 	}
 	/* protected *************************************************************************************/
 	public function __construct(& $fileInfo, $cfg, $tokens) {
 		$this->fileInfo = & $fileInfo;
 		$this->cfg = & $cfg;
 		$this->tokens = & $tokens;
-		$this->result = '';
+		$this->result = [];
 		$this->classState = 0; // 0 not in class, 1 - between `class` or `trait` keyword and `{`, 2 inside class
 		$this->classBracketsLevel = 0;
 		$this->functionsStates = [0];
@@ -103,10 +113,10 @@ class Packager_Php_Scripts_Replacer
 			$this->monitorNamespace($token);
 			$this->monitorClass($token, $i);
 			$this->monitorFunctions($token, $i);
-			$this->result .= $newPart;
+			$this->result[] = $newPart;
 			$i += 1;
 		}
-		return $this->result;
+		return $this;
 	}
 	protected function runNamespacesProcessing () {
 		$newPart = '';
@@ -118,7 +128,7 @@ class Packager_Php_Scripts_Replacer
 				$token[3] = token_name($tokenId);
 				if ($tokenId == T_NAMESPACE) {
 					if ($this->namespaceState > 0) {
-						$this->result .= (!$this->cfg->minifyPhp ? "\n}\n" : '}');
+						$this->result[] = (!$this->cfg->minifyPhp ? "\n}\n" : '}');
 					}
 					$this->namespaceState = 1;
 				}
@@ -130,12 +140,71 @@ class Packager_Php_Scripts_Replacer
 					$this->namespaceState = 2;
 				}
 			}
-			$this->result .= $newPart;
+			$this->result[] = $newPart;
 		}
 		if ($this->namespaceState == 2) {
-			$this->result .= (!$this->cfg->minifyPhp ? "\n}" : '}');
+			$this->result[] = (!$this->cfg->minifyPhp ? "\n}" : '}');
 		}
-		return $this->result;
+		return $this;
+	}
+	protected function runTemplatesProcessing () {
+		//$debug = mb_strpos($this->fileInfo->fullPath, 'index.phtml') !== FALSE;
+		$newPart = '';
+		for ($i = 0, $l = count($this->tokens); $i < $l;) {
+			$token = $this->tokens[$i];
+			if (is_array($token)) {
+				$tokenId = $token[0];
+				$oldPart = $token[1];
+				if ($tokenId == T_OPEN_TAG_WITH_ECHO) {
+					$nextToken = isset($this->tokens[$i + 1]) ? $this->tokens[$i + 1] : NULL;
+					$nextTokenId = is_array($nextToken) ? $nextToken[0] : NULL;
+					if ($nextTokenId == T_VARIABLE && $nextToken[1] != '$this') {
+						$oldPart = $nextToken[1];
+						$nextToken = isset($this->tokens[$i + 2]) ? $this->tokens[$i + 2] : NULL;
+						$openBracketToken = is_string($nextToken) && $nextToken == '(';
+						if ($openBracketToken) {
+							// 	<?=$helper( or <%=$helper(
+							$newPart = '<' . '?php echo call_user_func($this->GetHelper(\'' . mb_substr($oldPart, 1) . '\'), ';
+							$i += 2;
+						} else {
+							// 	<?=$variable or <%=$variable
+							$newPart = '<' . '?php echo isset(' . $oldPart . ')?' . $oldPart . ':$this->' . mb_substr($oldPart, 1);
+							$i += 1;
+						}
+					} else {
+						// 	<?= or <%=
+						$newPart = '<' . '?php echo ';
+					}
+				} else if ($tokenId == T_VARIABLE && $oldPart != '$this') {
+					$nextToken = isset($this->tokens[$i + 1]) ? $this->tokens[$i + 1] : NULL;
+					$openBracketToken = is_string($nextToken) && $nextToken == '(';
+					if ($openBracketToken) {
+						// $helper(
+						$newPart = 'call_user_func($this->GetHelper(\'' . mb_substr($oldPart, 1) . '\'),';
+						$i += 1;
+					} else {
+						// $variable
+						$newPart = '(isset(' . $oldPart . ')?' . $oldPart . ':$this->' . mb_substr($oldPart, 1) . ')';
+					}
+				} else {
+					// if there is not any part of php code for possible processing,
+					// just add php code part into result code string:
+					$newPart = $oldPart;
+				}
+				//if ($debug) var_dump("array;$tokenId;".$newPart);
+			} else if (is_string($token)) {
+				$newPart = $token;
+				//if ($debug) var_dump("string;".$newPart);
+			}
+			$this->result[] = $newPart;
+			$i += 1;
+		}
+		/*if ($debug) {
+			echo '<pre>';
+			var_dump(implode('', $this->result));
+			die();
+		}*/
+		return $this;
 	}
 	protected function monitorNamespace ($token) {
 		if ($this->namespaceState > 2 || $this->fileInfo->extension !== 'php') return;
@@ -342,7 +411,8 @@ class Packager_Php_Scripts_Replacer
 				} else if (is_string($subToken)) {
 					if ($subToken == $this->statementEndOperator) {
 						$subInstance = new self($this->fileInfo, $this->cfg, $subTokens);
-						$newSubPart = $subInstance->runReplacementsProcessing();
+						$subInstance->runReplacementsProcessing();
+						$newSubPart = implode('', $subInstance->result);
 						/*
 						var_dump($this->classFnDynamicEnvironment);
 						var_dump([

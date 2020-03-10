@@ -351,7 +351,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		$composerAutoloadFullPath = $sourcesDir . '/vendor/autoload.php';
 		$errorMsgs = [];
 		$errorTraces = [];
-		$selfClass = version_compare(PHP_VERSION, '5.5', '>') ? self::class : __CLASS__;
+		$selfClass = get_class();
 		if (file_exists($composerAutoloadFullPath)) {
 			// if project is using composer autoloader
 			try {
@@ -364,12 +364,12 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 				//var_dump($e2);
 				$errorMsgs = [$e2->getMessage()];
 				$errorTraces = $e2->getTrace();
-			} finally {
+			} //finally {
 				if ($errorMsgs) {
 					var_dump(get_included_files());
 					var_dump($errorMsgs);
 				}
-			}
+			//}
 			if ($this->_isFileIncluded($file)) {
 				// file has no dependency, because it's part of composer
 				// auto load or in composer auto load static includes array

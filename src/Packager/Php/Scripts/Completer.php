@@ -5,17 +5,21 @@ include_once(__DIR__.'/Replacer.php');
 
 class Packager_Php_Scripts_Completer extends Packager_Php_Base
 {
-	protected function processPhpCode () {
-		$processPhpReplacements = $this->cfg->phpFsMode !== Packager_Php::FS_MODE_STRICT_HDD &&
-								  $this->cfg->phpFsMode !== Packager_Php::FS_MODE_PHP_LIBRARY;
+	protected function processScriptsPhpCode () {
+		$processScriptsPhpReplacements = (
+			$this->cfg->phpFsMode !== Packager_Php::FS_MODE_STRICT_HDD &&
+			$this->cfg->phpFsMode !== Packager_Php::FS_MODE_PHP_LIBRARY
+		);
 		foreach ($this->files->php as & $fileInfo) {
 
 			// process pattern and string replacements by config
 			$this->processPatternAndStringReplacements($fileInfo);
-			
+
 			// process php code and wrap configured functions
-			if ($processPhpReplacements)
-				$fileInfo->content = Packager_Php_Scripts_Replacer::ProcessReplacements($fileInfo, $this->cfg);
+			if ($processScriptsPhpReplacements)
+				$fileInfo->content = Packager_Php_Scripts_Replacer::ProcessScriptsReplacements(
+					$fileInfo, $this->cfg
+				);
 
 			// minify if necessary
 			if ($this->cfg->minifyPhp) {
@@ -23,7 +27,7 @@ class Packager_Php_Scripts_Completer extends Packager_Php_Base
 			}
 			$fileInfo->content = str_replace("\r\n", "\n", $fileInfo->content);
 
-			// remove open tag - only at file begin (<\?php or <\?) 
+			// remove open tag - only at file begin (<\?php or <\?)
 			// and remove close tag - only at file end (?\>)
 			self::_removeOpenAndClosePhpTags($fileInfo);
 
@@ -35,7 +39,9 @@ class Packager_Php_Scripts_Completer extends Packager_Php_Base
 			foreach ($this->files->php as & $fileInfo) {
 
 				if ($fileInfo->containsNamespace === Packager_Php::NAMESPACE_NAMED_SEMICOLONS) {
-					$fileInfo->content = Packager_Php_Scripts_Replacer::ProcessNamespaces($fileInfo, $this->cfg);
+					$fileInfo->content = Packager_Php_Scripts_Replacer::ProcessNamespaces(
+						$fileInfo, $this->cfg
+					);
 				}
 
 			}
@@ -46,13 +52,13 @@ class Packager_Php_Scripts_Completer extends Packager_Php_Base
 		$wrapperFullPath = __DIR__ . '/../Wrappers/' . $wrapperFileName;
 		$this->wrapperCode = file_get_contents($wrapperFullPath);
 		$this->wrapperCode = str_replace(
-			"____" . self::$wrapperClassName . "::FS_MODE____", 
-			$this->cfg->phpFsMode, 
+			"____" . self::$wrapperClassName . "::FS_MODE____",
+			$this->cfg->phpFsMode,
 			$this->wrapperCode
 		);
 		$this->wrapperCode = str_replace(
-			"'____" . self::$wrapperClassName . "::\$_minifiedPhp____'", 
-			$this->cfg->minifyPhp ? 'TRUE' : 'FALSE', 
+			"'____" . self::$wrapperClassName . "::\$_minifiedPhp____'",
+			$this->cfg->minifyPhp ? 'TRUE' : 'FALSE',
 			$this->wrapperCode
 		);
 		if ($this->cfg->phpFsMode != Packager_Php::FS_MODE_STRICT_HDD) {
@@ -103,18 +109,18 @@ class Packager_Php_Scripts_Completer extends Packager_Php_Base
 	private function _processWrapperCodeRemovePublicElements () {
 		foreach (['require_once', 'include_once', 'require', 'include'] as $statement) {
 			if (!(
-				isset(self::$phpReplacementsStatistics[$statement]) && 
+				isset(self::$phpReplacementsStatistics[$statement]) &&
 				self::$phpReplacementsStatistics[$statement] > 0
 			)) {
 				// remove php function equivalent from wrapper code
 				$this->_removeWrapperPhpFunctionEquivalent($statement);
 			}
 		}
-		// go thought all wrapper public elements and decide 
+		// go thought all wrapper public elements and decide
 		// if there will be for each one public function or not by statistic record
 		foreach (self::$wrapperReplacements[T_STRING] as $phpFunction => $wrapperEquivalent) {
 			if (!(
-				isset(self::$phpReplacementsStatistics[$phpFunction]) && 
+				isset(self::$phpReplacementsStatistics[$phpFunction]) &&
 				self::$phpReplacementsStatistics[$phpFunction] > 0
 			)) {
 				// remove php function equivalent from wrapper code
@@ -123,7 +129,7 @@ class Packager_Php_Scripts_Completer extends Packager_Php_Base
 		}
 	}
 	private function _processWrapperCodeRemovePrivateElements () {
-		// go thought all wrapper private elements and decide 
+		// go thought all wrapper private elements and decide
 		// if there will necessary by dependencies to keep private element or not
 		$privateElementsRemoved = [];
 		foreach (self::$wrapperInternalElementsDependencies as $internalElement => $dependecies) {
@@ -133,7 +139,7 @@ class Packager_Php_Scripts_Completer extends Packager_Php_Base
 				if ($replacedCount > 0) {
 					// if there is any php function replaced more times than 0 in target code
 					if (mb_strpos($dependecies, ",$phpFunction,") !== FALSE) {
-						// if there is any dependency from private wrapper code function 
+						// if there is any dependency from private wrapper code function
 						// representing original php function - keep this private code in wrapper
 						$keepPrivateElementInWrapper = TRUE;
 					}
@@ -152,35 +158,34 @@ class Packager_Php_Scripts_Completer extends Packager_Php_Base
 			$this->_removeWrapperPhpFunctionEquivalent('Init'); // remove method call
 			$initMethodRemoved = TRUE;
 		}
-		// there is not necessary to have there a field section, 
-		// if there are no static files to include in result and 
+		// there is not necessary to have there a field section,
+		// if there are no static files to include in result and
 		// if there is removed Init() method
 		if (count($this->files->static) === 0 && $initMethodRemoved) {
 			$this->_removeWrapperPhpFunctionEquivalent('fields');
 		}
 	}
 	private function _removeWrapperPhpFunctionEquivalent ($originalPhpFunctionName) {
-		$selfClass = version_compare(PHP_VERSION, '5.5', '>') ? self::class : __CLASS__;
-		$commentTemplate = $selfClass . '::{startEnd}({functionName})';
+		$commentTemplate = get_class() . '::{startEnd}({functionName})';
 		$startStr	= str_replace(['{startEnd}', '{functionName}'], ['start', $originalPhpFunctionName], $commentTemplate);
 		$endStr		= str_replace(['{startEnd}', '{functionName}'], ['end', $originalPhpFunctionName], $commentTemplate);
 		$startPos = mb_strpos($this->wrapperCode, $startStr);
-		
+
 		/*if ($startPos === FALSE) {
 			echo "<h1>Comment containing '$startStr' not founded in wrapper code.</h1>";
 			echo "<pre>{$this->wrapperCode}</pre>";
 			die();
 		}*/
-		
+
 		$endPos = mb_strpos($this->wrapperCode, $endStr, $startPos + mb_strlen($startStr));
-		
+
 		/*if ($endPos === FALSE) {
 			echo "<h1>Comment containing '$endStr' not founded in wrapper code.</h1>";
 			echo "<pre>{$this->wrapperCode}</pre>";
 			die();
 		}*/
 		if ($startPos === FALSE || $endPos === FALSE) return;
-		
+
 		$this->wrapperCode = mb_substr(
 			$this->wrapperCode,
 			0,

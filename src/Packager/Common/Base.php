@@ -17,7 +17,7 @@ class Packager_Common_Base {
 			'css', 'htc', 'js', 'txt', 'svg'
 		],
 		'binary'	=> [
-			'ico', 'gif', 'png', 'jpg', 'jpeg', 
+			'ico', 'gif', 'png', 'jpg', 'jpeg',
 			'zip', 'ttf', 'eot', 'otf', 'woff', 'woff2',
 		],
 		'base64'	=> [
@@ -45,13 +45,13 @@ class Packager_Common_Base {
 		'keepPhpDocComments'		=> [],
 		// PHP compiling only:
 		'autoloadingOrderDetection'	=> TRUE,
-		'includeFirst'				=> [],	
+		'includeFirst'				=> [],
 		'includeLast'				=> [],
 		'phpFsMode'					=> 'PHP_PRESERVE_HDD',
 		'phpFunctionsToReplace'		=> [],
 		'phpFunctionsToKeep'		=> [],
 		'phpFunctionsToProcess'		=> [],
-		//'errorReportingLevel'		=> 5,		// E_ALL
+		'errorReportingLevel'		=> E_ALL,
 	];
 	private static $_htmlStyles = [
 		'success'	=> 'html,body{background:#005700;}',
@@ -73,7 +73,7 @@ class Packager_Common_Base {
 	public static function Create ($cfg = []) {
 		if (!self::$instance) {
 			// set custom error handlers to catch eval warnings and errors
-			$selfClass = version_compare(PHP_VERSION, '5.5', '>') ? self::class : __CLASS__;
+			$selfClass = get_class();
 			set_error_handler([$selfClass, 'ErrorHandler']);
 			set_exception_handler([$selfClass, 'ErrorHandler']);
 			self::$instance = new static($cfg);
@@ -291,7 +291,7 @@ class Packager_Common_Base {
 	}
 	/**allLevelsToExceptions
 	 * Print all files included by exclude/include pattern rules directly to output.
-	 * 
+	 *
 	 * @return void
 	 */
 	public function PrintFilesToPack () {
@@ -337,7 +337,7 @@ class Packager_Common_Base {
 			unset($backTraceItem['args'], $backTraceItem['object']);
 		}
 
-		
+
 		ob_start();
 		echo '<pre>';
 		var_dump($backTrace);
@@ -345,7 +345,7 @@ class Packager_Common_Base {
 		var_dump(func_get_args());
 		echo '</pre>';
 		$content = ob_get_clean();
-		
+
 		//$content = '';
 
 
@@ -355,7 +355,7 @@ class Packager_Common_Base {
 		if (isset($backTrace[count($backTrace) - 2])) {
 			$semiFinalBacktraceRec = (object) $backTrace[count($backTrace) - 2];
 			if ($semiFinalBacktraceRec->class == 'Packager_Php_Completer' && $semiFinalBacktraceRec->function == 'autoloadJob') {
-				//if (!headers_sent()) 
+				//if (!headers_sent())
 					header("HTTP/1.1 200 OK");
 				$response = (object) [
 					'success'			=> 2,
@@ -390,7 +390,7 @@ class Packager_Common_Base {
 			T_ML_COMMENT	=> 1,
 			T_WHITESPACE	=> 1,
 		];
-		if (count($this->cfg->keepPhpDocComments) === 0) 
+		if (count($this->cfg->keepPhpDocComments) === 0)
 			$tokensToRemove[T_DOC_COMMENT] = 1;
 		foreach ($tokens as & $token) {
 			if (is_array($token)) {
@@ -403,9 +403,9 @@ class Packager_Common_Base {
 					if ($tokenId == T_ECHO) $oldPart .= ' ';
 					if (
 						isset($chars[substr($result, -1)]) ||
-						isset($chars[$oldPart{0}])
+						isset($chars[$oldPart[0]])
 					) $space = '';
-					if ($tokenId == T_DOC_COMMENT) 
+					if ($tokenId == T_DOC_COMMENT)
 						$oldPart = $this->shrinkPhpCodeReducePhpDocComment($oldPart);
 					$result .= $space . $oldPart;
 					$space = '';
@@ -521,7 +521,7 @@ class Packager_Common_Base {
 			// echo $subProcessUrl . '<br />';
 
 			//$jobResult = file_get_contents($subProcessUrl); // do not use file_get_contents(), when http output is 500, file_get_contents() returns false only..
-			
+
 			$cUrlResult = $this->_processGetRequest($subProcessUrl);
 			/*if ($cUrlResult->code == 500) {
 				echo '<pre>';
@@ -556,21 +556,21 @@ class Packager_Common_Base {
 		$allFiles = [];
 		foreach($rii as $item){
 			if (!$item->isDir()) {
-				
+
 				$fullPath = str_replace('\\', '/', $item->__toString());
 				$relPath = substr($fullPath, strlen($this->cfg->sourcesDir));
-				
+
 				$extension = '';
 				$lastDotPos = strrpos($fullPath, '.');
 				if ($lastDotPos !== FALSE) $extension = substr($fullPath, $lastDotPos + 1);
 				$extension = strtolower($extension);
-				
+
 				$fileName = '';
 				$lastSlashPos = strrpos($fullPath, '/');
 				if ($lastSlashPos !== FALSE) $fileName = substr($fullPath, $lastSlashPos + 1);
-				
+
 				$relPathDir = substr($relPath, 0, strlen($relPath) - strlen($fileName) - 1);
-				
+
 				$fileItem = (object) [
 					'relPath'	 		=> $relPath,
 					'fullPath'	 		=> $fullPath,
@@ -587,18 +587,18 @@ class Packager_Common_Base {
 					$fileItem->utf8bomRemoved		= FALSE;
 					$fileItem->containsNamespace	= Packager_Php::NAMESPACE_NONE;
 				}
-				
+
 				$allFiles[$fullPath] = $fileItem;
 			}
 		}
-		
+
 		$this->excludeFilesByCfg($allFiles);
-		
+
 		foreach ($allFiles as $fullPath => $fileInfo)
 			$allFiles[$fullPath]->content = file_get_contents($fullPath);
-		
+
 		$this->encodeFilesToUtf8($allFiles);
-		
+
 		if ($this->compilationType == 'PHP') {
 			$this->files->all = $allFiles;
 		} else if ($this->compilationType == 'PHAR') {
@@ -656,8 +656,8 @@ class Packager_Common_Base {
 			if ($outputType == 'text') {
 				$contentStr = implode("\n\n", $contentItems);
 			} else {
-				$contentStr = '<table><tbody><tr>' 
-					. implode('</tr><tr>', $contentItems) 
+				$contentStr = '<table><tbody><tr>'
+					. implode('</tr><tr>', $contentItems)
 					. '</tr></tbody></table>';
 			}
 		}
@@ -673,26 +673,26 @@ class Packager_Common_Base {
 	private function _checkCommonConfiguration () {
 		if (!$this->cfg->sourcesDir) {
 			$this->sendResult(
-				"Source directory is an empty string.", 
+				"Source directory is an empty string.",
 				"Define application source directory:<br /><br />"
-				 . "\$config['sourcesDir'] = '/path/to/development/directory';", 
+				 . "\$config['sourcesDir'] = '/path/to/development/directory';",
 				'error'
 			);
 		}
 		$this->cfg->sourcesDir = str_replace('\\', '/', realpath($this->cfg->sourcesDir));
 		if (!is_dir($this->cfg->sourcesDir)) {
 			$this->sendResult(
-				"Source directory not found.", 
+				"Source directory not found.",
 				"Define application source directory:<br /><br />"
-				 . "\$config['sourcesDir'] = '/path/to/development/directory';", 
+				 . "\$config['sourcesDir'] = '/path/to/development/directory';",
 				'error'
 			);
 		}
 		if (!$this->cfg->releaseDir) {
 			$this->sendResult(
-				"Release directory not defined or empty string.", 
+				"Release directory not defined or empty string.",
 				"Define release directory:<br /><br />"
-					. "\$config['releaseDir'] = '/path/to/release/directory';", 
+					. "\$config['releaseDir'] = '/path/to/release/directory';",
 				'error'
 			);
 		}
@@ -813,8 +813,8 @@ class Packager_Common_Base {
 					$errFile = func_get_arg(5)[1]['file'];
 				if (isset($errorLevels[$errLevel]))
 					throw new \ErrorException($errMessage, $errLevel, $errLevel, $errFile, $errLine);
-				return $prevErrorHandler 
-					? call_user_func_array($prevErrorHandler, func_get_args()) 
+				return $prevErrorHandler
+					? call_user_func_array($prevErrorHandler, func_get_args())
 					: FALSE;
 			}
 		);

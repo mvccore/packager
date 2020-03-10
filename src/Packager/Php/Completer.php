@@ -26,8 +26,8 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 		$this->completePhpFilesOrder();
 		// complete $this->files->php array and $this->files->static array, unset $this->files->all
 		$this->_completePhpAndStaticFiles();
-		// process php code file system functions replacements
-		$this->processPhpCode();
+		// process php code in script files - file system functions replacements
+		$this->processScriptsPhpCode();
 		// complete files records and php code together
 		$this->_completeResult();
 		// save result php file and display notification
@@ -60,7 +60,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 		self::_setUpExtensionsAndStoringTypes();
 		$this->_completeResultPhpCodeAndScriptFilesRecords();
 		if (
-			$this->cfg->phpFsMode != Packager_Php::FS_MODE_STRICT_HDD && 
+			$this->cfg->phpFsMode != Packager_Php::FS_MODE_STRICT_HDD &&
 			$this->cfg->phpFsMode != Packager_Php::FS_MODE_PHP_LIBRARY
 		) {
 			$this->_completeResultStaticFilesRecords();
@@ -105,9 +105,9 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 					$fileInfo->containsNamespace === Packager_Php::NAMESPACE_NONE &&
 					!$this->globalNamespaceOpened
 				) {
-					// if current file doesn't have any namespace and previous 
+					// if current file doesn't have any namespace and previous
 					// file closed global namespace - open global namespace again
-					if ($this->cfg->minifyPhp) {					
+					if ($this->cfg->minifyPhp) {
 						$openNamespaceGlue = 'namespace{';
 					} else {
 						$openNamespaceGlue = "namespace{\n";
@@ -130,14 +130,14 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 			}
 
 			$newLineGlue = ($this->result == '') ? '' : "\n";
-			
+
 			$this->result .= $newLineGlue . $closeNamespaceGlue . $openNamespaceGlue . $fileInfo->content;
-			
+
 			/**
 			 * DEVEL NOTE:
 			 * Why to store any info about php scripts?
-			 * - Because in previous versions MvcCore needs to know if controller 
-			 * - class exists by file_exists() to dispatch the controller.
+			 * - Because in previous versions MvcCore needs to know if controller:
+			 *	 - class exists by file_exists() to dispatch the controller.
 			 * - But not any more, maybe we can remove it.
 			 * - but it is still good to have info about php scripts themselfs
 			 */
@@ -156,7 +156,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 	private function _completeResultStaticFilesRecords () {
 		$fullPaths = array_keys($this->files->static);
 		for ($i = 0, $l = count($fullPaths); $i < $l; $i += 1) {
-			
+
 			$fullPath = $fullPaths[$i];
 			$fileInfo = $this->files->static[$fullPath];
 
@@ -164,18 +164,18 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 			$filemtime = $fileInfo->filemtime;
 			$filesize = $fileInfo->filesize;
 			$filesize = strlen($fileInfo->content);
-			
+
 			$storingType = self::_getStoringTypeByExtension($fileInfo->extension);
 			$this->_processStaticFileContent($fileInfo, $storingType);
-			
+
 			$glue = ($this->resultFilesInfo == '') ? '' : "\n";
 			$this->resultFilesInfo .= $glue . "'$relPath'=>['index'=>$i,'mtime'=>$filemtime,'size'=>$filesize,'store'=>'$storingType'],";
-			
+
 			$glue = ($this->resultFilesContents == '') ? '' : "\n";
-			$this->resultFilesContents .= 
-				$glue . /*'/*'.$relPath.'* /'."\n".*/ self::$wrapperClassName . "::\$Contents[$i]=" 
+			$this->resultFilesContents .=
+				$glue . /*'/*'.$relPath.'* /'."\n".*/ self::$wrapperClassName . "::\$Contents[$i]="
 				. $this->_packStaticFileContent($fileInfo, $storingType);
-			
+
 			$this->files->static[$fullPath] = $relPath . ($fileInfo->utf8bomRemoved ? ' (UTF8 BOM REMOVED)' : '');
 		}
 		// frees memory - store only relative paths for result notification
@@ -189,11 +189,11 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 			// process pattern and string replacements by config
 			$this->processPatternAndStringReplacements($fileInfo);
 			// process php code and wrap configured functions
-			$fileInfo->content = Packager_Php_Scripts_Replacer::ProcessReplacements($fileInfo, $this->cfg);
-
-			if ($this->cfg->minifyPhp) {
+			$fileInfo->content = Packager_Php_Scripts_Replacer::ProcessTemplatesReplacements(
+				$fileInfo, $this->cfg
+			);
+			if ($this->cfg->minifyPhp)
 				$fileInfo->content = $this->shrinkPhpCode($fileInfo->content);
-			}
 			if ($this->cfg->minifyTemplates) {
 				//include_once(__DIR__.'/../Libs/Minify/HTML.php');
 				@include_once('vendor/autoload.php');
@@ -206,20 +206,20 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 		if ($this->wrapperCode !== '') {
 			// for wrappers:
 			$this->wrapperCode = str_replace(
-				"'____" . self::$wrapperClassName . "::\$Info____'", 
-				"/*____" . self::$wrapperClassName . "::\$Info____*/" . $this->resultFilesInfo . "\n", 
+				"'____" . self::$wrapperClassName . "::\$Info____'",
+				"/*____" . self::$wrapperClassName . "::\$Info____*/" . $this->resultFilesInfo . "\n",
 				$this->wrapperCode
 			);
 			$baseCode = '<'.'?php'
 				. ($this->anyPhpContainsNamespace ? "\nnamespace{" : "")
 				. "\n" . 'error_reporting('.$this->cfg->errorReportingLevel.');'
-				. "\n" . $this->wrapperCode 
-				. "\n" . $this->resultFilesContents 
+				. "\n" . $this->wrapperCode
+				. "\n" . $this->resultFilesContents
 				. "\n";
 			$baseCodeLinesCount = substr_count($baseCode, "\n") + 1;
 			$baseCode = str_replace(
-				"'____" . self::$wrapperClassName . "::\$_baseLinesCount____'", 
-				$baseCodeLinesCount, 
+				"'____" . self::$wrapperClassName . "::\$_baseLinesCount____'",
+				$baseCodeLinesCount,
 				$baseCode
 			);
 		} else {
@@ -242,7 +242,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 				. "\n" . self::$wrapperStringDeclarator . 'GZIP;';
 		} else if ($storingType == 'binary') {
 			return "<<<'" . self::$wrapperStringDeclarator . "BIN'"
-				. "\n" . $fileInfo->content 
+				. "\n" . $fileInfo->content
 				. "\n" . self::$wrapperStringDeclarator . 'BIN;';
 		} else if ($storingType == 'base64') {
 			return "'".base64_encode($fileInfo->content)."';";
@@ -287,7 +287,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 			}
 			$content .= "\n\n\nDONE";
 			$this->sendResult(
-				$title, 
+				$title,
 				$content
 			);
 		} else {
@@ -314,7 +314,7 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 			}
 			$content .= '</div><h2>DONE</h2>';
 			$this->sendResult(
-				$title, 
+				$title,
 				$content,
 				'success'
 			);
