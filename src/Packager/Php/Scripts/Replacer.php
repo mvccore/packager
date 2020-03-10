@@ -168,7 +168,7 @@ class Packager_Php_Scripts_Replacer
 							$i += 2;
 						} else {
 							// 	<?=$variable or <%=$variable
-							$newPart = '<' . '?php echo isset(' . $oldPart . ')?' . $oldPart . ':$this->' . mb_substr($oldPart, 1);
+							$newPart = '<' . '?php echo call_user_func(function($__val){return $__val;},isset(' . $oldPart . ')?' . $oldPart . ':$this->' . mb_substr($oldPart, 1) . ')';
 							$i += 1;
 						}
 					} else {
@@ -184,7 +184,7 @@ class Packager_Php_Scripts_Replacer
 						$i += 1;
 					} else {
 						// $variable
-						$newPart = '(isset(' . $oldPart . ')?' . $oldPart . ':$this->' . mb_substr($oldPart, 1) . ')';
+						$newPart = 'call_user_func(function($__val){return $__val;},isset(' . $oldPart . ')?' . $oldPart . ':$this->' . mb_substr($oldPart, 1) . ')';
 					}
 				} else {
 					// if there is not any part of php code for possible processing,
