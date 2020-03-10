@@ -8,7 +8,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 	{
 		/** @var string */
 		const FS_MODE = '____\Packager_Php_Wrapper::FS_MODE____';
-		
+
 		/** @var string */
 		public static $ScriptFilename;
 
@@ -36,13 +36,13 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 
 		/** @var bool */
 		private static $_minifiedPhp = '____\Packager_Php_Wrapper::$_minifiedPhp____'; // replaced automatically in build process
-		
+
 		/** @var array */
 		private static $_contexts = array();
-		
+
 		/** @var bool */
 		private static $_closureRendering = TRUE;
-		
+
 		/** @var array */
 		private static $_currentFileSource = array();
 
@@ -60,7 +60,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		// Packager_Php_Scripts_Completer::start(Init)
 		/**
 		 * Static initialization for often used variables
-		 * 
+		 *
 		 * @return void
 		 */
 		public static function Init () {
@@ -72,16 +72,16 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			}
 		}
 		// Packager_Php_Scripts_Completer::end(Init)
-		
+
 		// Packager_Php_Scripts_Completer::start(_includeFile)
 		/**
 		 * Evaluate static file content (mostly a template)
-		 * 
-		 * @param string  $path 
-		 * @param mixed   $context 
-		 * @param boolean $onceOnly 
-		 * @param string  $fn 
-		 * 
+		 *
+		 * @param string  $path
+		 * @param mixed   $context
+		 * @param boolean $onceOnly
+		 * @param string  $fn
+		 *
 		 * @return void|boolean|int|mixed
 		 */
 		private static function _includeFile ($path, & $context, $onceOnly, $fn = '') {
@@ -94,28 +94,28 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 				return self::_includeFileWithRendering($path, $context, $onceOnly);
 			}
 		}
-		
+
 		/**
 		 * Get info if file has been included or not
-		 * 
-		 * @param string  $path 
-		 * 
+		 *
+		 * @param string  $path
+		 *
 		 * @return boolean
 		 */
 		private static function _getIsFileIncluded ($path) {
 			return (
-				isset(self::$Info[$path]) && 
+				isset(self::$Info[$path]) &&
 				self::$Info[$path]['included']
 			) ? TRUE : FALSE;
 		}
 
 		/**
 		 * Evaluate static file content (mostly a template)
-		 * 
-		 * @param string  $path 
-		 * @param mixed   $context 
-		 * @param boolean $onceOnly 
-		 * 
+		 *
+		 * @param string  $path
+		 * @param mixed   $context
+		 * @param boolean $onceOnly
+		 *
 		 * @return boolean|int|mixed
 		 */
 		private static function _includeFileWithRendering ($path, & $context, $onceOnly) {
@@ -133,13 +133,13 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		/**
 		 * Evaluate static file content (mostly a template)
 		 * Render file by calling closure code in PHP > 5.3 or render file with eval() and $this context replacing in PHP < 5.4
-		 * 
-		 * @param string  $path 
-		 * @param mixed   $context 
-		 * @param boolean $onceOnly 
-		 * @param boolean $closureRendering 
-		 * @param string  $store 
-		 * 
+		 *
+		 * @param string  $path
+		 * @param mixed   $context
+		 * @param boolean $onceOnly
+		 * @param boolean $closureRendering
+		 * @param string  $store
+		 *
 		 * @return int|mixed|string
 		 */
 		private static function _renderFile ($path, & $context, $onceOnly, $closureRendering, $store) {
@@ -151,14 +151,14 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			if ($onceOnly) self::_setFileIsIncluded($path);
 			return $result;
 		}
-		
+
 		/**
 		 * Evaluate static file content (mostly a template)
 		 * Render file by calling closure code in PHP > 5.3
-		 * 
-		 * @param string  $path 
-		 * @param mixed   $context 
-		 * 
+		 *
+		 * @param string  $path
+		 * @param mixed   $context
+		 *
 		 * @return int|mixed
 		 */
 		private static function _callTemplateClosure ($path, & $context) {
@@ -168,15 +168,15 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			}
 			return $templateClosure();
 		}
-		
+
 		/**
 		 * Evaluate static file content (mostly a template)
 		 * Render file with eval() and $this context replacing in PHP < 5.4
-		 * 
-		 * @param string  $path 
-		 * @param mixed   $context 
-		 * @param string  $store 
-		 * 
+		 *
+		 * @param string  $path
+		 * @param mixed   $context
+		 * @param string  $store
+		 *
 		 * @return string
 		 */
 		private static function _evalFile ($path, & $context, $store) {
@@ -199,10 +199,10 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 
 		/**
 		 * Get static file content with replaced $this context variables if necessary
-		 * 
-		 * @param string  $path 
+		 *
+		 * @param string  $path
 		 * @param mixed   $context
-		 * 
+		 *
 		 * @return string
 		 */
 		private static function _getStaticWithContext ($path, $context) {
@@ -214,11 +214,10 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 				if (mb_strlen($content) === 0) {
 					$templateClosure = self::_getFileContent($path, TRUE);
 					$content = self::_getTemplateClosureBody($templateClosure);
-					$selfClass = version_compare(PHP_VERSION, '5.5', '>') ? self::class : __CLASS__;
 					// http://php.net/manual/en/language.variables.basics.php
 					$content = preg_replace(
 						"#([^\\\])(\\\$this)([^a-zA-Z0-9_\x7f-\xff])#im",
-						"$1".$selfClass."::\$Context$3",
+						"$1".get_class()."::\$Context$3",
 						$content
 					);
 					$index = self::$Info[$path]['index'];
@@ -227,12 +226,12 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			}
 			return $content;
 		}
-		
+
 		/**
 		 * Get closure function body from static files array
-		 * 
+		 *
 		 * @param Closure $templateClosure
-		 * 
+		 *
 		 * @return string
 		 */
 		private static function _getTemplateClosureBody (Closure $templateClosure) {
@@ -248,10 +247,10 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			$functionSource = mb_substr($functionSource, $firstCloseTagPos, $functionBodyLength);
 			return $functionSource;
 		}
-		
+
 		/**
 		 * Set up current file source array
-		 * 
+		 *
 		 * @return void
 		 */
 		private static function _setUpCurrentFileSource () {
@@ -259,12 +258,12 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 				self::$_currentFileSource = file(__FILE__);
 			}
 		}
-		
+
 		/**
 		 * Get static file content with replaced $this context variables already processed
-		 * 
-		 * @param string  $path 
-		 * 
+		 *
+		 * @param string  $path
+		 *
 		 * @return string
 		 */
 		private static function _getStaticWithContextAlreadyProcessed ($path) {
@@ -277,22 +276,22 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			}
 			return $content;
 		}
-		
+
 		/**
 		 * Set up current context into contexts array to remember it after subtemplate has been rendered
-		 * 
+		 *
 		 * @param mixed $context
-		 * 
+		 *
 		 * @return void
 		 */
 		private static function _addContext ($context) {
 			self::$_contexts[] = $context;
 			self::$Context = $context;
 		}
-		
+
 		/**
 		 * Remove current context from contexts array and reset previous (remember any context after subtemplate has been rendered)
-		 * 
+		 *
 		 * @return void
 		 */
 		private static function _removeContext () {
@@ -308,12 +307,12 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			}
 			self::$Context = $newContext;
 		}
-		
+
 		/**
 		 * Set info if file has been included or not
-		 * 
-		 * @param string  $path 
-		 * 
+		 *
+		 * @param string  $path
+		 *
 		 * @return void
 		 */
 		private static function _setFileIsIncluded ($path) {
@@ -324,14 +323,14 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			}
 		}
 		// Packager_Php_Scripts_Completer::end(_includeFile)
-		
+
 		// Packager_Php_Scripts_Completer::start(_getFileContent)
 		/**
 		 * Get static file content string (decode gzip record by default)
-		 * 
-		 * @param string  $path 
-		 * @param boolean $decodeGzip 
-		 * 
+		 *
+		 * @param string  $path
+		 * @param boolean $decodeGzip
+		 *
 		 * @return string
 		 */
 		private static function _getFileContent ($path, $decodeGzip = TRUE) {
@@ -347,9 +346,9 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 
 		/**
 		 * Get php script content as part of result file
-		 * 
-		 * @param array $lines 
-		 * 
+		 *
+		 * @param array $lines
+		 *
 		 * @return string
 		 */
 		private static function _getScript ($lines) {
@@ -367,11 +366,11 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 
 		/**
 		 * Get static file content by store type and store index (decode gzip string if necessary)
-		 * 
-		 * @param string  $store 
-		 * @param int	 $index 
-		 * @param boolean $decodeGzip 
-		 * 
+		 *
+		 * @param string  $store
+		 * @param int	 $index
+		 * @param boolean $decodeGzip
+		 *
 		 * @return string
 		 */
 		private static function _getStatic ($store, $index, $decodeGzip = TRUE) {
@@ -386,14 +385,14 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			}
 		}
 		// Packager_Php_Scripts_Completer::end(_getFileContent)
-		
+
 		// Packager_Php_Scripts_Completer::start(NormalizePath)
 		/**
 		 * Normalize any path to stored relative path with normal slashes,
 		 * used only for internal purposes, not as php build-in function replacement.
-		 * 
-		 * @param string  $path 
-		 * 
+		 *
+		 * @param string  $path
+		 *
 		 * @return string
 		 */
 		public static function NormalizePath ($path) {
@@ -421,29 +420,29 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			return str_replace('//', '/', $path);
 		}
 		// Packager_Php_Scripts_Completer::end(NormalizePath)
-		
+
 		// Packager_Php_Scripts_Completer::start(_isProtocolPath)
 		/**
 		 * Check if given path is protocol like:
 		 * http://..., https://..., php://...
-		 * 
-		 * @param string  $path 
-		 * 
+		 *
+		 * @param string  $path
+		 *
 		 * @return bool
 		 */
 		public static function _isProtocolPath ($path) {
 			return preg_match("#^([a-z]*)\://(.*)#", $path) ? TRUE : FALSE;
 		}
 		// Packager_Php_Scripts_Completer::end(_isProtocolPath)
-		
+
 		// Packager_Php_Scripts_Completer::start(Warning)
 		/**
 		 * Generates php warning content in output.
-		 * 
-		 * @param string $msg 
-		 * @param string $path 
+		 *
+		 * @param string $msg
+		 * @param string $path
 		 * @param string $fn
-		 * 
+		 *
 		 * @return void
 		 */
 		public static function Warning ($msg = '', $path = '', $fn = '') {
@@ -454,13 +453,13 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 
 		// Packager_Php_Scripts_Completer::start(readfile)
 		/**
-		 * Send file content to output, add gzip http header 
+		 * Send file content to output, add gzip http header
 		 * if client accepts it and also if data are stored as gzip.
-		 * 
+		 *
 		 * @param string   $filename
 		 * @param boolean  $use_include_path
 		 * @param resource $context
-		 * 
+		 *
 		 * @return boolean|int
 		 */
 		public static function Readfile ($filename, $use_include_path = FALSE, $context = NULL) {
@@ -476,13 +475,13 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		}
 
 		/**
-		 * 
-		 * Send file content to output, add gzip http header 
+		 *
+		 * Send file content to output, add gzip http header
 		 * if client accepts it and also if data are stored as gzip.
-		 * 
+		 *
 		 * @param string $content
 		 * @param string $path
-		 * 
+		 *
 		 * @return int
 		 */
 		private static function _readfile (& $content, $path) {
@@ -502,9 +501,9 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		// Packager_Php_Scripts_Completer::start(is_file)
 		/**
 		 * Tells whether the filename is a regular file.
-		 * 
+		 *
 		 * @param string   $filename
-		 * 
+		 *
 		 * @return boolean
 		 */
 		public static function IsFile ($filename) {
@@ -516,9 +515,9 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		// Packager_Php_Scripts_Completer::start(is_dir)
 		/**
 		 * Tells whether the filename is a directory.
-		 * 
+		 *
 		 * @param string   $filename
-		 * 
+		 *
 		 * @return boolean
 		 */
 		public static function IsDir ($filename) {
@@ -543,12 +542,12 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		// Packager_Php_Scripts_Completer::start(mkdir)
 		/**
 		 * Makes real directory.
-		 * 
+		 *
 		 * @param string   $filename
 		 * @param int	  $mode
 		 * @param bool	 $recursive
 		 * @param resource $context
-		 * 
+		 *
 		 * @return boolean
 		 */
 		public static function MkDir ($filename, $mode = 0777, $recursive = FALSE, $context = NULL) {
@@ -568,15 +567,15 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			return $r;
 		}
 		// Packager_Php_Scripts_Completer::end(mkdir)
-		
+
 		// Packager_Php_Scripts_Completer::start(_changeItself)
 		/**
 		 * Change php file content itself - add new content after unique `$replacement`.
 		 * Do not put any new line chars into `$newContent`.
-		 * 
+		 *
 		 * @param string $replacement
 		 * @param string $newContent
-		 * 
+		 *
 		 * @return boolean
 		 */
 		private static function _changeItself ($replacement, $newContent) {
@@ -612,17 +611,17 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			return $r1 && $r2 && $r3 && $r4;
 		}
 		// Packager_Php_Scripts_Completer::end(_changeItself)
-		
+
 		// Packager_Php_Scripts_Completer::start(file_get_contents)
 		/**
 		 * Return file content string
-		 * 
+		 *
 		 * @param string   $filename
 		 * @param boolean  $use_include_path
 		 * @param resource $context
 		 * @param int	  $offset
 		 * @param int	  $maxlen
-		 * 
+		 *
 		 * @return string|bool
 		 */
 		public static function FileGetContents ($filename, $use_include_path = FALSE, $context = NULL, $offset = 0/*, $maxlen = NULL*/) {
@@ -637,15 +636,15 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			}
 		}
 		// Packager_Php_Scripts_Completer::end(file_get_contents)
-		
+
 		// Packager_Php_Scripts_Completer::start(file)
 		/**
 		 * Return file content string
-		 * 
+		 *
 		 * @param string   $filename
 		 * @param int      $flags
 		 * @param resource $context
-		 * 
+		 *
 		 * @return \string[]|bool
 		 */
 		public static function File ($filename, $flags = 0, $context = NULL) {
@@ -667,22 +666,22 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 							unset($lines[$key]);
 					}
 				} else if (!$fileIgnoreNewLines) {
-					foreach ($lines as $key => & $line) 
+					foreach ($lines as $key => & $line)
 						$line .= PHP_EOL;
 				}
 				return $lines;
 			}
 		}
 		// Packager_Php_Scripts_Completer::end(file)
-		
+
 		// Packager_Php_Scripts_Completer::start(parse_ini_file)
 		/**
 		 * Parse a configuration file
-		 * 
-		 * @param string  $filename 
-		 * @param boolean $process_sections 
-		 * @param int	 $scanner_mode 
-		 * 
+		 *
+		 * @param string  $filename
+		 * @param boolean $process_sections
+		 * @param int	 $scanner_mode
+		 *
 		 * @return array|bool
 		 */
 		public static function ParseIniFile ($filename, $process_sections = FALSE, $scanner_mode = INI_SCANNER_NORMAL) {
@@ -696,14 +695,14 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			}
 		}
 		// Packager_Php_Scripts_Completer::end(parse_ini_file)
-		
+
 		// Packager_Php_Scripts_Completer::start(md5_file)
 		/**
 		 * Calculates the md5 hash of a given file
-		 * 
-		 * @param string  $filename 
+		 *
+		 * @param string  $filename
 		 * @param boolean $raw_output
-		 * 
+		 *
 		 * @return string|bool
 		 */
 		public static function Md5File ($filename, $raw_output = FALSE) {
@@ -716,17 +715,17 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			}
 		}
 		// Packager_Php_Scripts_Completer::end(md5_file)
-		
+
 		// Packager_Php_Scripts_Completer::start(simplexml_load_file)
 		/**
 		 * Interprets an XML file into an object
-		 * 
-		 * @param string  $filename 
-		 * @param string  $class_name 
-		 * @param int	 $options 
-		 * @param string  $ns 
-		 * @param boolean $is_prefix 
-		 * 
+		 *
+		 * @param string  $filename
+		 * @param string  $class_name
+		 * @param int	 $options
+		 * @param string  $ns
+		 * @param boolean $is_prefix
+		 *
 		 * @return SimpleXMLElement|bool
 		 */
 		public static function SimplexmlLoadFile (
@@ -743,13 +742,13 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			}
 		}
 		// Packager_Php_Scripts_Completer::end(simplexml_load_file)
-		
+
 		// Packager_Php_Scripts_Completer::start(file_exists)
 		/**
 		 * Checks whether a file or directory exists)
-		 * 
-		 * @param string $filename 
-		 * 
+		 *
+		 * @param string $filename
+		 *
 		 * @return bool
 		 */
 		public static function FileExists ($filename) {
@@ -757,13 +756,13 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			return isset(self::$Info[$path]);
 		}
 		// Packager_Php_Scripts_Completer::end(file_exists)
-		
+
 		// Packager_Php_Scripts_Completer::start(filemtime)
 		/**
 		 * Gets file modification time
-		 * 
-		 * @param string $filename 
-		 * 
+		 *
+		 * @param string $filename
+		 *
 		 * @return boolean|int
 		 */
 		public static function Filemtime ($filename) {
@@ -776,13 +775,13 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			}
 		}
 		// Packager_Php_Scripts_Completer::end(filemtime)
-		
+
 		// Packager_Php_Scripts_Completer::start(filesize)
 		/**
 		 * Gets file size
-		 * 
-		 * @param string $filename 
-		 * 
+		 *
+		 * @param string $filename
+		 *
 		 * @return boolean|int
 		 */
 		public static function Filesize ($filename) {
@@ -795,59 +794,59 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			}
 		}
 		// Packager_Php_Scripts_Completer::end(filesize)
-		
+
 		// Packager_Php_Scripts_Completer::start(require)
 		/**
 		 * require()
-		 * 
-		 * @param string $path 
-		 * 
+		 *
+		 * @param string $path
+		 *
 		 * @return mixed
 		 */
 		public static function RequireStandard ($path, $context = NULL) {
 			return self::_includeFile($path, $context, FALSE, 'require');
 		}
 		// Packager_Php_Scripts_Completer::end(require)
-		
+
 		// Packager_Php_Scripts_Completer::start(include)
 		/**
 		 * include()
-		 * 
-		 * @param string $path 
-		 * 
+		 *
+		 * @param string $path
+		 *
 		 * @return mixed
 		 */
 		public static function IncludeStandard ($path, $context = NULL) {
 			return self::_includeFile($path, $context, FALSE, 'include');
 		}
 		// Packager_Php_Scripts_Completer::end(include)
-		
+
 		// Packager_Php_Scripts_Completer::start(require_once)
 		/**
 		 * require_once()
-		 * 
-		 * @param string $path 
-		 * 
+		 *
+		 * @param string $path
+		 *
 		 * @return mixed
 		 */
 		public static function RequireOnce ($path, $context = NULL) {
 			return self::_includeFile($path, $context, TRUE, 'require_once');
 		}
 		// Packager_Php_Scripts_Completer::end(require_once)
-		
+
 		// Packager_Php_Scripts_Completer::start(include_once)
 		/**
 		 * include_once()
-		 * 
-		 * @param string $path 
-		 * 
+		 *
+		 * @param string $path
+		 *
 		 * @return mixed
 		 */
 		public static function IncludeOnce ($path, $context = NULL) {
 			return self::_includeFile($path, $context, TRUE, 'include_once');
 		}
 		// Packager_Php_Scripts_Completer::end(include_once)
-		
+
 	}
 	// Packager_Php_Scripts_Completer::start(Init)
 	Packager_Php_Wrapper::Init();
@@ -866,7 +865,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 */
 		private $_position = 0;
 		/**
-		 * The DirectoryIterator class provides a simple 
+		 * The DirectoryIterator class provides a simple
 		 * interface for viewing the contents of filesystem directories.
 		 * @param string $path
 		 */
@@ -947,7 +946,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		/**
 		 * The SplFileInfo class offers a high-level object oriented interface to information for an individual file.
 		 * @param string $full_path
-		 * @throws UnexpectedValueException 
+		 * @throws UnexpectedValueException
 		 */
 		public function __construct ($absolute_path) {
 			$absolute_path = str_replace('\\', '/', $absolute_path);
@@ -1003,7 +1002,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		}
 		/**
 		 * Gets the base name of the file
-		 * @param string $suffix 
+		 * @param string $suffix
 		 * @return string
 		 */
 		public function getBasename ($suffix = NULL) {
@@ -1093,7 +1092,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		}
 		/**
 		 * Gets an SplFileInfo object for the path
-		 * @param mixed $class_name 
+		 * @param mixed $class_name
 		 * @return SplFileInfo
 		 */
 		public function getPathInfo ($class_name = NULL) {
@@ -1202,7 +1201,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		}
 		/**
 		 * Gets an SplFileObject object for the file
-		 * @param string $open_mode 
+		 * @param string $open_mode
 		 * @param bool $use_include_path
 		 * @param resource $context
 		 * @throws RuntimeException

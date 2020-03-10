@@ -214,11 +214,10 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 				if (mb_strlen($content) === 0) {
 					$templateClosure = self::_getFileContent($path, TRUE);
 					$content = self::_getTemplateClosureBody($templateClosure);
-					$selfClass = version_compare(PHP_VERSION, '5.5', '>') ? self::class : __CLASS__;
 					// http://php.net/manual/en/language.variables.basics.php
 					$content = preg_replace(
 						"#([^\\\])(\\\$this)([^a-zA-Z0-9_\x7f-\xff])#im",
-						"$1".$selfClass."::\$Context$3",
+						"$1".get_class()."::\$Context$3",
 						$content
 					);
 					$index = self::$Info[$path]['index'];
