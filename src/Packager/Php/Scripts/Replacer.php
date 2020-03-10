@@ -30,6 +30,7 @@ class Packager_Php_Scripts_Replacer
 	protected $tokens = [];
 	protected $namespaceState = 0;
 	protected $classState = 0;
+	protected $foreachState = 0;
 	protected $classBracketsLevel = 0;
 	protected $functionsStates = [0];
 	protected $functionsOpenIndexes = [0];
@@ -148,47 +149,79 @@ class Packager_Php_Scripts_Replacer
 		return $this;
 	}
 	protected function runTemplatesProcessing () {
-		//$debug = mb_strpos($this->fileInfo->fullPath, 'index.phtml') !== FALSE;
+		//$debug = mb_strpos($this->fileInfo->fullPath, 'layout.phtml') !== FALSE;
 		$newPart = '';
 		for ($i = 0, $l = count($this->tokens); $i < $l;) {
 			$token = $this->tokens[$i];
 			if (is_array($token)) {
+				//if ($debug) var_dump($token);
 				$tokenId = $token[0];
 				$oldPart = $token[1];
-				if ($tokenId == T_OPEN_TAG_WITH_ECHO) {
-					$nextToken = isset($this->tokens[$i + 1]) ? $this->tokens[$i + 1] : NULL;
-					$nextTokenId = is_array($nextToken) ? $nextToken[0] : NULL;
-					if ($nextTokenId == T_VARIABLE && $nextToken[1] != '$this') {
-						$oldPart = $nextToken[1];
-						$nextToken = isset($this->tokens[$i + 2]) ? $this->tokens[$i + 2] : NULL;
+				if ($this->foreachState !== 2) {
+					if ($tokenId == T_ISSET || $tokenId == T_UNSET) {
+						//var_dump("isset/unset()");
+						$subTokens = [];
+						$j = $i + 2;
+						$bracketLevel = 1;
+						while (TRUE) {
+							$subToken = & $this->tokens[$j];
+							if (is_array($subToken)) {
+								$subTokenValue = $subToken[1];
+								if ($subToken[0] == T_VARIABLE && $subTokenValue != '$this') {
+									$subTokens[] = '$this->' . mb_substr($subTokenValue, 1);
+								} else {
+									$subTokens[] = $subTokenValue;
+								}
+							} else if (is_string($subToken)) {
+								if ($subToken == '(') {
+									$bracketLevel += 1;
+								} else if ($subToken == ')') {
+									$bracketLevel -= 1;
+								}
+								$subTokens[] = $subToken;
+							}
+							if ($bracketLevel == 0) break;
+							$j += 1;
+						}
+						$newPart = ($tokenId == T_ISSET ? 'isset(' : 'unset(') . implode('', $subTokens);
+						$i = $j;
+					} else if ($tokenId == T_OPEN_TAG_WITH_ECHO) {
+						$nextToken = isset($this->tokens[$i + 1]) ? $this->tokens[$i + 1] : NULL;
+						$nextTokenId = is_array($nextToken) ? $nextToken[0] : NULL;
+						if ($nextTokenId == T_VARIABLE && $nextToken[1] != '$this') {
+							$oldPart = $nextToken[1];
+							$nextToken = isset($this->tokens[$i + 2]) ? $this->tokens[$i + 2] : NULL;
+							$openBracketToken = is_string($nextToken) && $nextToken == '(';
+							if ($openBracketToken) {
+								// 	<?=$helper( or <%=$helper(
+								$newPart = '<' . '?php echo call_user_func($this->GetHelper(\'' . mb_substr($oldPart, 1) . '\'), ';
+								$i += 2;
+							} else {
+								// 	<?=$variable or <%=$variable
+								$newPart = '<' . '?php echo call_user_func(function($__val){return $__val;},isset(' . $oldPart . ')?' . $oldPart . ':$this->' . mb_substr($oldPart, 1) . ')';
+								$i += 1;
+							}
+						} else {
+							// 	<?= or <%=
+							$newPart = '<' . '?php echo ';
+						}
+					} else if ($tokenId == T_VARIABLE && $oldPart != '$this') {
+						$nextToken = isset($this->tokens[$i + 1]) ? $this->tokens[$i + 1] : NULL;
 						$openBracketToken = is_string($nextToken) && $nextToken == '(';
 						if ($openBracketToken) {
-							// 	<?=$helper( or <%=$helper(
-							$newPart = '<' . '?php echo call_user_func($this->GetHelper(\'' . mb_substr($oldPart, 1) . '\'), ';
-							$i += 2;
-						} else {
-							// 	<?=$variable or <%=$variable
-							$newPart = '<' . '?php echo call_user_func(function($__val){return $__val;},isset(' . $oldPart . ')?' . $oldPart . ':$this->' . mb_substr($oldPart, 1) . ')';
+							// $helper(
+							$newPart = 'call_user_func($this->GetHelper(\'' . mb_substr($oldPart, 1) . '\'),';
 							$i += 1;
+						} else {
+							// $variable
+							$newPart = 'call_user_func(function($__val){return $__val;},isset(' . $oldPart . ')?' . $oldPart . ':$this->' . mb_substr($oldPart, 1) . ')';
 						}
 					} else {
-						// 	<?= or <%=
-						$newPart = '<' . '?php echo ';
-					}
-				} else if ($tokenId == T_VARIABLE && $oldPart != '$this') {
-					$nextToken = isset($this->tokens[$i + 1]) ? $this->tokens[$i + 1] : NULL;
-					$openBracketToken = is_string($nextToken) && $nextToken == '(';
-					if ($openBracketToken) {
-						// $helper(
-						$newPart = 'call_user_func($this->GetHelper(\'' . mb_substr($oldPart, 1) . '\'),';
-						$i += 1;
-					} else {
-						// $variable
-						$newPart = 'call_user_func(function($__val){return $__val;},isset(' . $oldPart . ')?' . $oldPart . ':$this->' . mb_substr($oldPart, 1) . ')';
+						// if there is not any part of php code for possible processing,
+						// just add php code part into result code string:
+						$newPart = $oldPart;
 					}
 				} else {
-					// if there is not any part of php code for possible processing,
-					// just add php code part into result code string:
 					$newPart = $oldPart;
 				}
 				//if ($debug) var_dump("array;$tokenId;".$newPart);
@@ -196,6 +229,7 @@ class Packager_Php_Scripts_Replacer
 				$newPart = $token;
 				//if ($debug) var_dump("string;".$newPart);
 			}
+			$this->monitorForeachHead($token, $i);
 			$this->result[] = $newPart;
 			$i += 1;
 		}
@@ -336,6 +370,19 @@ class Packager_Php_Scripts_Replacer
 				$this->functionsStates[0] = 0;
 				$this->functionsBracketsLevels[0] = 0;
 			}
+		}
+	}
+	protected function monitorForeachHead($token, $currentIndex) {
+		if (is_array($token)) {
+			$tokenId = $token[0];
+			if ($this->foreachState == 0 && $tokenId == T_FOREACH) {
+				$this->foreachState = 1;
+			} else if ($this->foreachState == 1 && $tokenId == T_AS) {
+				$this->foreachState = 2;
+			}
+		} else if (is_string($token)) {
+			if ($this->foreachState == 2 && ($token == ';' || $token == ':'))
+				$this->foreachState = 0;
 		}
 	}
 	protected function processPhpCodeReplacement ($oldPart, $tokenId, $i) {
