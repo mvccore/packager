@@ -10,6 +10,18 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		/** @var string */
 		const FS_MODE = '____\Packager_Php_Wrapper::FS_MODE____';
 		
+		/** @var int */
+		const FN_INC 		= 0b0001;
+		
+		/** @var int */
+		const FN_REQ 		= 0b0010;
+		
+		/** @var int */
+		const FN_INC_ONCE 	= 0b0100;
+		
+		/** @var int */
+		const FN_REQ_ONCE 	= 0b1000;
+		
 		/** @var string */
 		public static $ScriptFilename;
 
@@ -81,15 +93,24 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @param string  $path 
 		 * @param mixed   $context 
 		 * @param boolean $onceOnly 
-		 * @param string  $fn 
+		 * @param int     $fn 
 		 * 
 		 * @return void|boolean|int|mixed
 		 */
-		private static function _includeFile ($path, $context, $onceOnly, $fn = '') {
+		private static function _includeFile ($path, $context, $onceOnly, $fn) {
 			$path = self::NormalizePath($path);
 			if ($onceOnly && self::_getIsFileIncluded($path)) return;
 			if (!isset(self::$Info[$path])) {
-				return call_user_func_array($fn, array($path));
+				if (($fn & self::FN_INC) != 0) {
+					return include(__DIR__.$path);
+				} else if (($fn & self::FN_REQ) != 0) {
+					return require(__DIR__.$path);
+				} else if (($fn & self::FN_INC_ONCE) != 0) {
+					return include_once(__DIR__.$path);
+				} else /*if (($fn & self::FN_REQ_ONCE) != 0)*/ {
+					return require_once(__DIR__.$path);
+				}
+				//return call_user_func($fn, $path);// <- this construction doesn't work properly.
 			} else {
 				return self::_includeFileWithRendering($path, $context, $onceOnly);
 			}
@@ -797,7 +818,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @return mixed
 		 */
 		public static function RequireStandard ($path, $context = NULL) {
-			return self::_includeFile($path, $context, FALSE, 'require');
+			return self::_includeFile($path, $context, FALSE, self::FN_REQ);
 		}
 		// Packager_Php_Scripts_Completer::end(require)
 		
@@ -810,7 +831,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @return mixed
 		 */
 		public static function IncludeStandard ($path, $context = NULL) {
-			return self::_includeFile($path, $context, FALSE, 'include');
+			return self::_includeFile($path, $context, FALSE, self::FN_INC);
 		}
 		// Packager_Php_Scripts_Completer::end(include)
 		
@@ -823,7 +844,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @return mixed
 		 */
 		public static function RequireOnce ($path, $context = NULL) {
-			return self::_includeFile($path, $context, TRUE, 'require_once');
+			return self::_includeFile($path, $context, TRUE, self::FN_REQ_ONCE);
 		}
 		// Packager_Php_Scripts_Completer::end(require_once)
 		
@@ -836,7 +857,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @return mixed
 		 */
 		public static function IncludeOnce ($path, $context = NULL) {
-			return self::_includeFile($path, $context, TRUE, 'include_once');
+			return self::_includeFile($path, $context, TRUE, self::FN_INC_ONCE);
 		}
 		// Packager_Php_Scripts_Completer::end(include_once)
 		

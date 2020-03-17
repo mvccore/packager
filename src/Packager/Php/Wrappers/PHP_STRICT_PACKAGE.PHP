@@ -84,7 +84,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 *
 		 * @return void|boolean|int|mixed
 		 */
-		private static function _includeFile ($path, & $context, $onceOnly, $fn = '') {
+		private static function _includeFile ($path, & $context, $onceOnly, $fn) {
 			$path = self::NormalizePath($path);
 			if ($onceOnly && self::_getIsFileIncluded($path)) return;
 			if (!isset(self::$Info[$path])) {
