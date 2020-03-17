@@ -80,9 +80,8 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			self::$ScriptFilename = str_replace('\\', '/', $_SERVER['SCRIPT_FILENAME']);
 			self::$BasePath = str_replace('\\', '/', __DIR__);
 			self::$BasePathLength = mb_strlen(self::$BasePath);
-			if (version_compare(PHP_VERSION, '5.4.0', "<")) {
+			if (PHP_VERSION_ID < 50400) 
 				self::$_closureRendering = FALSE;
-			}
 		}
 		// Packager_Php_Scripts_Completer::end(Init)
 		
@@ -1235,8 +1234,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 			} else if ($this->_info) {
 				return $this->_info['size'];
 			} else {
-				$selfClass = version_compare(PHP_VERSION, '5.5', '>') ? self::class : __CLASS__;
-				trigger_error("[".$selfClass."::".__METHOD__."] File doesn't exists.", E_WARNING);
+				trigger_error("[".get_class()."::".__METHOD__."] File doesn't exists.", E_WARNING);
 				return FALSE;
 			}
 		}
@@ -1372,8 +1370,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 
 		private function _notImplemented ($methodName) {
 			Packager_Php_Wrapper::PrintBacktrace();
-			$selfClass = version_compare(PHP_VERSION, '5.5', '>') ? self::class : __CLASS__;
-			throw new RuntimeException($selfClass."::" . $methodName . "(): Not implemented.");
+			throw new RuntimeException(get_class()."::" . $methodName . "(): Not implemented.");
 		}
 	}
 	// Packager_Php_Scripts_Completer::end(DirectoryIterator)
