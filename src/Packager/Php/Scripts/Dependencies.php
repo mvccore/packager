@@ -2,6 +2,9 @@
 
 include_once(__DIR__.'/Order.php');
 
+if (PHP_VERSION_ID < 70000)
+	include_once(__DIR__.'/Throwable.php');
+
 class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 {
 	protected $includedFiles = [];
@@ -135,7 +138,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 					$caughtTextIndexFixOffset = $caughtTextIndex - mb_strlen($caughtTextIndexFixMatchItem) - 4;
 					if ($caughtTextIndexFixOffset > 0 && mb_strlen($fileInfo->content) > $caughtTextIndexFixOffset + mb_strlen($caughtTextIndexFixMatchItem)) {
 						$caughtTextIndexFix = mb_strpos(
-							$fileInfo->content, 
+							$fileInfo->content,
 							$caughtTextIndexFixMatchItem,
 							$caughtTextIndexFixOffset
 						);
@@ -158,8 +161,8 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 	}
 	private function _completeDependenciesByReqsAndInclsReplaceConstsAndEval (& $fileInfo, & $capturedItems) {
 		$fullPathLastSlash = strrpos($fileInfo->fullPath, '/');
-		$fullPathDir = $fullPathLastSlash !== FALSE 
-			? substr($fileInfo->fullPath, 0, $fullPathLastSlash) 
+		$fullPathDir = $fullPathLastSlash !== FALSE
+			? substr($fileInfo->fullPath, 0, $fullPathLastSlash)
 			: $fileInfo->fullPath ;
 		$capturedItemKeysToUnset = [];
 		ob_start();
@@ -311,7 +314,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 				// process target file include command
 				try {
 					include($file);
-				} catch (Exception $e) {
+				} catch (Packager_Php_Scripts_Throwable $e) {
 					$success = FALSE;
 					$this->exceptionsMessages[] = $e->getMessage();
 					$this->exceptionsTraces[] = $e->getTrace();
