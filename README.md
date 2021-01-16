@@ -1,7 +1,7 @@
 # Packager
 
 [![Latest Stable Version](https://img.shields.io/badge/Stable-v2.3.0-brightgreen.svg?style=plastic)](https://github.com/mvccore/packager/releases)
-[![License](https://img.shields.io/badge/Licence-BSD-brightgreen.svg?style=plastic)](https://mvccore.github.io/docs/packager/2.0.0/LICENCE.md)
+[![License](https://img.shields.io/badge/License-BSD%203-brightgreen.svg?style=plastic)](https://mvccore.github.io/docs/mvccore/5.0.0/LICENCE.md)
 ![PHP Version](https://img.shields.io/badge/PHP->=5.4-brightgreen.svg?style=plastic)
 
 ## Features
