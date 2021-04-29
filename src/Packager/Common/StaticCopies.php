@@ -21,7 +21,7 @@ class Packager_Common_StaticCopies extends Packager_Common_Base
 		$rii = new \RecursiveIteratorIterator($rdi);
 		$dirsFullPaths = [];
 		foreach ($rii as $item) {
-			/** @var $item \SplFileInfo */
+			/** @var \SplFileInfo $item */
 			$path = str_replace('\\', '/', $item->getPath());
 			$fileName = $item->getFilename();
 			$parentDir = $fileName == '..';
@@ -102,7 +102,7 @@ class Packager_Common_StaticCopies extends Packager_Common_Base
 		$dirsFullPaths = [];
 		$filesFullPaths = [];
 		foreach ($rii as $item) {
-			/** @var $item \SplFileInfo */
+			/** @var \SplFileInfo $item */
 			$path = str_replace('\\', '/', $item->getPath());
 			$isDir = $item->isDir();
 			$baseDir = $isDir && $sourceDirFullPath === $path;
