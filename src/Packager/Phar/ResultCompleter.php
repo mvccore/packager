@@ -124,7 +124,7 @@ class Packager_Phar_ResultCompleter extends Packager_Common_StaticCopies
 		
 		$releaseFileNameExpl = explode('.', $releaseFileName);
 		unset($releaseFileNameExpl[count($releaseFileNameExpl) - 1]);
-		$releaseFileNameWithoutExt = implode('.', $releaseFileNameExpl);
+		$releaseFileNameWithoutExt = ltrim(implode('.', $releaseFileNameExpl), '/');
 		
 		$releaseFilePhp = $releaseDir . '/' . $releaseFileNameWithoutExt . '.php';
 		$releaseFilePhar = $releaseDir . '/' . $releaseFileNameWithoutExt . '.phar';
@@ -139,13 +139,66 @@ class Packager_Phar_ResultCompleter extends Packager_Common_StaticCopies
 	}
 	private function _buildPharArchive ($releaseDir, $releaseFileNameWithoutExt) {
 		$archive = NULL;
-
+		$pharFullPath = $this->virtualRealPath($releaseDir . '/' . $releaseFileNameWithoutExt . '.phar');
+		$phpFullPath = $this->virtualRealPath($releaseDir . '/' . $releaseFileNameWithoutExt . '.php');
 		try {
 			$archive = new Phar(
-				$releaseDir . '/' . $releaseFileNameWithoutExt . '.phar', 
+				$pharFullPath, 
 				0, 
 				$releaseFileNameWithoutExt . '.phar'
 			);
+			
+			$incScripts = [];
+			$incStatics = [];
+			$archive->startBuffering();
+			foreach ($this->files as $fileInfo) {
+				$archive[$fileInfo->relPath] = $fileInfo->content;
+				if ($fileInfo->extension == 'php') {
+					$incScripts[] = $fileInfo->relPath;
+				} else {
+					$incStatics[] = $fileInfo->relPath;
+				}
+			}
+			$archive->setStub('<'.'?php '
+				.PHP_EOL."Phar::mapPhar();"
+				.'include_once("phar://' . $releaseFileNameWithoutExt . '.phar/index.php");'
+				.'__HALT_COMPILER();');
+
+			$archive->stopBuffering();
+		
+			unset($archive); // frees memory, run rename operation without any conflict
+			
+			// wait for phar to be written on HDD:
+			$i = 0;
+			$fsc = 0;
+			$lastFs = 0;
+			while ($i < 50) {
+				clearstatcache(true, $pharFullPath);
+				$fs = @filesize($pharFullPath);
+				if ($fs !== false && $fs > 0) {
+					if ($fs === $lastFs) {
+						if ($fsc > 10) {
+							break;
+						} else {
+							$fsc++;
+						}
+					} else {
+						$lastFs = $fs;
+					}
+				}
+				usleep(50000);
+				$i++;
+			}
+
+			$this->_jsonResult->data = [
+				'phar'		=> $pharFullPath, 
+				'php'		=> $phpFullPath,
+				'incl'		=> [
+					'scripts'	=> $incScripts,
+					'statics'	=> $incStatics,
+				],
+			];
+
 		} catch (UnexpectedValueException $e1) {
 			$m = $e1->getMessage();
 			if (mb_strpos($m, 'disabled by the php.ini setting phar.readonly') !== FALSE) {
@@ -162,48 +215,29 @@ class Packager_Phar_ResultCompleter extends Packager_Common_StaticCopies
 					$e1->getTrace(),
 				];
 			}
-		} catch (Exception $e2) {
+		} catch (Throwable $e2) {
 			$this->_jsonResult->success = FALSE;
 			$this->_jsonResult->data = [
 				$e2->getMessage(),
 				$e2->getTrace(),
 			];
-		} finally {
-			if ($this->_jsonResult->data) return;
 		}
-		
-		$incScripts = [];
-		$incStatics = [];
-		$archive->startBuffering();
-		foreach ($this->files as $fileInfo) {
-			$archive[$fileInfo->relPath] = $fileInfo->content;
-			if ($fileInfo->extension == 'php') {
-				$incScripts[] = $fileInfo->relPath;
-			} else {
-				$incStatics[] = $fileInfo->relPath;
+	}
+	protected function virtualRealPath ($path) {
+		$path = explode('/', str_replace('\\', '/', $path));
+		$stack = [];
+		foreach ($path as $seg) {
+			if ($seg == '..') {
+				// Ignore this segment, remove last segment from stack
+				array_pop($stack);
+				continue;
 			}
+			if ($seg == '.') 
+				// Ignore this segment
+				continue;
+			$stack[] = $seg;
 		}
-		
-		$archive->setStub('<'.'?php '
-			.PHP_EOL.'Phar::mapPhar();'
-			.'include_once("phar://' . $releaseFileNameWithoutExt . '.phar/index.php");'
-			.'__HALT_COMPILER();');
-
-		$archive->stopBuffering();
-		
-		//$archive->compressFiles(Phar::GZ);
-		//@$archive->buildFromIterator(); // writes archive on hard drive
-		
-		unset($archive); // frees memory, run rename operation without any conflict
-		
-		$this->_jsonResult->data = [
-			'phar'		=> $releaseDir . '/' . $releaseFileNameWithoutExt . '.phar', 
-			'php'		=> $releaseDir . '/' . $releaseFileNameWithoutExt . '.php',
-			'incl'		=> [
-				'scripts'	=> $incScripts,
-				'statics'	=> $incStatics,
-			],
-		];
+		return implode('/', $stack);
 	}
 	protected function notify ($incFiles) {
 		$scriptsCount = count($incFiles->scripts);

@@ -35,6 +35,7 @@ class Packager_Php_Scripts_Replacer
 	protected $functionsStates = [0];
 	protected $functionsOpenIndexes = [0];
 	protected $functionsBracketsLevels = [0];
+	protected $fullyQuantifiedNamespaces = FALSE;
 	public static function SetPhpFunctionsToProcess ($phpFunctionsToProcess = []) {
 		self::$phpFunctionsToProcess = $phpFunctionsToProcess;
 	}
@@ -81,6 +82,7 @@ class Packager_Php_Scripts_Replacer
 
 		$this->classFnStaticEnvironment = FALSE;
 		$this->classFnStaticMonitorIndex = -1;
+		$this->fullyQuantifiedNamespaces = PHP_VERSION_ID >= 80000;
 	}
 	public function & SetEnabled ($enabled) {
 		$this->enabled = $enabled;
@@ -241,13 +243,18 @@ class Packager_Php_Scripts_Replacer
 		return $this;
 	}
 	protected function monitorNamespace ($token) {
-		if ($this->namespaceState > 2 || $this->fileInfo->extension !== 'php') return;
+		if ($this->namespaceState > 2 || $this->fileInfo->extension !== 'php') 
+			return;
 		if (is_array($token)) {
 			$tokenId = $token[0];
-			if ($this->namespaceState == 1 && $tokenId == T_STRING) {
-				$this->namespaceState = 2;
+			if ($this->namespaceState == 1 && (
+				$tokenId === T_STRING || (
+					$this->fullyQuantifiedNamespaces && $tokenId === T_NAME_QUALIFIED
+				)
+			)) {
+				$this->namespaceState = 2; // inside
 			} else if ($tokenId == T_NAMESPACE) {
-				$this->namespaceState = 1;
+				$this->namespaceState = 1; // opening
 			}
 		} else if (is_string($token)) {
 			if ($this->namespaceState == 1) {

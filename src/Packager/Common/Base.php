@@ -325,6 +325,10 @@ class Packager_Common_Base {
 			$result = $jsonData;
 			$result->type = 'json';
 		} else {
+			// DEV
+			//echo '<pre>';
+			//foreach (debug_backtrace() as $item) var_dump($item);
+			//echo '</pre>';
 			$result->message = "Json decode error.";
 			$result->data = $cUrlContentStr;
 			$result->type = 'html';
@@ -345,6 +349,7 @@ class Packager_Common_Base {
 		var_dump(func_get_args());
 		echo '</pre>';
 		$content = ob_get_clean();
+		
 
 		//$content = '';
 
@@ -369,7 +374,38 @@ class Packager_Common_Base {
 		}
 	}
 	public static function ExceptionHandler (/*\Exception */$exception = NULL, $exit = TRUE) {
-		//if (!is_null($exception)) var_dump($exception);
+		if ($exception === NULL) return self::ErrorHandler();
+
+		$backTrace = debug_backtrace();
+		foreach ($backTrace as & $backTraceItem) {
+			unset($backTraceItem['args'], $backTraceItem['object']);
+		}
+
+
+		ob_start();
+		echo '<pre>';
+		var_dump($backTrace);
+		var_dump(error_get_last());
+		var_dump(func_get_args());
+		echo '</pre>';
+		$content = ob_get_clean();
+		
+
+		//$content = '';
+
+
+		self::$instance->errorHandlerData = func_get_args();
+		self::$instance->exceptionsTraces = $backTrace;
+
+		header("HTTP/1.1 200 OK");
+		$response = (object) [
+			'success'			=> 3,
+			'includedFiles'		=> Packager_Php_Scripts_Dependencies::CompleteIncludedFilesByTargetFile(),
+			'exceptionsMessages'=> self::$instance->exceptionsMessages,
+			'exceptionsTraces'	=> self::$instance->exceptionsTraces,
+			'content'			=> $content,
+		];
+		self::$instance->sendJsonResultAndExit($response);
 	}
 	public static function ShutdownHandler () {
 		//$exception = error_get_last();
@@ -380,7 +416,7 @@ class Packager_Common_Base {
 	protected function shrinkPhpCode (& $code = '') {
 		if (!defined('T_DOC_COMMENT')) define ('T_DOC_COMMENT', -1);
 		if (!defined('T_ML_COMMENT')) define ('T_ML_COMMENT', -1);
-		$chars = '!"#$&\'()*+,-./:;<=>?@[\]^`{|}';
+		$chars = '!"#$&\'()*+,-./:;<=>?@[]^`{|}';
 		$chars = array_flip(preg_split('//',$chars));
 		$result = '';
 		$space = '';
@@ -397,15 +433,15 @@ class Packager_Common_Base {
 				$tokenId = $token[0];
 				$token[3] = token_name($tokenId);
 				if (isset($tokensToRemove[$tokenId])) {
-					if ($tokenId == T_WHITESPACE) $space = ' ';
+					if ($tokenId === T_WHITESPACE) $space = ' ';
 				} else {
 					$oldPart = $token[1];
-					if ($tokenId == T_ECHO) $oldPart .= ' ';
+					if ($tokenId === T_ECHO) $oldPart .= ' ';
 					if (
 						isset($chars[substr($result, -1)]) ||
 						isset($chars[$oldPart[0]])
 					) $space = '';
-					if ($tokenId == T_DOC_COMMENT)
+					if ($tokenId === T_DOC_COMMENT)
 						$oldPart = $this->shrinkPhpCodeReducePhpDocComment($oldPart);
 					$result .= $space . $oldPart;
 					$space = '';
@@ -518,16 +554,17 @@ class Packager_Common_Base {
 			foreach ($arguments as $key => $value) {
 				$subProcessUrl .= '&' . $key . '=' . base64_encode($value);
 			}
-			// echo $subProcessUrl . '<br />';
+			//var_dump($arguments);
+			//echo $subProcessUrl . '<br />';
 
 			//$jobResult = file_get_contents($subProcessUrl); // do not use file_get_contents(), when http output is 500, file_get_contents() returns false only..
 
 			$cUrlResult = $this->_processGetRequest($subProcessUrl);
-			/*if ($cUrlResult->code == 500) {
-				echo '<pre>';
-				print_r($cUrlResult->info->url);
-				echo '</pre>';
-			}*/
+			//if ($cUrlResult->code == 500) {
+			//	echo '<pre>';
+			//	var_dump($cUrlResult);
+			//	echo '</pre>';
+			//}
 			$jobResult = $cUrlResult->content;
 		}
 		if ($resultType == 'json') {
@@ -541,13 +578,66 @@ class Packager_Common_Base {
 		}
 	}
 	protected function sendJsonResultAndExit ($jsonData) {
-		$jsonOut = json_encode($jsonData);
-		//if (!headers_sent()) {
+		if (!defined('JSON_PRESERVE_ZERO_FRACTION'))
+			define('JSON_PRESERVE_ZERO_FRACTION', 1024);
+		if (!defined('JSON_INVALID_UTF8_SUBSTITUTE'))
+			define('JSON_INVALID_UTF8_SUBSTITUTE', 2097152);
+		$flags = (
+			JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE |
+			JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION | JSON_INVALID_UTF8_SUBSTITUTE
+		);
+		//$flags |= JSON_PRETTY_PRINT;
+		if (\PHP_VERSION_ID >= 50500) {
+			$jsonOut = @json_encode($jsonData, $flags, $depth = 512);
+		} else {
+			$jsonOut = @json_encode($jsonData, $flags);
+		}
+		$errorCode = json_last_error();
+		if ($errorCode == JSON_ERROR_NONE) {
+			if (PHP_VERSION_ID < 70100)
+				$jsonOut = strtr($jsonOut, [
+					"\xe2\x80\xa8" => '\u2028',
+					"\xe2\x80\xa9" => '\u2029',
+				]);
+		} else {
+			$jsonOut = @json_encode((object) [
+				'success'	=> FALSE,
+				'data'		=> $this->getJsonLastErrorMessage($errorCode),
+			]);
+		}
+		$jsonOutLen = strlen($jsonOut);
+		if (!headers_sent() && $jsonOutLen > 0) {
 			header('Content-Type: text/javascript; charset=utf-8');
-			header('Content-Length: ' . mb_strlen($jsonOut));
-		//}
+			header('Content-Length: ' . $jsonOutLen);
+		}
+		
 		echo $jsonOut;
-		exit;
+		
+		$finishOutputBuffers = TRUE;
+		if (@ini_get('zlib.output_compression')) {
+			$finishOutputBuffers = FALSE;
+		}
+		if ($finishOutputBuffers) {
+			while (ob_get_level())
+				ob_end_flush();
+		}
+		flush();
+
+	}
+	protected function getJsonLastErrorMessage ($jsonErrorCode) {
+		if (function_exists('json_last_error_msg')) {
+			return json_last_error_msg();
+		} else {
+			// errors before PHP 5.5:
+			static $__jsonErrorMessages = array(
+				JSON_ERROR_DEPTH			=> 'The maximum stack depth has been exceeded.',
+				JSON_ERROR_STATE_MISMATCH	=> 'Occurs with underflow or with the modes mismatch.',
+				JSON_ERROR_CTRL_CHAR		=> 'Control character error, possibly incorrectly encoded.',
+				JSON_ERROR_SYNTAX			=> 'Syntax error.',
+				JSON_ERROR_UTF8				=> 'Malformed UTF-8 characters, possibly incorrectly encoded.'
+			);
+			return $__jsonErrorMessages[$jsonErrorCode];
+		}
 	}
 	protected function completeAllFiles () {
 		// get project source code recursive iterator
@@ -591,14 +681,14 @@ class Packager_Common_Base {
 				$allFiles[$fullPath] = $fileItem;
 			}
 		}
-
+		
 		$this->excludeFilesByCfg($allFiles);
-
+		
 		foreach ($allFiles as $fullPath => $fileInfo)
 			$allFiles[$fullPath]->content = file_get_contents($fullPath);
-
+		
 		$this->encodeFilesToUtf8($allFiles);
-
+		
 		if ($this->compilationType == 'PHP') {
 			$this->files->all = $allFiles;
 		} else if ($this->compilationType == 'PHAR') {
@@ -805,7 +895,7 @@ class Packager_Common_Base {
 		$errorLevels = array_fill_keys([E_ERROR,E_RECOVERABLE_ERROR,E_CORE_ERROR,E_USER_ERROR,E_WARNING,E_CORE_WARNING,E_USER_WARNING], TRUE);
 		$prevErrorHandler = set_error_handler(
 			function(
-				$errLevel, $errMessage, $errFile, $errLine, $errContext
+				$errLevel, $errMessage, $errFile, $errLine
 			) use (
 				& $prevErrorHandler, $errorLevels
 			) {

@@ -2,9 +2,6 @@
 
 include_once(__DIR__.'/Order.php');
 
-if (PHP_VERSION_ID < 70000)
-	include_once(__DIR__.'/Throwable.php');
-
 class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 {
 	protected $includedFiles = [];
@@ -363,7 +360,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 				//var_dump($e1);
 				$errorMsgs = [$e1->getMessage()];
 				$errorTraces = $e1->getTrace();
-			} catch (Error $e2) {
+			} catch (Packager_Php_Scripts_Throwable $e2) {
 				//var_dump($e2);
 				$errorMsgs = [$e2->getMessage()];
 				$errorTraces = $e2->getTrace();
@@ -378,7 +375,8 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 				// auto load or in composer auto load static includes array
 				return FALSE;
 			}
-			spl_autoload_register([$selfClass, 'AutoloadCall'], false, true);
+			spl_autoload_register([$selfClass, 'AutoloadCall'], true, true);
+			
 		} else {
 			// if composer auto load doesn't exists, MvcCore project is probably
 			// developed with manually placed files in document root, '/App' dir or in '/Libs' dir,
