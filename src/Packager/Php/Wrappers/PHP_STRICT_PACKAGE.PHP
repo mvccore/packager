@@ -486,7 +486,8 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		private static function _readfile (& $content, $path) {
 			$store = self::$Info[$path]['store'];
 			if ($store == 'gzip') {
-				if (strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') !== FALSE) {
+				$zlibOutCompr = @ini_get('zlib.output_compression');
+				if (strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') !== FALSE && !$zlibOutCompr) {
 					header('Content-Encoding: gzip');
 				} else {
 					$content = gzdecode($content);
