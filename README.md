@@ -26,6 +26,8 @@ composer require mvccore/packager
 	(everything is only possible to get from `index.php`, very fast for specific application types in **IIS/PHP/op_cache**)
   - strict hard drive mode (`\Packager_Php::FS_MODE_STRICT_HDD`)
 	(no file system wrapping functions)
+  - php library mode (`\Packager_Php::FS_MODE_PHP_LIBRARY`)
+	(no file system wrapping functions, no PHP code replacements except namespace merge)
   - preserve php package mode (`\Packager_Php::FS_MODE_PRESERVE_PACKAGE`)
 	(first there is check if it is possible to get anything from `index.php`, then from hard drive)
   - preserve hard drive mode (`\Packager_Php::FS_MODE_PRESERVE_HDD`)
