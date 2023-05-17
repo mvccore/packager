@@ -151,7 +151,16 @@ class Packager_Php_Base extends Packager_Common_StaticCopies
 		$this->cfg->phpFunctionsToProcess = $phpFunctionsToProcess;
 		unset($this->cfg->phpFunctionsToReplace, $this->cfg->phpFunctionsToKeep);
 		
-		self::$wrapperReplacements[T_STRING] = (object) self::$wrapperReplacements[T_STRING];
+		if ($this->cfg->phpFsMode === Packager_Php::FS_MODE_STRICT_HDD) {
+			unset(
+				self::$wrapperReplacements[T_REQUIRE_ONCE],
+				self::$wrapperReplacements[T_INCLUDE_ONCE],
+				self::$wrapperReplacements[T_REQUIRE],
+				self::$wrapperReplacements[T_INCLUDE]
+			);
+		} else {
+			self::$wrapperReplacements[T_STRING] = (object) self::$wrapperReplacements[T_STRING];
+		}
 
 		static::$wrapperReplacements[T_DIR] = function (& $replacer, & $fileInfo, & $oldPart) {
 			$relPathDir = $fileInfo->relPathDir;

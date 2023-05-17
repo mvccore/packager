@@ -14,25 +14,33 @@ class Packager_Php_Completer extends Packager_Php_Scripts_Dependencies
 		$this->completePhpFilesDependenciesByAutoloadDeclaration($params['file']);
 	}
 	protected function mainJob ($params = []) {
-		// clean all files in release directory
-		$this->cleanReleaseDir();
-		// statically copy files and folders
-		$this->copyStaticFilesAndFolders();
-		// complete $this->files as usual
-		$this->completeAllFiles();
-		// complete dependencies array by include_once(), require_once() and auto loading
-		$this->completePhpFilesDependencies();
-		// complete order for php files declaration by completed data
-		$this->completePhpFilesOrder();
-		// complete $this->files->php array and $this->files->static array, unset $this->files->all
-		$this->_completePhpAndStaticFiles();
-		// process php code in script files - file system functions replacements
-		$this->processScriptsPhpCode();
-		// complete files records and php code together
-		$this->_completeResult();
-		// save result php file and display notification
-		$this->_saveResult();
-		$this->notify();
+		try {
+			// clean all files in release directory
+			$this->cleanReleaseDir();
+			// statically copy files and folders
+			$this->copyStaticFilesAndFolders();
+			// complete $this->files as usual
+			$this->completeAllFiles();
+			// complete dependencies array by include_once(), require_once() and auto loading
+			$this->completePhpFilesDependencies();
+			// complete order for php files declaration by completed data
+			$this->completePhpFilesOrder();
+			// complete $this->files->php array and $this->files->static array, unset $this->files->all
+			$this->_completePhpAndStaticFiles();
+			// process php code in script files - file system functions replacements
+			$this->processScriptsPhpCode();
+			// complete files records and php code together
+			$this->_completeResult();
+			// save result php file and display notification
+			$this->_saveResult();
+		} catch (\Throwable $e) {
+			throw $e;
+		}
+		try {
+			$this->notify();
+		} catch (\Throwable $e) {
+			throw $e;
+		}
 	}
 	private function _completePhpAndStaticFiles () {
 		foreach ($this->filesPhpOrder as $fullPath) {

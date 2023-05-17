@@ -7,7 +7,7 @@ class Packager_Php_Scripts_Completer extends Packager_Php_Base
 {
 	protected function processScriptsPhpCode () {
 		$processScriptsPhpReplacements = (
-			$this->cfg->phpFsMode !== Packager_Php::FS_MODE_STRICT_HDD &&
+			//$this->cfg->phpFsMode !== Packager_Php::FS_MODE_STRICT_HDD && // not this, because strict hdd package also needs Packager_Php_Wrapper class
 			$this->cfg->phpFsMode !== Packager_Php::FS_MODE_PHP_LIBRARY
 		);
 		foreach ($this->files->php as & $fileInfo) {

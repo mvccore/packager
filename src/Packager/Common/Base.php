@@ -1,5 +1,7 @@
 <?php
 
+include_once(__DIR__.'/RecursiveDirIterator.php');
+
 class Packager_Common_Base {
 	protected $cfg;
 	protected $files = [];
@@ -312,7 +314,6 @@ class Packager_Common_Base {
 		unset($this->files->all);
 		$this->notify("Files to pack notification");
 	}
-
 	/************************************* static ************************************/
 	protected static function decodeJson (& $cUrlContentStr) {
 		$result = (object) [
@@ -414,13 +415,31 @@ class Packager_Common_Base {
 	}
 	/************************************* dynamic ************************************/
 	protected function shrinkPhpCode (& $code = '') {
-		if (!defined('T_DOC_COMMENT')) define ('T_DOC_COMMENT', -1);
-		if (!defined('T_ML_COMMENT')) define ('T_ML_COMMENT', -1);
+		if (!defined('T_DOC_COMMENT')) define('T_DOC_COMMENT', -1);
+		if (!defined('T_ML_COMMENT')) define('T_ML_COMMENT', -1);
+		if (!defined('T_ATTRIBUTE')) define('T_ATTRIBUTE', -1);
+		$attrsSupport = PHP_VERSION_ID >= 80000;
 		$chars = '!"#$&\'()*+,-./:;<=>?@[]^`{|}';
 		$chars = array_flip(preg_split('//',$chars));
-		$result = '';
+		$result = [];
+		$resultCount = 0;
 		$space = '';
+		$attrClosedIndex = NULL;
 		$tokens = token_get_all($code);
+		$tokensCount = count($tokens);
+		/*foreach ($tokens as $key => $token) {
+			if (is_array($token)) {
+				$tokens[$key][] = token_name($token[0]);
+				$tokens[$key][] = $key;
+			}
+		}
+		if (mb_strpos($code, '#[\\ReturnTypeWillChange]') !== FALSE) {
+			var_dump($attrsSupport);
+			var_dump($code);
+			echo '<pre>';
+			print_r($tokens);
+			die();
+		}*/
 		$tokensToRemove = [
 			T_COMMENT		=> 1,
 			T_ML_COMMENT	=> 1,
@@ -428,29 +447,74 @@ class Packager_Common_Base {
 		];
 		if (count($this->cfg->keepPhpDocComments) === 0)
 			$tokensToRemove[T_DOC_COMMENT] = 1;
-		foreach ($tokens as & $token) {
+		foreach ($tokens as $tokenIndex => & $token) {
 			if (is_array($token)) {
 				$tokenId = $token[0];
-				$token[3] = token_name($tokenId);
+				$oldPart = NULL;
+				//$token[3] = token_name($tokenId);
 				if (isset($tokensToRemove[$tokenId])) {
-					if ($tokenId === T_WHITESPACE) $space = ' ';
+					if ($tokenId === T_WHITESPACE)
+						$space = ' ';
 				} else {
 					$oldPart = $token[1];
-					if ($tokenId === T_ECHO) $oldPart .= ' ';
+					if ($tokenId === T_ECHO) 
+						$oldPart .= ' ';
+					$resultLastItem = $resultCount > 0 
+						? $result[$resultCount - 1] 
+						: '';
 					if (
-						isset($chars[substr($result, -1)]) ||
+						$resultCount > 0 &&
+						isset($chars[substr($resultLastItem, -1)]) ||
 						isset($chars[$oldPart[0]])
 					) $space = '';
-					if ($tokenId === T_DOC_COMMENT)
+					if ($tokenId === T_DOC_COMMENT) {
 						$oldPart = $this->shrinkPhpCodeReducePhpDocComment($oldPart);
-					$result .= $space . $oldPart;
+					}
+				}
+				// PHP 8 attributes begin
+				if ($attrsSupport) {
+					if ($tokenId === T_ATTRIBUTE) {
+						$indexCurrent = $tokenIndex + 1;
+						$bracketLevel = 1;
+						while (TRUE) {
+							if ($indexCurrent + 1 === $tokensCount) break;
+							$tokenCurrent = $tokens[$indexCurrent];
+							if (is_string($tokenCurrent)) {
+								if ($tokenCurrent === ']') $bracketLevel--;
+								if ($tokenCurrent === '[') $bracketLevel++;
+							}
+							if ($bracketLevel === 0) {
+								$attrClosedIndex = $indexCurrent;
+								break;
+							}
+							$indexCurrent++;
+						}
+					}
+				} else if ($tokenId === T_COMMENT) {
+					$tokeVal = $token[1];
+					$oldPart = mb_strpos($tokeVal, '#[') === 0
+						? rtrim($tokeVal, "\r\n") . " \n"
+						: NULL;
+					unset($tokeVal);
+				}
+				// PHP 8 attributes begin
+				if ($oldPart !== NULL) {
+					$result[] = $space . $oldPart;
+					$resultCount++;
 					$space = '';
 				}
 			} else if (is_string($token)) {
-				$result .= $token; // control char: !"#$&\'()*+,-./:;<=>?@[\]^`{|}
+				// PHP 8 attributes
+				if ($attrsSupport && $attrClosedIndex !== NULL && $attrClosedIndex === $tokenIndex) {
+					$token = rtrim($token, "\r\n") . " \n";
+					$attrClosedIndex = NULL;
+				}
+				// PHP 8 attributes end
+				$result[] = $token; // control char: !"#$&\'()*+,-./:;<=>?@[\]^`{|}
+				$resultCount++;
 			}
 		}
-		return $result;
+		return implode('', $result);
 	}
 	protected function shrinkPhpCodeReducePhpDocComment ($code) {
 		$keepPhpDocComments = $this->cfg->keepPhpDocComments;
@@ -641,45 +705,46 @@ class Packager_Common_Base {
 	}
 	protected function completeAllFiles () {
 		// get project source code recursive iterator
-		$rdi = new \RecursiveDirectoryIterator($this->cfg->sourcesDir);
-		$rii = new \RecursiveIteratorIterator($rdi);
+		$rdi = new Packager_Common_RecursiveDirIterator($this->cfg->sourcesDir);
+		$allItems = $rdi->GetAllFiles();
+		
 		$allFiles = [];
-		foreach($rii as $item){
-			if (!$item->isDir()) {
+		foreach ($allItems as $fullPath => $relPathAndSplFileInfo) {
+			list($relPath, $splFileInfo) = $relPathAndSplFileInfo;
 
-				$fullPath = str_replace('\\', '/', $item->__toString());
-				$relPath = substr($fullPath, strlen($this->cfg->sourcesDir));
-
-				$extension = '';
-				$lastDotPos = strrpos($fullPath, '.');
-				if ($lastDotPos !== FALSE) $extension = substr($fullPath, $lastDotPos + 1);
-				$extension = strtolower($extension);
-
-				$fileName = '';
-				$lastSlashPos = strrpos($fullPath, '/');
-				if ($lastSlashPos !== FALSE) $fileName = substr($fullPath, $lastSlashPos + 1);
-
-				$relPathDir = substr($relPath, 0, strlen($relPath) - strlen($fileName) - 1);
-
-				$fileItem = (object) [
-					'relPath'	 		=> $relPath,
-					'fullPath'	 		=> $fullPath,
-					'relPathDir'		=> $relPathDir,
-					'fileName'			=> $fileName,
-					'extension'			=> $extension,
-					'processed'			=> FALSE,
-				];
-
-				if ($this->compilationType == 'PHP') {
-					$fileItem->instance				= $item;
-					$fileItem->filemtime			= filemtime($fullPath);
-					$fileItem->filesize				= filesize($fullPath);
-					$fileItem->utf8bomRemoved		= FALSE;
-					$fileItem->containsNamespace	= Packager_Php::NAMESPACE_NONE;
-				}
-
-				$allFiles[$fullPath] = $fileItem;
+			$extension = '';
+			$lastSlashPos = mb_strrpos($fullPath, '/');
+			$lastDotPos = mb_strrpos($fullPath, '.');
+			if ($lastDotPos !== FALSE && $lastSlashPos !== FALSE && $lastDotPos > $lastSlashPos) {
+				$extension = mb_substr($fullPath, $lastDotPos + 1);
+				$extension = mb_strtolower($extension);
 			}
+
+			$fileName = '';
+			if ($lastSlashPos !== FALSE) 
+				$fileName = mb_substr($fullPath, $lastSlashPos + 1);
+
+			$relPathDir = mb_substr($relPath, 0, mb_strlen($relPath) - mb_strlen($fileName) - 1);
+
+			$fileItem = (object) [
+				'relPath'	 		=> $relPath,
+				'fullPath'	 		=> $fullPath,
+				'relPathDir'		=> $relPathDir,
+				'fileName'			=> $fileName,
+				'extension'			=> $extension,
+				'processed'			=> FALSE,
+			];
+
+			if ($this->compilationType == 'PHP') {
+				$fileItem->instance				= $splFileInfo;
+				$fileItem->filemtime			= filemtime($fullPath);
+				$fileItem->filesize				= filesize($fullPath);
+				$fileItem->utf8bomRemoved		= FALSE;
+				$fileItem->containsNamespace	= Packager_Php::NAMESPACE_NONE;
+			}
+
+			$allFiles[$fullPath] = $fileItem;
+			
 		}
 		
 		$this->excludeFilesByCfg($allFiles);

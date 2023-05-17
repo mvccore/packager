@@ -292,7 +292,7 @@ class Packager_Php extends Packager_Php_Completer
 	public function Run () {
 		parent::Run();
 		list($jobMethod, $params) = $this->completeJobAndParams();
-		$this->$jobMethod($params);
+		$this->{$jobMethod}($params);
 		return $this;
 	}
 }
