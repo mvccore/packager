@@ -49,5 +49,5 @@ composer require mvccore/packager
 - [**Example Hallo World (mvccore/example-helloworld)**](https://github.com/mvccore/example-helloworld)
 - [**Example Pig Latin Translator (example-translator)**](https://github.com/mvccore/example-translator)
 - [**Example CD Collection (mvccore/example-cdcol)**](https://github.com/mvccore/example-cdcol)
-- [**Application XML Documents (mvccore/app-xmldocs)**](https://github.com/mvccore/app-xmldocs)
-- [**Application Questionnaires (mvccore/app-questionnaires)**](https://github.com/mvccore/app-questionnaires)
+- <s>[**Application XML Documents (mvccore/app-xmldocs)**](https://github.com/mvccore/app-xmldocs)</s>
+- <s>[**Application Questionnaires (mvccore/app-questionnaires)**](https://github.com/mvccore/app-questionnaires)</s>
