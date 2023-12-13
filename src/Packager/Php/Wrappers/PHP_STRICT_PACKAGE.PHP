@@ -216,7 +216,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 					// http://php.net/manual/en/language.variables.basics.php
 					$content = preg_replace(
 						"#([^\\\])(\\\$this)([^a-zA-Z0-9_\x7f-\xff])#im",
-						"$1".get_class()."::\$Context$3",
+						"$1".get_called_class()."::\$Context$3",
 						$content
 					);
 					$index = self::$Info[$path]['index'];
@@ -894,18 +894,23 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 				);
 			}
 		}
+		#[\ReturnTypeWillChange]
 		public function rewind() {
 			$this->_position = 0;
 		}
+		#[\ReturnTypeWillChange]
 		public function current() {
 			return $this->_files[$this->_position];
 		}
+		#[\ReturnTypeWillChange]
 		public function key() {
 			return $this->_position;
 		}
+		#[\ReturnTypeWillChange]
 		public function next() {
 			$this->_position += 1;
 		}
+		#[\ReturnTypeWillChange]
 		public function valid() {
 			return isset($this->_files[$this->_position]);
 		}
@@ -997,6 +1002,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @throws RuntimeException
 		 * @return int
 		 */
+		#[\ReturnTypeWillChange]
 		public function getATime () {
 			$this->_notImplemented(__METHOD__);
 		}
@@ -1005,6 +1011,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @param string $suffix
 		 * @return string
 		 */
+		#[\ReturnTypeWillChange]
 		public function getBasename ($suffix = NULL) {
 			if (!is_null($suffix)) {
 				$predictedPos = mb_strlen($this->_baseName) - mb_strlen($suffix);
@@ -1019,6 +1026,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @throws RuntimeException
 		 * @return int
 		 */
+		#[\ReturnTypeWillChange]
 		public function getCTime () {
 			$this->_notImplemented(__METHOD__);
 		}
@@ -1026,6 +1034,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Gets the file extension
 		 * @return string
 		 */
+		#[\ReturnTypeWillChange]
 		public function getExtension () {
 			return $this->_ext;
 		}
@@ -1034,6 +1043,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @param $class_name
 		 * @return SplFileInfo
 		 */
+		#[\ReturnTypeWillChange]
 		public function getFileInfo ($class_name = NULL) {
 			return $this;
 		}
@@ -1041,6 +1051,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Gets the filename including extension
 		 * @return string
 		 */
+		#[\ReturnTypeWillChange]
 		public function getFilename () {
 			return $this->_baseName;
 		}
@@ -1049,6 +1060,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @throws RuntimeException
 		 * @return int
 		 */
+		#[\ReturnTypeWillChange]
 		public function getGroup () {
 			$this->_notImplemented(__METHOD__);
 		}
@@ -1057,6 +1069,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @throws RuntimeException
 		 * @return int
 		 */
+		#[\ReturnTypeWillChange]
 		public function getInode () {
 			$this->_notImplemented(__METHOD__);
 		}
@@ -1065,6 +1078,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @throws RuntimeException
 		 * @return string
 		 */
+		#[\ReturnTypeWillChange]
 		public function getLinkTarget () {
 			$this->_notImplemented(__METHOD__);
 		}
@@ -1072,6 +1086,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Gets the last modified time
 		 * @return int|bool
 		 */
+		#[\ReturnTypeWillChange]
 		public function getMTime () {
 			return $this->_info ? $this->_info['mtime'] : FALSE;
 		}
@@ -1080,6 +1095,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @throws RuntimeException
 		 * @return int
 		 */
+		#[\ReturnTypeWillChange]
 		public function getOwner () {
 			$this->_notImplemented(__METHOD__);
 		}
@@ -1087,6 +1103,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Gets the path without filename
 		 * @return string
 		 */
+		#[\ReturnTypeWillChange]
 		public function getPath () {
 			return $this->_basePath;
 		}
@@ -1095,6 +1112,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @param mixed $class_name
 		 * @return SplFileInfo
 		 */
+		#[\ReturnTypeWillChange]
 		public function getPathInfo ($class_name = NULL) {
 			return $this;
 		}
@@ -1102,6 +1120,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Gets the path to the file
 		 * @return string
 		 */
+		#[\ReturnTypeWillChange]
 		public function getPathname () {
 			return $this->_basePath;
 		}
@@ -1109,6 +1128,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Gets file permissions
 		 * @return int
 		 */
+		#[\ReturnTypeWillChange]
 		public function getPerms () {
 			return 0444; // read for everyone
 		}
@@ -1116,6 +1136,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Gets absolute path to file
 		 * @return string
 		 */
+		#[\ReturnTypeWillChange]
 		public function getRealPath () {
 			return $this->_absPath;
 		}
@@ -1123,11 +1144,12 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Gets file size
 		 * @return int|bool
 		 */
+		#[\ReturnTypeWillChange]
 		public function getSize () {
 			if ($this->_info) {
 				return $this->_info['size'];
 			} else {
-				trigger_error("[".get_class()."::".__METHOD__."] File doesn't exists.", E_WARNING);
+				trigger_error("[".get_class($this)."::".__METHOD__."] File doesn't exists.", E_WARNING);
 				return FALSE;
 			}
 		}
@@ -1135,6 +1157,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Gets file type
 		 * @return string
 		 */
+		#[\ReturnTypeWillChange]
 		public function getType () {
 			return 'file'; // Packager implements only files packing functionality
 		}
@@ -1142,6 +1165,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Tells if the file is a directory
 		 * @return bool
 		 */
+		#[\ReturnTypeWillChange]
 		public function isDir () {
 			return FALSE; // Packager doesn't implement any directories packing functionality
 		}
@@ -1149,6 +1173,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Tells if the file is executable
 		 * @return bool
 		 */
+		#[\ReturnTypeWillChange]
 		public function isExecutable () {
 			return FALSE; // Packager doesn't implement any executable files packing functionality
 		}
@@ -1156,6 +1181,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Tells if the object references a regular file
 		 * @return bool
 		 */
+		#[\ReturnTypeWillChange]
 		public function isFile () {
 			return TRUE; // Packager implements only files packing functionality
 		}
@@ -1163,6 +1189,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Tells if the file is a link
 		 * @return bool
 		 */
+		#[\ReturnTypeWillChange]
 		public function isLink () {
 			return FALSE; // Packager doesn't implement any links packing functionality
 		}
@@ -1170,6 +1197,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Tells if file is readable
 		 * @return bool
 		 */
+		#[\ReturnTypeWillChange]
 		public function isReadable () {
 			return TRUE;
 		}
@@ -1177,6 +1205,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Tells if the entry is writable
 		 * @return bool
 		 */
+		#[\ReturnTypeWillChange]
 		public function isWritable () {
 			return FALSE; // Packager doesn't implement any self writing functionality
 		}
@@ -1186,6 +1215,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @throws RuntimeException
 		 * @return void
 		 */
+		#[\ReturnTypeWillChange]
 		public function setFileClass ($class_name = "SplFileObject") {
 			$this->_notImplemented(__METHOD__);
 		}
@@ -1195,6 +1225,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @throws RuntimeException
 		 * @return void
 		 */
+		#[\ReturnTypeWillChange]
 		public function setInfoClass ($class_name = "SplFileInfo") {
 			$this->_notImplemented(__METHOD__);
 		}
@@ -1206,6 +1237,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @throws RuntimeException
 		 * @return SplFileObject
 		 */
+		#[\ReturnTypeWillChange]
 		public function openFile ($open_mode = "r", $use_include_path = false, $context = NULL) {
 			$this->_notImplemented(__METHOD__);
 		}
@@ -1213,13 +1245,14 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Returns the path to the file as a string
 		 * @return string
 		 */
+		#[\ReturnTypeWillChange]
 		public function __toString(){
 			return $this->_baseName;
 		}
 
 		private function _notImplemented ($methodName) {
 			Packager_Php_Wrapper::PrintBacktrace();
-			throw new RuntimeException(get_class()."::" . $methodName . "(): Not implemented.");
+			throw new RuntimeException(get_class($this)."::" . $methodName . "(): Not implemented.");
 		}
 	}
 	// Packager_Php_Scripts_Completer::end(DirectoryIterator)

@@ -237,7 +237,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 					// http://php.net/manual/en/language.variables.basics.php
 					$content = preg_replace(
 						"#([^\\\])(\\\$this)([^a-zA-Z0-9_\x7f-\xff])#im",
-						"$1".get_class()."::\$Context$3",
+						"$1".get_called_class()."::\$Context$3",
 						$content
 					);
 					$index = self::$Info[$path]['index'];
@@ -914,6 +914,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 				parent::__construct($path);
 			}
 		}
+		#[\ReturnTypeWillChange]
 		public function rewind() {
 			if (!$this->_hdd) {
 				$this->_position = 0;
@@ -921,14 +922,17 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 				parent::rewind();
 			}
 		}
+		#[\ReturnTypeWillChange]
 		public function current() {
 			if (!$this->_hdd) return $this->_files[$this->_position];
 			return parent::current();
 		}
+		#[\ReturnTypeWillChange]
 		public function key() {
 			if (!$this->_hdd) return $this->_position;
 			return parent::key();
 		}
+		#[\ReturnTypeWillChange]
 		public function next() {
 			if (!$this->_hdd) {
 				$this->_position += 1;
@@ -936,6 +940,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 				parent::next();
 			}
 		}
+		#[\ReturnTypeWillChange]
 		public function valid() {
 			if (!$this->_hdd) return isset($this->_files[$this->_position]);
 			return parent::valid();
@@ -1039,6 +1044,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @throws RuntimeException
 		 * @return int
 		 */
+		#[\ReturnTypeWillChange]
 		public function getATime () {
 			if ($this->_hdd) {
 				return parent::getATime();
@@ -1051,6 +1057,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @param string $suffix
 		 * @return string
 		 */
+		#[\ReturnTypeWillChange]
 		public function getBasename ($suffix = NULL) {
 			if ($this->_hdd) {
 				return parent::getBasename($suffix);
@@ -1069,6 +1076,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @throws RuntimeException
 		 * @return int
 		 */
+		#[\ReturnTypeWillChange]
 		public function getCTime () {
 			if ($this->_hdd) {
 				return parent::getCTime();
@@ -1080,6 +1088,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Gets the file extension
 		 * @return string
 		 */
+		#[\ReturnTypeWillChange]
 		public function getExtension () {
 			if ($this->_hdd) {
 				return parent::getExtension();
@@ -1092,6 +1101,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @param $class_name
 		 * @return SplFileInfo
 		 */
+		#[\ReturnTypeWillChange]
 		public function getFileInfo ($class_name = NULL) {
 			if ($this->_hdd) {
 				return parent::getFileInfo($class_name);
@@ -1103,6 +1113,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Gets the filename including extension
 		 * @return string
 		 */
+		#[\ReturnTypeWillChange]
 		public function getFilename () {
 			if ($this->_hdd) {
 				return parent::getFilename();
@@ -1115,6 +1126,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @throws RuntimeException
 		 * @return int
 		 */
+		#[\ReturnTypeWillChange]
 		public function getGroup () {
 			if ($this->_hdd) {
 				return parent::getGroup();
@@ -1127,6 +1139,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @throws RuntimeException
 		 * @return int
 		 */
+		#[\ReturnTypeWillChange]
 		public function getInode () {
 			if ($this->_hdd) {
 				return parent::getInode();
@@ -1139,6 +1152,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @throws RuntimeException
 		 * @return string
 		 */
+		#[\ReturnTypeWillChange]
 		public function getLinkTarget () {
 			if ($this->_hdd) {
 				return parent::getLinkTarget();
@@ -1150,6 +1164,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Gets the last modified time
 		 * @return int|bool
 		 */
+		#[\ReturnTypeWillChange]
 		public function getMTime () {
 			if ($this->_hdd) {
 				return parent::getMTime();
@@ -1162,6 +1177,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @throws RuntimeException
 		 * @return int
 		 */
+		#[\ReturnTypeWillChange]
 		public function getOwner () {
 			if ($this->_hdd) {
 				return parent::getOwner();
@@ -1173,6 +1189,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Gets the path without filename
 		 * @return string
 		 */
+		#[\ReturnTypeWillChange]
 		public function getPath () {
 			if ($this->_hdd) {
 				return parent::getPath();
@@ -1185,6 +1202,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @param mixed $class_name
 		 * @return SplFileInfo
 		 */
+		#[\ReturnTypeWillChange]
 		public function getPathInfo ($class_name = NULL) {
 			if ($this->_hdd) {
 				return parent::getPathInfo($class_name);
@@ -1196,6 +1214,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Gets the path to the file
 		 * @return string
 		 */
+		#[\ReturnTypeWillChange]
 		public function getPathname () {
 			if ($this->_hdd) {
 				return parent::getPathname();
@@ -1207,6 +1226,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Gets file permissions
 		 * @return int
 		 */
+		#[\ReturnTypeWillChange]
 		public function getPerms () {
 			if ($this->_hdd) {
 				return parent::getPerms();
@@ -1218,6 +1238,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Gets absolute path to file
 		 * @return string
 		 */
+		#[\ReturnTypeWillChange]
 		public function getRealPath () {
 			if ($this->_hdd) {
 				return parent::getRealPath();
@@ -1229,13 +1250,14 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Gets file size
 		 * @return int|bool
 		 */
+		#[\ReturnTypeWillChange]
 		public function getSize () {
 			if ($this->_hdd) {
 				return parent::getSize();
 			} else if ($this->_info) {
 				return $this->_info['size'];
 			} else {
-				trigger_error("[".get_class()."::".__METHOD__."] File doesn't exists.", E_WARNING);
+				trigger_error("[".get_class($this)."::".__METHOD__."] File doesn't exists.", E_WARNING);
 				return FALSE;
 			}
 		}
@@ -1243,6 +1265,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Gets file type
 		 * @return string
 		 */
+		#[\ReturnTypeWillChange]
 		public function getType () {
 			if ($this->_hdd) {
 				return parent::getType();
@@ -1254,6 +1277,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Tells if the file is a directory
 		 * @return bool
 		 */
+		#[\ReturnTypeWillChange]
 		public function isDir () {
 			if ($this->_hdd) {
 				return parent::isDir();
@@ -1265,6 +1289,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Tells if the file is executable
 		 * @return bool
 		 */
+		#[\ReturnTypeWillChange]
 		public function isExecutable () {
 			if ($this->_hdd) {
 				return parent::isExecutable();
@@ -1276,6 +1301,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Tells if the object references a regular file
 		 * @return bool
 		 */
+		#[\ReturnTypeWillChange]
 		public function isFile () {
 			if ($this->_hdd) {
 				return parent::isFile();
@@ -1287,6 +1313,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Tells if the file is a link
 		 * @return bool
 		 */
+		#[\ReturnTypeWillChange]
 		public function isLink () {
 			if ($this->_hdd) {
 				return parent::isLink();
@@ -1298,6 +1325,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Tells if file is readable
 		 * @return bool
 		 */
+		#[\ReturnTypeWillChange]
 		public function isReadable () {
 			if ($this->_hdd) {
 				return parent::isReadable();
@@ -1309,6 +1337,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Tells if the entry is writable
 		 * @return bool
 		 */
+		#[\ReturnTypeWillChange]
 		public function isWritable () {
 			if ($this->_hdd) {
 				return parent::isWritable();
@@ -1322,6 +1351,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @throws RuntimeException
 		 * @return void
 		 */
+		#[\ReturnTypeWillChange]
 		public function setFileClass ($class_name = "SplFileObject") {
 			if ($this->_hdd) {
 				return parent::setFileClass($class_name);
@@ -1335,6 +1365,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @throws RuntimeException
 		 * @return void
 		 */
+		#[\ReturnTypeWillChange]
 		public function setInfoClass ($class_name = "SplFileInfo") {
 			if ($this->_hdd) {
 				return parent::setInfoClass($class_name);
@@ -1350,6 +1381,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * @throws RuntimeException
 		 * @return SplFileObject
 		 */
+		#[\ReturnTypeWillChange]
 		public function openFile ($open_mode = "r", $use_include_path = false, $context = NULL) {
 			if ($this->_hdd) {
 				return parent::openFile($open_mode, $use_include_path, $context);
@@ -1361,6 +1393,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 		 * Returns the path to the file as a string
 		 * @return string
 		 */
+		#[\ReturnTypeWillChange]
 		public function __toString(){
 			if ($this->_hdd) {
 				return parent::__toString();
@@ -1371,7 +1404,7 @@ if (!defined('PACKAGER_PHP_FILE_BASE')) {
 
 		private function _notImplemented ($methodName) {
 			Packager_Php_Wrapper::PrintBacktrace();
-			throw new RuntimeException(get_class()."::" . $methodName . "(): Not implemented.");
+			throw new RuntimeException(get_class($this)."::" . $methodName . "(): Not implemented.");
 		}
 	}
 	// Packager_Php_Scripts_Completer::end(DirectoryIterator)
