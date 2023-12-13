@@ -351,7 +351,7 @@ class Packager_Php_Scripts_Dependencies extends Packager_Php_Scripts_Order
 		$composerAutoloadFullPath = $sourcesDir . '/vendor/autoload.php';
 		$errorMsgs = [];
 		$errorTraces = [];
-		$selfClass = get_class();
+		$selfClass = get_class($this);
 		if (file_exists($composerAutoloadFullPath)) {
 			// if project is using composer autoloader
 			try {

@@ -75,7 +75,7 @@ class Packager_Common_Base {
 	public static function Create ($cfg = []) {
 		if (!self::$instance) {
 			// set custom error handlers to catch eval warnings and errors
-			$selfClass = get_class();
+			$selfClass = get_called_class();
 			set_error_handler([$selfClass, 'ErrorHandler']);
 			set_exception_handler([$selfClass, 'ErrorHandler']);
 			self::$instance = new static($cfg);
